@@ -14,5 +14,25 @@ router.post(
   authorize("admin", "superAdmin"),
   testController.createTest
 );
+// Get All Tests
+router.get(
+  "/",
+  protect,
+  authorize("admin", "superAdmin"),
+  testController.getAllTests
+);
+router.get(
+  "/:id",
+  protect,
+  authorize("admin","superAdmin"),
+  testController.getTestById
+);
+router.put(
+  "/:id",
+  protect,
+  authorize("admin","superAdmin"),
+  testController.updateTest
+);
+
 
 module.exports = router;
