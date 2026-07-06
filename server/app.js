@@ -8,6 +8,7 @@ const cookieParser = require("cookie-parser");
 const adminRoutes = require("./routes/admin.routes");
 const authRoutes = require("./routes/auth.routes");
 const profileRoutes = require("./routes/profile.routes");
+const questionRoutes = require("./routes/question.routes");
 const app = express();
 
 app.use(helmet());
@@ -26,4 +27,5 @@ app.get("/api/health", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/questions", questionRoutes);
 module.exports = app;
