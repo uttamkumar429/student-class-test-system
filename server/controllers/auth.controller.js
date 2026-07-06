@@ -1,10 +1,15 @@
 const bcrypt = require("bcrypt");
 const User = require("../models/User");
 
+const { authenticateUser } = require("../services/auth.service");
+
 const generateUserId = require("../utils/generateUserId");
 const generateToken = require("../utils/generateToken");
 const validateRegister = require("../validators/registerValidator");
 
+// ===============================
+// REGISTER
+// ===============================
 exports.register = async (req, res) => {
   try {
     const errors = validateRegister(req.body);
@@ -58,13 +63,16 @@ exports.register = async (req, res) => {
   } catch (error) {
     console.error(error);
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: "Internal Server Error",
     });
   }
 };
 
+// ===============================
+// STUDENT LOGIN
+// ===============================
 exports.login = async (req, res) => {
   try {
     const { emailOrPhone, password } = req.body;
@@ -76,38 +84,23 @@ exports.login = async (req, res) => {
       });
     }
 
-    const user = await User.findOne({
-      $or: [
-        { email: emailOrPhone.toLowerCase() },
-        { phone: emailOrPhone },
-      ],
-    });
+    const authResult = await authenticateUser(emailOrPhone, password);
 
-    if (!user) {
+    if (!authResult.success) {
       return res.status(401).json({
         success: false,
-        message: "Invalid Credentials",
+        message: authResult.message,
       });
     }
 
-    const isPasswordMatched = await bcrypt.compare(
-      password,
-      user.password
-    );
-
-    if (!isPasswordMatched) {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid Credentials",
-      });
-    }
+    const user = authResult.user;
 
     const token = generateToken(user._id, user.role);
 
     user.lastLogin = new Date();
     await user.save();
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: "Login Successful",
       token,
@@ -118,10 +111,71 @@ exports.login = async (req, res) => {
         role: user.role,
       },
     });
+
   } catch (error) {
     console.error(error);
 
-    res.status(500).json({
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
+};
+
+// ===============================
+// ADMIN LOGIN
+// ===============================
+exports.adminLogin = async (req, res) => {
+  try {
+    const { emailOrPhone, password } = req.body;
+
+    if (!emailOrPhone || !password) {
+      return res.status(400).json({
+        success: false,
+        message: "Email/Phone and Password are required.",
+      });
+    }
+
+    const authResult = await authenticateUser(emailOrPhone, password);
+
+    if (!authResult.success) {
+      return res.status(401).json({
+        success: false,
+        message: authResult.message,
+      });
+    }
+
+    const user = authResult.user;
+
+    // Only Admin or Super Admin can login
+    if (user.role !== "admin" && user.role !== "superAdmin") {
+      return res.status(403).json({
+        success: false,
+        message: "Access denied. Admin only.",
+      });
+    }
+
+    const token = generateToken(user._id, user.role);
+
+    user.lastLogin = new Date();
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Admin Login Successful",
+      token,
+      user: {
+        id: user._id,
+        userId: user.userId,
+        fullName: user.fullName,
+        role: user.role,
+      },
+    });
+
+  } catch (error) {
+    console.error(error);
+
+    return res.status(500).json({
       success: false,
       message: "Internal Server Error",
     });

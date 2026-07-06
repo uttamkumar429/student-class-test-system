@@ -23,7 +23,17 @@ exports.uploadProfilePhoto = async (req, res) => {
     let profile = await Profile.findOne({
       userId: req.user._id,
     });
+    
+    // Delete old image if exists
+    if (
+      profile &&
+      profile.cloudinaryPublicId &&
+      profile.cloudinaryPublicId.trim() !== ""
+    ) {
+      await cloudinary.uploader.destroy(profile.cloudinaryPublicId);
+    }
 
+    
     if (!profile) {
       profile = await Profile.create({
         userId: req.user._id,
