@@ -14,5 +14,34 @@ router.post(
   authorize("admin", "superAdmin"),
   questionController.createQuestion
 );
+router.get(
+  "/",
+  protect,
+  authorize("admin", "superAdmin"),
+  questionController.getAllQuestions
+);
+// Get Question By Id
+router.get(
+  "/:id",
+  protect,
+  authorize("admin", "superAdmin"),
+  questionController.getQuestionById
+);
+
+// Update Question
+router.put(
+  "/:id",
+  protect,
+  authorize("admin", "superAdmin"),
+  questionController.updateQuestion
+);
+
+// Delete Question
+router.delete(
+  "/:id",
+  protect,
+  authorize("admin", "superAdmin"),
+  questionController.deleteQuestion
+);
 
 module.exports = router;
