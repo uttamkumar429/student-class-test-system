@@ -1,6 +1,6 @@
 const ExamAttempt = require("../models/ExamAttempt");
 const TestSnapshot = require("../models/TestSnapshot");
-
+const StudentAnswer = require("../models/StudentAnswer");
 
 // ==========================================
 // STUDENT DASHBOARD
@@ -91,8 +91,208 @@ const startExam = async (studentId, snapshotId) => {
   return attempt;
 
 };
+// =====================================
+// GET EXAM QUESTIONS
+// =====================================
+const getExamQuestions = async (studentId, attemptId) => {
+
+  // Find Attempt
+  const attempt = await ExamAttempt.findById(attemptId);
+
+  if (!attempt) {
+    throw new Error("Exam attempt not found.");
+  }
+
+  // Security Check
+  if (attempt.student.toString() !== studentId.toString()) {
+    throw new Error("Unauthorized access.");
+  }
+
+  // Already Submitted?
+  if (attempt.status === "submitted") {
+    throw new Error("Exam already submitted.");
+  }
+
+  // Load Snapshot
+  const snapshot = await TestSnapshot.findById(
+    attempt.testSnapshot
+  );
+
+  if (!snapshot) {
+    throw new Error("Test snapshot not found.");
+  }
+
+  // Secure Questions
+  const questions = snapshot.questions.map((question) => ({
+
+    questionId: question.questionId,
+
+    subject: question.subject,
+
+    chapter: question.chapter,
+
+    difficulty: question.difficulty,
+
+    question: question.question,
+
+    optionA: question.optionA,
+
+    optionB: question.optionB,
+
+    optionC: question.optionC,
+
+    optionD: question.optionD,
+
+    marks: question.marks
+
+  }));
+
+  return {
+    attemptId: attempt._id,
+    questions,
+  };
+
+};
 
 module.exports = {
   getDashboard,
   startExam,
+  getExamQuestions,
+};
+// ======================================
+// SAVE ANSWER
+// ======================================
+const saveAnswer = async (
+
+  studentId,
+
+  attemptId,
+
+  questionId,
+
+  selectedAnswer
+
+) => {
+
+  // Check Attempt
+
+  const attempt = await ExamAttempt.findById(attemptId);
+
+  if (!attempt) {
+
+    throw new Error("Exam attempt not found.");
+
+  }
+
+  // Ownership Check
+
+  if (attempt.student.toString() !== studentId.toString()) {
+
+    throw new Error("Unauthorized access.");
+
+  }
+
+  // Already Submitted?
+
+  if (attempt.status === "submitted") {
+
+    throw new Error("Exam already submitted.");
+
+  }
+
+  // Load Snapshot
+
+  const snapshot = await TestSnapshot.findById(
+    attempt.testSnapshot
+  );
+
+  if (!snapshot) {
+
+    throw new Error("Snapshot not found.");
+
+  }
+
+  // Find Question
+
+ const question = snapshot.questions.find(
+
+    (q) => q.questionId.toString() === questionId
+
+);
+
+  if (!question) {
+
+    throw new Error("Question not found.");
+
+  }
+
+  // Correct?
+
+  const isCorrect =
+    question.correctAnswer === selectedAnswer;
+
+  // Already Saved?
+
+  const existingAnswer = await StudentAnswer.findOne({
+
+    attempt: attemptId,
+
+    questionId,
+
+  });
+
+  if (existingAnswer) {
+
+    existingAnswer.selectedAnswer = selectedAnswer;
+
+    existingAnswer.correctAnswer =
+      question.correctAnswer;
+
+    existingAnswer.isCorrect = isCorrect;
+
+    existingAnswer.marksAwarded = isCorrect
+      ? question.marks
+      : 0;
+
+    await existingAnswer.save();
+
+    return existingAnswer;
+
+  }
+
+  // Create New Answer
+
+  const answer = await StudentAnswer.create({
+
+    attempt: attemptId,
+
+    questionId,
+
+    selectedAnswer,
+
+    correctAnswer: question.correctAnswer,
+
+    isCorrect,
+
+    marksAwarded: isCorrect
+      ? question.marks
+      : 0,
+
+  });
+
+  return answer;
+
+};
+
+
+module.exports = {
+
+  getDashboard,
+
+  startExam,
+
+  getExamQuestions,
+
+  saveAnswer,
+
 };

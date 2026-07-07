@@ -30,9 +30,7 @@ const snapshotQuestionSchema = new mongoose.Schema(
 
     marks: Number,
   },
-  {
-    _id: false,
-  }
+  
 );
 
 const testSnapshotSchema = new mongoose.Schema(

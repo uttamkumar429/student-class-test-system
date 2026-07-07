@@ -21,5 +21,23 @@ router.post(
   authorize("student"),
   studentController.startExam
 );
+// Get Exam Questions
+router.get(
+  "/attempt/:attemptId/questions",
+  protect,
+  authorize("student"),
+  studentController.getExamQuestions
+);
+// Save Answer
+router.post(
 
+  "/attempt/:attemptId/answer",
+
+  protect,
+
+  authorize("student"),
+
+  studentController.saveAnswer
+
+);
 module.exports = router;

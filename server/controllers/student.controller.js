@@ -1,8 +1,14 @@
 const {
-  getDashboard,
-  startExam: startExamService,
-} = require("../services/student.service");
 
+  getDashboard,
+
+  startExam: startExamService,
+
+  getExamQuestions: getExamQuestionsService,
+
+  saveAnswer: saveAnswerService,
+
+} = require("../services/student.service");
 // ==========================================
 // STUDENT DASHBOARD
 // ==========================================
@@ -57,6 +63,82 @@ exports.startExam = async (req, res) => {
     return res.status(400).json({
       success: false,
       message: error.message,
+    });
+
+  }
+
+};
+// =====================================
+// GET EXAM QUESTIONS
+// =====================================
+exports.getExamQuestions = async (req, res) => {
+
+  try {
+
+    const result = await getExamQuestionsService(
+
+      req.user._id,
+
+      req.params.attemptId
+
+    );
+
+    return res.status(200).json({
+      success: true,
+      ...result,
+    });
+
+  } catch (error) {
+
+    console.error(error);
+
+    return res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+
+  }
+
+};
+// ======================================
+// SAVE ANSWER
+// ======================================
+exports.saveAnswer = async (req, res) => {
+
+  try {
+
+    const answer = await saveAnswerService(
+
+      req.user._id,
+
+      req.params.attemptId,
+
+      req.body.questionId,
+
+      req.body.selectedAnswer
+
+    );
+
+    return res.status(200).json({
+
+      success: true,
+
+      message: "Answer saved successfully.",
+
+      answer,
+
+    });
+
+  } catch (error) {
+
+    console.error(error);
+
+    return res.status(400).json({
+
+      success: false,
+
+      message: error.message,
+
     });
 
   }
