@@ -11,6 +11,7 @@ const profileRoutes = require("./routes/profile.routes");
 const questionRoutes = require("./routes/question.routes");
 const testRoutes = require("./routes/test.routes");
 const publishRoutes = require("./routes/publish.routes");
+const studentRoutes = require("./routes/student.routes");
 const app = express();
 
 app.use(helmet());
@@ -36,4 +37,5 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/questions", questionRoutes);
 app.use("/api/tests", testRoutes);
 app.use("/api/tests", publishRoutes);
+app.use("/api/student", studentRoutes);
 module.exports = app;
