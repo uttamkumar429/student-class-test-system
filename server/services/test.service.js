@@ -96,11 +96,23 @@ const getTestById = async (id) => {
 // =====================================
 const updateTest = async (id, testData) => {
 
+  // Find Existing Test
+  const existingTest = await Test.findById(id);
+
+  if (!existingTest) {
+    return null;
+  }
+
+  // Business Rule
+  if (existingTest.status === "published") {
+    throw new Error("Published tests cannot be updated.");
+  }
+
   const result = await processQuestions(
     testData.questions
   );
 
-  const test = await Test.findByIdAndUpdate(
+  const updatedTest = await Test.findByIdAndUpdate(
     id,
     {
       ...testData,
@@ -115,7 +127,25 @@ const updateTest = async (id, testData) => {
     .populate("createdBy", "fullName email")
     .populate("questions");
 
-  return test;
+  return updatedTest;
+};
+// =====================================
+// DELETE TEST
+// =====================================
+const deleteTest = async (id) => {
+
+  const test = await Test.findById(id);
+
+  if (!test) {
+    return null;
+  }
+
+  if (test.status === "published") {
+    throw new Error("Published tests cannot be deleted.");
+  }
+
+  return await Test.findByIdAndDelete(id);
+
 };
 
 module.exports = {
@@ -123,5 +153,6 @@ module.exports = {
   getAllTests,
   getTestById,
   updateTest,
+  deleteTest,
   processQuestions,
 };

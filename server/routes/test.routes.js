@@ -33,6 +33,13 @@ router.put(
   authorize("admin","superAdmin"),
   testController.updateTest
 );
+// Delete Test
+router.delete(
+  "/:id",
+  protect,
+  authorize("admin", "superAdmin"),
+  testController.deleteTest
+);
 
 
 module.exports = router;

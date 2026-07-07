@@ -5,6 +5,7 @@ const {
   getAllTests,
   getTestById,
   updateTest: updateTestService,
+  deleteTest: deleteTestService,
 } = require("../services/test.service");
 
 // CREATE TEST
@@ -145,4 +146,36 @@ exports.updateTest = async (req, res) => {
 
   }
 
+};
+
+// ===============================
+// DELETE TEST
+// ===============================
+exports.deleteTest = async (req, res) => {
+  try {
+
+    const test = await deleteTestService(req.params.id);
+
+    if (!test) {
+      return res.status(404).json({
+        success: false,
+        message: "Test not found.",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Test deleted successfully.",
+    });
+
+  } catch (error) {
+
+    console.error(error);
+
+    return res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+
+  }
 };
