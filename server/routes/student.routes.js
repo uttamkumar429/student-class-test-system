@@ -40,4 +40,11 @@ router.post(
   studentController.saveAnswer
 
 );
+// Submit Exam
+router.post(
+  "/attempt/:attemptId/submit",
+  protect,
+  authorize("student"),
+  studentController.submitExam
+);
 module.exports = router;

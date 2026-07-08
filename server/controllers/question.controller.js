@@ -1,7 +1,14 @@
+const asyncHandler = require("../middleware/asyncHandler");
+
 const validateQuestion = require("../validators/question.validator");
+const {
+  successResponse,
+  errorResponse,
+} = require("../utils/response");
+
 
 const {
-  createQuestion,
+  createQuestion: createQuestionService,
   getAllQuestions,
   getQuestionById,
   updateQuestion,
@@ -9,59 +16,55 @@ const {
 } = require("../services/question.service");
 // CREATE QUESTION
 
-exports.createQuestion = async (req, res) => {
-  try {
-    const errors = validateQuestion(req.body);
+exports.createQuestion = asyncHandler(async (req, res) => {
 
-    if (errors.length) {
-      return res.status(400).json({
-        success: false,
-        errors,
-      });
-    }
+  const errors = validateQuestion(req.body);
 
-    const question = await createQuestion({
-      ...req.body,
-      createdBy: req.user._id,
-    });
-
-    return res.status(201).json({
-      success: true,
-      message: "Question created successfully.",
-      question,
-    });
-
-  } catch (error) {
-    console.error(error);
-
-    return res.status(500).json({
-      success: false,
-      message: "Internal Server Error",
-    });
+  if (errors.length) {
+    return errorResponse(res, 400, errors);
   }
-};
+
+  const question = await createQuestionService({
+    ...req.body,
+    createdBy: req.user._id,
+  });
+
+  return successResponse(
+    res,
+    201,
+    "Question created successfully.",
+    question
+  );
+});
 
 
 // GET ALL QUESTIONS
 
 exports.getAllQuestions = async (req, res) => {
-  try {
-    const questions = await getAllQuestions();
 
-    return res.status(200).json({
-      success: true,
-      total: questions.length,
-      questions,
-    });
+  try {
+
+    const result = await getAllQuestions(req.query);
+
+    return successResponse(
+      res,
+      200,
+      "Questions fetched successfully.",
+      result
+    );
 
   } catch (error) {
+
     console.error(error);
 
-    return res.status(500).json({
-      success: false,
-      message: "Internal Server Error",
-    });
+    return errorResponse(
+      res,
+      500,
+      "Internal Server Error"
+    );
+
   }
+
 };
 // ===============================
 // GET QUESTION BY ID

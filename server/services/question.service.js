@@ -5,13 +5,20 @@ const createQuestion = async (questionData) => {
   return await Question.create(questionData);
 };
 
-// GET ALL
 const getAllQuestions = async () => {
-  return await Question.find()
+
+  const total = await Question.countDocuments();
+
+  const questions = await Question.find()
     .populate("createdBy", "fullName email")
     .sort({ createdAt: -1 });
-};
 
+  return {
+    total,
+    questions,
+  };
+
+};
 // GET BY ID
 const getQuestionById = async (id) => {
   return await Question.findById(id).populate(

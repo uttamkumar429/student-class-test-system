@@ -1,41 +1,93 @@
 console.log("App.js Loaded");
-console.log("Auth Routes Mounted");
+
 const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
 const morgan = require("morgan");
 const cookieParser = require("cookie-parser");
-const adminRoutes = require("./routes/admin.routes");
+
+const app = express();
+
+// =========================
+// Import Routes
+// =========================
 const authRoutes = require("./routes/auth.routes");
+const adminRoutes = require("./routes/admin.routes");
 const profileRoutes = require("./routes/profile.routes");
 const questionRoutes = require("./routes/question.routes");
 const testRoutes = require("./routes/test.routes");
 const publishRoutes = require("./routes/publish.routes");
 const studentRoutes = require("./routes/student.routes");
-const app = express();
+const errorHandler = require("./middleware/error.middleware");
 
+// =========================
+// Global Middleware
+// =========================
 app.use(helmet());
 app.use(cors());
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
 app.use(cookieParser());
+
 app.use(morgan("dev"));
 
+// =========================
+// Health Check API
+// =========================
 app.get("/api/health", (req, res) => {
-  res.status(200).json({
+  return res.status(200).json({
     success: true,
-    message: "Server is running successfully."
+    message: "Server is running successfully.",
   });
 });
+
+// =========================
+// Routes
+// =========================
+
+// Authentication
 app.use("/api/auth", authRoutes);
-app.use("/api/profile", profileRoutes);
+
+// Admin
 app.use("/api/admin", adminRoutes);
-app.use("/api/questions", questionRoutes);
-app.use("/api/auth", authRoutes);
+
+// Profile
 app.use("/api/profile", profileRoutes);
-app.use("/api/admin", adminRoutes);
+
+// Questions
 app.use("/api/questions", questionRoutes);
+
+// Tests (CRUD)
 app.use("/api/tests", testRoutes);
+
+// Publish Test
 app.use("/api/tests", publishRoutes);
+
+// Student APIs
 app.use("/api/student", studentRoutes);
+app.use(errorHandler);
+// =========================
+// 404 Route
+// =========================
+app.use((req, res) => {
+  return res.status(404).json({
+    success: false,
+    message: "Route not found.",
+  });
+});
+
+// =========================
+// Global Error Handler
+// =========================
+app.use((err, req, res, next) => {
+  console.error("Global Error:", err);
+
+  return res.status(err.status || 500).json({
+    success: false,
+    message: err.message || "Internal Server Error",
+  });
+});
+
 module.exports = app;

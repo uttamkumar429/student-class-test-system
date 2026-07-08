@@ -75,17 +75,17 @@ exports.register = async (req, res) => {
 // ===============================
 exports.login = async (req, res) => {
   try {
-    const { emailOrPhone, password } = req.body;
+    const { email, phone, emailOrPhone, password } = req.body;
 
-    if (!emailOrPhone || !password) {
+    const loginId = emailOrPhone || email || phone;
+
+    if (!loginId || !password) {
       return res.status(400).json({
         success: false,
         message: "Email/Phone and Password are required.",
-      });
-    }
-
-    const authResult = await authenticateUser(emailOrPhone, password);
-
+    });
+}
+    const authResult = await authenticateUser(loginId, password);
     if (!authResult.success) {
       return res.status(401).json({
         success: false,

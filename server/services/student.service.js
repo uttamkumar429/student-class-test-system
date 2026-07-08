@@ -177,7 +177,7 @@ const saveAnswer = async (
   // Check Attempt
 
   const attempt = await ExamAttempt.findById(attemptId);
-
+  console.log("1. Attempt Found:", attempt);
   if (!attempt) {
 
     throw new Error("Exam attempt not found.");
@@ -219,6 +219,7 @@ const saveAnswer = async (
     (q) => q.questionId.toString() === questionId
 
 );
+console.log("2. Question Found:", question);
 
   if (!question) {
 
@@ -240,6 +241,7 @@ const saveAnswer = async (
     questionId,
 
   });
+  console.log("3. Existing Answer:", existingAnswer);
 
   if (existingAnswer) {
 
@@ -254,11 +256,12 @@ const saveAnswer = async (
       ? question.marks
       : 0;
 
-    await existingAnswer.save();
+      await existingAnswer.save();
 
-    return existingAnswer;
-
-  }
+      console.log("4. Updated Answer:", existingAnswer);
+ 
+       return existingAnswer;
+    }
 
   // Create New Answer
 
@@ -279,7 +282,7 @@ const saveAnswer = async (
       : 0,
 
   });
-
+  console.log("5. Created Answer:", answer);
   return answer;
 
 };
@@ -295,4 +298,76 @@ module.exports = {
 
   saveAnswer,
 
+};
+// ======================================
+// SUBMIT EXAM
+// ======================================
+const submitExam = async (studentId, attemptId) => {
+
+  // Find Attempt
+  const attempt = await ExamAttempt.findById(attemptId);
+
+  if (!attempt) {
+    throw new Error("Exam attempt not found.");
+  }
+
+  // Security Check
+  if (attempt.student.toString() !== studentId.toString()) {
+    throw new Error("Unauthorized access.");
+  }
+
+  // Already Submitted?
+  if (attempt.status === "submitted") {
+    throw new Error("Exam already submitted.");
+  }
+
+  // Load Answers
+  const answers = await StudentAnswer.find({
+    attempt: attemptId,
+  });
+
+  // Calculate Score
+  const obtainedMarks = answers.reduce(
+    (total, answer) => total + answer.marksAwarded,
+    0
+  );
+
+  // Percentage
+  const percentage =
+    attempt.totalMarks > 0
+      ? Number(
+          ((obtainedMarks / attempt.totalMarks) * 100).toFixed(2)
+        )
+      : 0;
+
+  // Time Taken (Minutes)
+  const submittedAt = new Date();
+
+  const timeTaken = Math.ceil(
+    (submittedAt - attempt.startedAt) / (1000 * 60)
+  );
+
+  // Update Attempt
+  attempt.obtainedMarks = obtainedMarks;
+  attempt.percentage = percentage;
+  attempt.timeTaken = timeTaken;
+  attempt.submittedAt = submittedAt;
+  attempt.status = "submitted";
+
+  await attempt.save();
+
+  return {
+    obtainedMarks,
+    totalMarks: attempt.totalMarks,
+    percentage,
+    timeTaken,
+  };
+
+};
+module.exports = {
+  getDashboard,
+  startExam,
+  getExamQuestions,
+  saveAnswer,
+  submitExam,
 };
