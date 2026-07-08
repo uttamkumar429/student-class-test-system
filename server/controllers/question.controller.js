@@ -1,3 +1,4 @@
+// const result = await getAllQuestionsService();
 const asyncHandler = require("../middleware/asyncHandler");
 
 const validateQuestion = require("../validators/question.validator");
@@ -9,10 +10,10 @@ const {
 
 const {
   createQuestion: createQuestionService,
-  getAllQuestions,
-  getQuestionById,
-  updateQuestion,
-  deleteQuestion,
+  getAllQuestions: getAllQuestionsService,
+  getQuestionById: getQuestionByIdService,
+  updateQuestion: updateQuestionService,
+  deleteQuestion: deleteQuestionService,
 } = require("../services/question.service");
 // CREATE QUESTION
 
@@ -40,136 +41,72 @@ exports.createQuestion = asyncHandler(async (req, res) => {
 
 // GET ALL QUESTIONS
 
-exports.getAllQuestions = async (req, res) => {
+exports.getAllQuestions = asyncHandler(async (req, res) => {
 
-  try {
+const result = await getAllQuestionsService();
 
-    const result = await getAllQuestions(req.query);
+  return successResponse(
+    res,
+    200,
+    "Questions fetched successfully.",
+    result
+  );
 
-    return successResponse(
-      res,
-      200,
-      "Questions fetched successfully.",
-      result
-    );
-
-  } catch (error) {
-
-    console.error(error);
-
-    return errorResponse(
-      res,
-      500,
-      "Internal Server Error"
-    );
-
-  }
-
-};
+});
 // ===============================
 // GET QUESTION BY ID
 // ===============================
-exports.getQuestionById = async (req, res) => {
-  try {
+exports.getQuestionById = asyncHandler(async (req, res) => {
 
-    const question = await getQuestionById(req.params.id);
+  const question = await getQuestionById(req.params.id);
 
-    if (!question) {
-      return res.status(404).json({
-        success: false,
-        message: "Question not found.",
-      });
-    }
-
-    return res.status(200).json({
-      success: true,
-      question,
-    });
-
-  } catch (error) {
-
-    console.error(error);
-
-    return res.status(500).json({
-      success: false,
-      message: "Internal Server Error",
-    });
-
+  if (!question) {
+    throw new Error("Question not found.");
   }
-};
 
+  return successResponse(
+    res,
+    200,
+    "Question fetched successfully.",
+    question
+  );
+
+});
 
 // UPDATE QUESTION
 
-exports.updateQuestion = async (req, res) => {
-  try {
+exports.updateQuestion = asyncHandler(async (req, res) => {
 
-    const errors = validateQuestion(req.body);
+  const question = await updateQuestion(
+    req.params.id,
+    req.body
+  );
 
-    if (errors.length) {
-      return res.status(400).json({
-        success: false,
-        errors,
-      });
-    }
-
-    const question = await updateQuestion(
-      req.params.id,
-      req.body
-    );
-
-    if (!question) {
-      return res.status(404).json({
-        success: false,
-        message: "Question not found.",
-      });
-    }
-
-    return res.status(200).json({
-      success: true,
-      message: "Question updated successfully.",
-      question,
-    });
-
-  } catch (error) {
-
-    console.error(error);
-
-    return res.status(500).json({
-      success: false,
-      message: "Internal Server Error",
-    });
-
+  if (!question) {
+    throw new Error("Question not found.");
   }
-};
 
+  return successResponse(
+    res,
+    200,
+    "Question updated successfully.",
+    question
+  );
+
+});
 // DELETE QUESTION
+exports.deleteQuestion = asyncHandler(async (req, res) => {
 
-exports.deleteQuestion = async (req, res) => {
-  try {
+  const question = await deleteQuestion(req.params.id);
 
-    const question = await deleteQuestion(req.params.id);
-
-    if (!question) {
-      return res.status(404).json({
-        success: false,
-        message: "Question not found.",
-      });
-    }
-
-    return res.status(200).json({
-      success: true,
-      message: "Question deleted successfully.",
-    });
-
-  } catch (error) {
-
-    console.error(error);
-
-    return res.status(500).json({
-      success: false,
-      message: "Internal Server Error",
-    });
-
+  if (!question) {
+    throw new Error("Question not found.");
   }
-};
+
+  return successResponse(
+    res,
+    200,
+    "Question deleted successfully."
+  );
+
+});

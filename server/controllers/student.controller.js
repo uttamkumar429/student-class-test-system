@@ -1,5 +1,13 @@
+const asyncHandler = require("../middleware/asyncHandler");
+
 const {
-  getDashboard,
+  successResponse,
+  errorResponse,
+} = require("../utils/response");
+
+
+const {
+  getDashboard: getDashboardService,
   startExam: startExamService,
   getExamQuestions: getExamQuestionsService,
   saveAnswer: saveAnswerService,
@@ -8,163 +16,87 @@ const {
 
 // STUDENT DASHBOARD
 
-exports.getDashboard = async (req, res) => {
+exports.getDashboard = asyncHandler(async (req, res) => {
 
-  try {
+  const dashboard = await getDashboardService();
 
-    const dashboard = await getDashboard();
+  return successResponse(
+    res,
+    200,
+    "Dashboard fetched successfully.",
+    dashboard
+  );
 
-    return res.status(200).json({
-      success: true,
-      dashboard,
-    });
-
-  } catch (error) {
-
-    console.error(error);
-
-    return res.status(500).json({
-      success: false,
-      message: "Internal Server Error",
-    });
-
-  }
-
-};
+});
 // =====================================
 // START EXAM
 // =====================================
-exports.startExam = async (req, res) => {
+exports.startExam = asyncHandler(async (req, res) => {
 
-  try {
+  const attempt = await startExamService(
+    req.user._id,
+    req.params.snapshotId
+  );
 
-    const attempt = await startExamService(
+  return successResponse(
+    res,
+    201,
+    "Exam started successfully.",
+    attempt
+  );
 
-      req.user._id,
-
-      req.params.snapshotId
-
-    );
-
-    return res.status(201).json({
-      success: true,
-      message: "Exam started successfully.",
-      attempt,
-    });
-
-  } catch (error) {
-
-    console.error(error);
-
-    return res.status(400).json({
-      success: false,
-      message: error.message,
-    });
-
-  }
-
-};
+});
 // =====================================
 // GET EXAM QUESTIONS
 // =====================================
-exports.getExamQuestions = async (req, res) => {
+exports.getExamQuestions = asyncHandler(async (req, res) => {
 
-  try {
+  const result = await getExamQuestionsService(
+    req.user._id,
+    req.params.attemptId
+  );
 
-    const result = await getExamQuestionsService(
+  return successResponse(
+    res,
+    200,
+    "Questions fetched successfully.",
+    result
+  );
 
-      req.user._id,
+});
 
-      req.params.attemptId
-
-    );
-
-    return res.status(200).json({
-      success: true,
-      ...result,
-    });
-
-  } catch (error) {
-
-    console.error(error);
-
-    return res.status(400).json({
-      success: false,
-      message: error.message,
-    });
-
-  }
-
-};
-// ======================================
 // SAVE ANSWER
-// ======================================
-// ======================================
-// SAVE ANSWER
-// ======================================
-exports.saveAnswer = async (req, res) => {
+exports.saveAnswer = asyncHandler(async (req, res) => {
 
-  try {
+  await saveAnswerService(
+    req.user._id,
+    req.params.attemptId,
+    req.body.questionId,
+    req.body.selectedAnswer
+  );
 
-    await saveAnswerService(
+  return successResponse(
+    res,
+    200,
+    "Answer saved successfully."
+  );
 
-      req.user._id,
-
-      req.params.attemptId,
-
-      req.body.questionId,
-
-      req.body.selectedAnswer
-
-    );
-
-    return res.status(200).json({
-      success: true,
-      message: "Answer saved successfully."
-    });
-
-  } catch (error) {
-
-    console.error(error);
-
-    return res.status(400).json({
-      success: false,
-      message: error.message,
-    });
-
-  }
-
-};
+});
 
 // SUBMIT EXAM
 
-exports.submitExam = async (req, res) => {
+exports.submitExam = asyncHandler(async (req, res) => {
 
-  try {
+  const result = await submitExamService(
+    req.user._id,
+    req.params.attemptId
+  );
 
-    const result = await submitExamService(
+  return successResponse(
+    res,
+    200,
+    "Exam submitted successfully.",
+    result
+  );
 
-      req.user._id,
-
-      req.params.attemptId
-
-    );
-
-    return res.status(200).json({
-      success: true,
-      message: "Exam submitted successfully.",
-      result,
-    });
-
-  } catch (error) {
-
-    console.error(error);
-
-    return res.status(400).json({
-      success: false,
-      message: error.message,
-    });
-
-  }
-
-};
+});

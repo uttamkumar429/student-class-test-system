@@ -1,181 +1,126 @@
 const validateTest = require("../validators/test.validator");
 
+const asyncHandler = require("../middleware/asyncHandler");
+const ApiError = require("../utils/ApiError");
 const {
-  createTest,
-  getAllTests,
-  getTestById,
+  successResponse,
+  errorResponse,
+} = require("../utils/response");
+
+const {
+  createTest: createTestService,
+  getAllTests: getAllTestsService,
+  getTestById: getTestByIdService,
   updateTest: updateTestService,
   deleteTest: deleteTestService,
 } = require("../services/test.service");
 
 // CREATE TEST
 
-exports.createTest = async (req, res) => {
-  try {
-    const errors = validateTest(req.body);
+exports.createTest = asyncHandler(async (req, res) => {
 
-    if (errors.length) {
-      return res.status(400).json({
-        success: false,
-        errors,
-      });
-    }
+  const errors = validateTest(req.body);
 
-    const test = await createTest({
-      ...req.body,
-      createdBy: req.user._id,
-    });
-
-    return res.status(201).json({
-      success: true,
-      message: "Test created successfully.",
-      test,
-    });
-
-  } catch (error) {
-    console.error(error);
-
-    return res.status(500).json({
-      success: false,
-      message: error.message || "Internal Server Error",
-    });
+  if (errors.length) {
+    return errorResponse(res, 400, errors);
   }
-};
+
+  const test = await createTestService({
+    ...req.body,
+    createdBy: req.user._id,
+  });
+
+  return successResponse(
+    res,
+    201,
+    "Test created successfully.",
+    test
+  );
+
+});
 
 // GET ALL TESTS
 
-exports.getAllTests = async (req, res) => {
-  try {
+exports.getAllTests = asyncHandler(async (req, res) => {
 
-    const tests = await getAllTests();
+  const tests = await getAllTestsService();
 
-    return res.status(200).json({
-      success: true,
+  return successResponse(
+    res,
+    200,
+    "Tests fetched successfully.",
+    {
       total: tests.length,
       tests,
-    });
-
-  } catch (error) {
-
-    console.error(error);
-
-    return res.status(500).json({
-      success: false,
-      message: "Internal Server Error",
-    });
-
-  }
-};
-
-// GET TEST BY ID
-exports.getTestById = async (req, res) => {
-
-  try {
-
-    const test = await getTestById(req.params.id);
-
-    if (!test) {
-      return res.status(404).json({
-        success: false,
-        message: "Test not found."
-      });
     }
+  );
 
-    return res.status(200).json({
-      success: true,
-      test,
-    });
+});
+// GET TEST BY ID
+exports.getTestById = asyncHandler(async (req, res) => {
 
-  } catch (error) {
+  const test = await getTestByIdService(req.params.id);
 
-    console.error(error);
+  if (!test) {
+    throw new ApiError(
+        404,
+        "Test not found."
+    );
+}
 
-    return res.status(500).json({
-      success:false,
-      message:"Internal Server Error"
-    });
+  return successResponse(
+    res,
+    200,
+    "Test fetched successfully.",
+    test
+  );
 
-  }
-
-};
+});
 
 // UPDATE TEST
-exports.updateTest = async (req, res) => {
+exports.updateTest = asyncHandler(async (req, res) => {
 
-  try {
+  const errors = validateTest(req.body);
 
-    const errors = validateTest(req.body);
+  if (errors.length) {
+    return errorResponse(res, 400, errors);
+  }
 
-    if (errors.length) {
-
-      return res.status(400).json({
-        success: false,
-        errors,
-      });
-
-    }
-
-   const test = await updateTestService(
+  const test = await updateTestService(
     req.params.id,
     req.body
-);
+  );
 
-    if (!test) {
+ if (!test) {
+    throw new ApiError(
+        404,
+        "Test not found."
+    );
+}
+  return successResponse(
+    res,
+    200,
+    "Test updated successfully.",
+    test
+  );
 
-      return res.status(404).json({
-        success: false,
-        message: "Test not found.",
-      });
+});
 
-    }
-
-    return res.status(200).json({
-      success: true,
-      message: "Test updated successfully.",
-      test,
-    });
-
-  } catch (error) {
-
-    console.error(error);
-
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-
-  }
-
-};
-
-// ===============================
 // DELETE TEST
-// ===============================
-exports.deleteTest = async (req, res) => {
-  try {
+exports.deleteTest = asyncHandler(async (req, res) => {
 
-    const test = await deleteTestService(req.params.id);
+  const test = await deleteTestService(req.params.id);
 
-    if (!test) {
-      return res.status(404).json({
-        success: false,
-        message: "Test not found.",
-      });
-    }
+  if (!test) {
+    throw new ApiError(
+        404,
+        "Test not found."
+    );
+}
+  return successResponse(
+    res,
+    200,
+    "Test deleted successfully."
+  );
 
-    return res.status(200).json({
-      success: true,
-      message: "Test deleted successfully.",
-    });
-
-  } catch (error) {
-
-    console.error(error);
-
-    return res.status(400).json({
-      success: false,
-      message: error.message,
-    });
-
-  }
-};
+});

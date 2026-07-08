@@ -8,6 +8,8 @@ class ApiError extends Error {
 
         this.success = false;
 
+        Error.captureStackTrace(this, this.constructor);
+
     }
 
 }
