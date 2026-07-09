@@ -8,7 +8,16 @@ const publishTest = async (testId) => {
 
   // Find Test
   const test = await Test.findById(testId)
+
     .populate("questions");
+    // Already Published Validation
+  if (test.status === "published") {
+    throw new Error("Test is already published.");
+  }
+  // Question Validation
+  if (!test.questions || test.questions.length === 0) {
+    throw new Error("Cannot publish a test without questions.");
+  } 
 
   if (!test) {
     throw new Error("Test not found.");

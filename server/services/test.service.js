@@ -54,10 +54,31 @@ const processQuestions = async (questionIds) => {
 // =====================================
 const createTest = async (testData) => {
 
+  // Check Duplicate Title
+  const existingTest = await Test.findOne({
+    title: testData.title,
+  });
+
+  if (existingTest) {
+    throw new Error("Test with this title already exists.");
+  }
+  // Validate Start Time
+const now = new Date();
+
+if (new Date(testData.startTime) < now) {
+  throw new Error("Start time cannot be in the past.");
+}
+// Validate End Time
+if (new Date(testData.endTime) <= new Date(testData.startTime)) {
+  throw new Error("End time must be greater than start time.");
+}
+
+  // Process Questions
   const result = await processQuestions(
     testData.questions
   );
 
+  // Create Test
   const test = await Test.create({
     ...testData,
     totalMarks: result.totalMarks,
@@ -70,14 +91,104 @@ const createTest = async (testData) => {
 // =====================================
 // GET ALL TESTS
 // =====================================
-const getAllTests = async () => {
+const getAllTests = async (
+  page = 1,
+  limit = 10,
+  sort = "newest",
+  status = "",
+  subject = "",
+  search = "",
+  startDate = "",
+  endDate = "",
+  duration=""
+) => {
 
-  return await Test.find()
+  const skip = (page - 1) * limit;
+
+  let sortOption = {};
+
+  switch (sort) {
+
+    case "oldest":
+      sortOption = { createdAt: 1 };
+      break;
+
+    case "title":
+      sortOption = { title: 1 };
+      break;
+
+    case "subject":
+      sortOption = { subject: 1 };
+      break;
+
+    default:
+      sortOption = { createdAt: -1 };
+
+  }
+
+  const filter = {};
+
+  if (status) {
+    filter.status = status;
+  }
+
+  if (subject) {
+    filter.subject = subject;
+  }
+  if (duration) {
+    filter.duration = Number(duration);
+  }
+
+  if (search) {
+
+    filter.$or = [
+      {
+        title: {
+          $regex: search,
+          $options: "i",
+        },
+      },
+      {
+        subject: {
+          $regex: search,
+          $options: "i",
+        },
+      },
+    ];
+
+  }
+
+  // Date Range Filter
+  if (startDate || endDate) {
+
+    filter.createdAt = {};
+
+    if (startDate) {
+      filter.createdAt.$gte = new Date(startDate);
+    }
+
+    if (endDate) {
+      filter.createdAt.$lte = new Date(endDate);
+    }
+
+  }
+
+  const total = await Test.countDocuments(filter);
+
+  const tests = await Test.find(filter)
     .populate("createdBy", "fullName email")
     .populate("questions")
-    .sort({
-      createdAt: -1,
-    });
+    .sort(sortOption)
+    .skip(skip)
+    .limit(limit);
+
+  return {
+    total,
+    page,
+    limit,
+    totalPages: Math.ceil(total / limit),
+    tests,
+  };
 
 };
 
@@ -94,28 +205,27 @@ const getTestById = async (id) => {
 // =====================================
 // UPDATE TEST
 // =====================================
-const updateTest = async (id, testData) => {
+const updateTest = async (id, data) => {
 
-  // Find Existing Test
-  const existingTest = await Test.findById(id);
+  const test = await Test.findById(id);
 
-  if (!existingTest) {
-    return null;
+  if (!test) {
+    throw new Error("Test not found.");
   }
 
-  // Business Rule
-  if (existingTest.status === "published") {
-    throw new Error("Published tests cannot be updated.");
+  // Prevent editing published test
+  if (test.status === "published") {
+    throw new Error("Published test cannot be updated.");
   }
 
   const result = await processQuestions(
-    testData.questions
+    data.questions
   );
 
-  const updatedTest = await Test.findByIdAndUpdate(
+  return await Test.findByIdAndUpdate(
     id,
     {
-      ...testData,
+      ...data,
       totalMarks: result.totalMarks,
       totalQuestions: result.totalQuestions,
     },
@@ -124,10 +234,9 @@ const updateTest = async (id, testData) => {
       runValidators: true,
     }
   )
-    .populate("createdBy", "fullName email")
-    .populate("questions");
+  .populate("questions")
+  .populate("createdBy", "fullName email");
 
-  return updatedTest;
 };
 // =====================================
 // DELETE TEST
@@ -137,11 +246,12 @@ const deleteTest = async (id) => {
   const test = await Test.findById(id);
 
   if (!test) {
-    return null;
+    throw new Error("Test not found.");
   }
 
+  // Prevent deleting published test
   if (test.status === "published") {
-    throw new Error("Published tests cannot be deleted.");
+    throw new Error("Published test cannot be deleted.");
   }
 
   return await Test.findByIdAndDelete(id);

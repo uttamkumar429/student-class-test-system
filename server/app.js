@@ -19,6 +19,7 @@ const testRoutes = require("./routes/test.routes");
 const publishRoutes = require("./routes/publish.routes");
 const studentRoutes = require("./routes/student.routes");
 const errorHandler = require("./middleware/error.middleware");
+const dashboardRoutes = require("./routes/dashboard.routes");
 
 // =========================
 // Global Middleware
@@ -68,6 +69,7 @@ app.use("/api/tests", publishRoutes);
 // Student APIs
 app.use("/api/student", studentRoutes);
 app.use(errorHandler);
+app.use("/api/dashboard", dashboardRoutes);
 // =========================
 // 404 Route
 // =========================

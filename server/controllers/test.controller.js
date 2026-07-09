@@ -43,17 +43,37 @@ exports.createTest = asyncHandler(async (req, res) => {
 
 exports.getAllTests = asyncHandler(async (req, res) => {
 
-  const tests = await getAllTestsService();
+  const page = Number(req.query.page) || 1;
+  const limit = Number(req.query.limit) || 10;
+
+  const sort = req.query.sort || "newest";
+  const status = req.query.status || "";
+  const subject = req.query.subject || "";
+  const search = req.query.search || "";
+
+  const startDate = req.query.startDate || "";
+  const endDate = req.query.endDate || "";
+  const duration = req.query.duration || "";
+
+  const result = await getAllTestsService(
+    page,
+    limit,
+    sort,
+    status,
+    subject,
+    search,
+    startDate,
+    endDate,
+    duration
+  );
 
   return successResponse(
     res,
     200,
     "Tests fetched successfully.",
-    {
-      total: tests.length,
-      tests,
-    }
+    result
   );
+
 
 });
 // GET TEST BY ID

@@ -5,20 +5,76 @@ const createQuestion = async (questionData) => {
   return await Question.create(questionData);
 };
 
-const getAllQuestions = async () => {
+// GET ALL
+const getAllQuestions = async (
+  page = 1,
+  limit = 10,
+  search = "",
+  subject = "",
+  difficulty = "",
+  sortBy = "createdAt",
+  order = "desc"
+) => {
 
-  const total = await Question.countDocuments();
+  const skip = (page - 1) * limit;
 
-  const questions = await Question.find()
+  const filter = {};
+
+  // Search
+  if (search) {
+    filter.$or = [
+      {
+        subject: {
+          $regex: search,
+          $options: "i",
+        },
+      },
+      {
+        chapter: {
+          $regex: search,
+          $options: "i",
+        },
+      },
+      {
+        question: {
+          $regex: search,
+          $options: "i",
+        },
+      },
+    ];
+  }
+
+  // Filter
+  if (subject) {
+    filter.subject = subject;
+  }
+
+  if (difficulty) {
+    filter.difficulty = difficulty;
+  }
+
+  // Sorting
+  const sort = {};
+
+  sort[sortBy] = order === "asc" ? 1 : -1;
+
+  const total = await Question.countDocuments(filter);
+
+  const questions = await Question.find(filter)
     .populate("createdBy", "fullName email")
-    .sort({ createdAt: -1 });
+    .sort(sort)
+    .skip(skip)
+    .limit(limit);
 
   return {
     total,
+    page,
+    limit,
+    totalPages: Math.ceil(total / limit),
     questions,
   };
-
 };
+
 // GET BY ID
 const getQuestionById = async (id) => {
   return await Question.findById(id).populate(
@@ -39,6 +95,7 @@ const updateQuestion = async (id, data) => {
   ).populate("createdBy", "fullName email");
 };
 
+// DELETE
 const deleteQuestion = async (id) => {
   return await Question.findByIdAndDelete(id);
 };

@@ -38,12 +38,32 @@ exports.createQuestion = asyncHandler(async (req, res) => {
   );
 });
 
-
 // GET ALL QUESTIONS
-
 exports.getAllQuestions = asyncHandler(async (req, res) => {
 
-const result = await getAllQuestionsService();
+  const page = Number(req.query.page) || 1;
+
+  const limit = Number(req.query.limit) || 10;
+
+  const search = req.query.search || "";
+
+  const subject = req.query.subject || "";
+
+  const difficulty = req.query.difficulty || "";
+
+  const sortBy = req.query.sortBy || "createdAt";
+
+  const order = req.query.order || "desc";
+
+  const result = await getAllQuestionsService(
+    page,
+    limit,
+    search,
+    subject,
+    difficulty,
+    sortBy,
+    order
+  );
 
   return successResponse(
     res,
