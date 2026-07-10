@@ -78,7 +78,7 @@ exports.getAllQuestions = asyncHandler(async (req, res) => {
 // ===============================
 exports.getQuestionById = asyncHandler(async (req, res) => {
 
-  const question = await getQuestionById(req.params.id);
+  const question = await getQuestionByIdService(req.params.id);
 
   if (!question) {
     throw new Error("Question not found.");
@@ -97,7 +97,7 @@ exports.getQuestionById = asyncHandler(async (req, res) => {
 
 exports.updateQuestion = asyncHandler(async (req, res) => {
 
-  const question = await updateQuestion(
+  const question = await updateQuestionService(
     req.params.id,
     req.body
   );
@@ -117,7 +117,7 @@ exports.updateQuestion = asyncHandler(async (req, res) => {
 // DELETE QUESTION
 exports.deleteQuestion = asyncHandler(async (req, res) => {
 
-  const question = await deleteQuestion(req.params.id);
+  const question = await deleteQuestionService(req.params.id);
 
   if (!question) {
     throw new Error("Question not found.");
