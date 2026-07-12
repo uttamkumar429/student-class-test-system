@@ -7,6 +7,7 @@ const {
 const {
   getExamMonitoring: getExamMonitoringService,
   getStudentAttempts: getStudentAttemptsService,
+  getAttemptDetails: getAttemptDetailsService,
 } = require("../services/adminExam.service");
 
 // =====================================
@@ -40,6 +41,25 @@ exports.getStudentAttempts = asyncHandler(async (req, res) => {
     res,
     200,
     "Student attempts fetched successfully.",
+    result
+  );
+
+});
+// =====================================
+// ATTEMPT DETAILS
+// =====================================
+
+exports.getAttemptDetails = asyncHandler(async (req, res) => {
+
+  const result = await getAttemptDetailsService(
+    req.params.snapshotId,
+    req.params.attemptId
+  );
+
+  return successResponse(
+    res,
+    200,
+    "Attempt details fetched successfully.",
     result
   );
 

@@ -1,5 +1,6 @@
 const ExamAttempt = require("../models/ExamAttempt");
 const TestSnapshot = require("../models/TestSnapshot");
+const StudentAnswer = require("../models/StudentAnswer");
 
 // =====================================
 // EXAM MONITORING
@@ -39,7 +40,6 @@ const getExamMonitoring = async (snapshotId) => {
   };
 };
 
-
 // =====================================
 // STUDENT ATTEMPT LIST
 // =====================================
@@ -63,39 +63,110 @@ const getStudentAttempts = async (snapshotId) => {
     .sort({ createdAt: -1 });
 
   return attempts.map((attempt) => ({
-
     attemptId: attempt._id,
-
     studentId: attempt.student?._id,
-
     userId: attempt.student?.userId,
-
     fullName: attempt.student?.fullName,
-
     email: attempt.student?.email,
-
     phone: attempt.student?.phone,
-
     isBlocked: attempt.student?.isBlocked,
-
     status: attempt.status,
-
     obtainedMarks: attempt.obtainedMarks,
-
     totalMarks: attempt.totalMarks,
-
     percentage: attempt.percentage,
-
     timeTaken: attempt.timeTaken,
-
     startedAt: attempt.startedAt,
-
     submittedAt: attempt.submittedAt,
-
   }));
 
 };
+
+// =====================================
+// ATTEMPT DETAILS
+// =====================================
+const getAttemptDetails = async (snapshotId, attemptId) => {
+
+  // Check Snapshot
+  const snapshot = await TestSnapshot.findById(snapshotId);
+
+  if (!snapshot) {
+    throw new Error("Test snapshot not found.");
+  }
+
+  // Load Attempt
+  const attempt = await ExamAttempt.findById(attemptId)
+    .populate({
+      path: "student",
+      select: "userId fullName email",
+    });
+
+  if (!attempt) {
+    throw new Error("Exam attempt not found.");
+  }
+
+  // Check attempt belongs to snapshot
+  if (attempt.testSnapshot.toString() !== snapshotId) {
+    throw new Error("Attempt does not belong to this test.");
+  }
+
+  // Load Answers
+  const answers = await StudentAnswer.find({
+    attempt: attemptId,
+  });
+
+  // Merge Question + Answer
+  const questions = snapshot.questions.map((question) => {
+
+    const answer = answers.find(
+      (a) =>
+        a.questionId.toString() ===
+        question.questionId.toString()
+    );
+
+    return {
+      questionId: question.questionId,
+      question: question.question,
+      optionA: question.optionA,
+      optionB: question.optionB,
+      optionC: question.optionC,
+      optionD: question.optionD,
+      selectedAnswer: answer?.selectedAnswer || null,
+      correctAnswer: question.correctAnswer,
+      isCorrect: answer?.isCorrect || false,
+      marksAwarded: answer?.marksAwarded || 0,
+    };
+
+  });
+
+  return {
+
+    student: {
+      userId: attempt.student.userId,
+      fullName: attempt.student.fullName,
+      email: attempt.student.email,
+    },
+
+    exam: {
+      title: snapshot.title,
+      subject: snapshot.subject,
+    },
+
+    summary: {
+      obtainedMarks: attempt.obtainedMarks,
+      totalMarks: attempt.totalMarks,
+      percentage: attempt.percentage,
+      timeTaken: attempt.timeTaken,
+      status: attempt.status,
+    },
+
+    questions,
+
+  };
+
+};
+
 module.exports = {
   getExamMonitoring,
   getStudentAttempts,
+  getAttemptDetails,
 };
