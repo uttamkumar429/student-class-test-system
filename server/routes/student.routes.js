@@ -55,3 +55,13 @@ router.post(
   studentController.submitExam
 );
 module.exports = router;
+// =====================================
+// RESULT DETAILS
+// =====================================
+
+router.get(
+  "/result/:attemptId",
+  protect,
+  authorize("student"),
+  studentController.getResult
+);

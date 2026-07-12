@@ -460,6 +460,71 @@ const submitExam = async (studentId, attemptId) => {
   };
 
 };
+// ======================================
+// GET RESULT
+// ======================================
+const getResult = async (studentId, attemptId) => {
+
+  // Find Attempt
+  const attempt = await ExamAttempt.findById(attemptId);
+
+  if (!attempt) {
+    throw new Error("Exam attempt not found.");
+  }
+
+  // Security Check
+  if (attempt.student.toString() !== studentId.toString()) {
+    throw new Error("Unauthorized access.");
+  }
+
+  // Result only after submission
+  if (attempt.status !== "submitted") {
+    throw new Error("Exam is not submitted yet.");
+  }
+
+  // Load Snapshot
+  const snapshot = await TestSnapshot.findById(
+    attempt.testSnapshot
+  );
+
+  if (!snapshot) {
+    throw new Error("Test snapshot not found.");
+  }
+
+  // Load Answers
+  const answers = await StudentAnswer.find({
+    attempt: attemptId,
+  });
+
+  const correctAnswers = answers.filter(
+    (answer) => answer.isCorrect
+  ).length;
+
+  const wrongAnswers = answers.filter(
+    (answer) => !answer.isCorrect
+  ).length;
+
+  const skippedAnswers =
+    attempt.totalQuestions - answers.length;
+
+  return {
+    examTitle: snapshot.title,
+    subject: snapshot.subject,
+    obtainedMarks: attempt.obtainedMarks,
+    totalMarks: attempt.totalMarks,
+    percentage: attempt.percentage,
+    correctAnswers,
+    wrongAnswers,
+    skippedAnswers,
+    timeTaken: attempt.timeTaken,
+    submittedAt: attempt.submittedAt,
+    status:
+      attempt.percentage >= 33
+        ? "Pass"
+        : "Fail",
+  };
+
+};
 module.exports = {
   getDashboard,
   startExam,
@@ -467,4 +532,5 @@ module.exports = {
   saveAnswer,
   resumeExam,
   submitExam,
+  getResult,
 };

@@ -13,6 +13,7 @@ const {
   saveAnswer: saveAnswerService,
   submitExam: submitExamService,
   resumeExam: resumeExamService,
+  getResult: getResultService,
 } = require("../services/student.service");
 
 // STUDENT DASHBOARD
@@ -112,6 +113,25 @@ exports.submitExam = asyncHandler(async (req, res) => {
     res,
     200,
     "Exam submitted successfully.",
+    result
+  );
+
+});
+// =====================================
+// RESULT DETAILS
+// =====================================
+
+exports.getResult = asyncHandler(async (req, res) => {
+
+  const result = await getResultService(
+    req.user._id,
+    req.params.attemptId
+  );
+
+  return successResponse(
+    res,
+    200,
+    "Result fetched successfully.",
     result
   );
 
