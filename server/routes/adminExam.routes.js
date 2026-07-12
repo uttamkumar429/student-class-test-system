@@ -6,7 +6,8 @@ const { protect } = require("../middleware/auth.middleware");
 const authorize = require("../middleware/role.middleware");
 
 const {
-  getExamMonitoring,
+    getExamMonitoring,
+    getStudentAttempts,
 } = require("../controllers/adminExam.controller");
 
 // =====================================
@@ -18,6 +19,16 @@ router.get(
   protect,
   authorize("admin", "superAdmin"),
   getExamMonitoring
+);
+// =====================================
+// STUDENT ATTEMPT LIST
+// =====================================
+
+router.get(
+  "/:snapshotId/attempts",
+  protect,
+  authorize("admin", "superAdmin"),
+  getStudentAttempts
 );
 
 module.exports = router;
