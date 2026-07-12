@@ -14,6 +14,7 @@ const {
   submitExam: submitExamService,
   resumeExam: resumeExamService,
   getResult: getResultService,
+  getResultHistory: getResultHistoryService,
 } = require("../services/student.service");
 
 // STUDENT DASHBOARD
@@ -133,6 +134,24 @@ exports.getResult = asyncHandler(async (req, res) => {
     200,
     "Result fetched successfully.",
     result
+  );
+
+});
+// =====================================
+// RESULT HISTORY
+// =====================================
+
+exports.getResultHistory = asyncHandler(async (req, res) => {
+
+  const results = await getResultHistoryService(
+    req.user._id
+  );
+
+  return successResponse(
+    res,
+    200,
+    "Result history fetched successfully.",
+    results
   );
 
 });

@@ -525,6 +525,35 @@ const getResult = async (studentId, attemptId) => {
   };
 
 };
+// ======================================
+// GET RESULT HISTORY
+// ======================================
+const getResultHistory = async (studentId) => {
+
+  // Load Submitted Attempts
+  const attempts = await ExamAttempt.find({
+    student: studentId,
+    status: "submitted",
+  })
+    .populate({
+      path: "testSnapshot",
+      select: "title subject",
+    })
+    .sort({ submittedAt: -1 });
+
+  const results = attempts.map((attempt) => ({
+    attemptId: attempt._id,
+    examTitle: attempt.testSnapshot?.title || "Unknown Test",
+    subject: attempt.testSnapshot?.subject || "Unknown Subject",
+    obtainedMarks: attempt.obtainedMarks,
+    totalMarks: attempt.totalMarks,
+    percentage: attempt.percentage,
+    status: attempt.percentage >= 33 ? "Pass" : "Fail",
+    submittedAt: attempt.submittedAt,
+  }));
+
+  return results;
+};
 module.exports = {
   getDashboard,
   startExam,
@@ -533,4 +562,5 @@ module.exports = {
   resumeExam,
   submitExam,
   getResult,
+  getResultHistory,
 };

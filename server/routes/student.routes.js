@@ -65,3 +65,13 @@ router.get(
   authorize("student"),
   studentController.getResult
 );
+// =====================================
+// RESULT HISTORY
+// =====================================
+
+router.get(
+  "/results",
+  protect,
+  authorize("student"),
+  studentController.getResultHistory
+);
