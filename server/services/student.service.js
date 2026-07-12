@@ -97,6 +97,32 @@ const startExam = async (studentId, snapshotId) => {
   return attempt;
 
 };
+// ======================================
+// CHECK EXAM EXPIRY
+// ======================================
+
+const checkExamExpiry = async (
+  studentId,
+  attempt,
+  snapshot
+) => {
+
+  const now = new Date();
+
+  if (now > snapshot.endTime) {
+
+    await submitExam(
+      studentId,
+      attempt._id
+    );
+
+    throw new Error(
+      "Exam time is over. Your exam has been submitted automatically."
+    );
+
+  }
+
+};
 // =====================================
 // GET EXAM QUESTIONS
 // =====================================
@@ -127,7 +153,15 @@ const getExamQuestions = async (studentId, attemptId) => {
   if (!snapshot) {
     throw new Error("Test snapshot not found.");
   }
+  // =====================================
+  // AUTO SUBMIT IF EXAM TIME IS OVER
+  // =====================================
 
+  await checkExamExpiry(
+    studentId,
+    attempt,
+    snapshot
+  );
   // Secure Questions
   const questions = snapshot.questions.map((question) => ({
 
@@ -213,6 +247,15 @@ const saveAnswer = async (
     throw new Error("Snapshot not found.");
 
   }
+    // ======================================
+  // AUTO SUBMIT IF TIME IS OVER
+  // ======================================
+
+  await checkExamExpiry(
+    studentId,
+    attempt,
+    snapshot
+  );
 
   // Find Question
 
@@ -320,7 +363,11 @@ const resumeExam = async (studentId) => {
     0,
     Math.floor((snapshot.endTime - now) / 1000)
   );
-
+  await checkExamExpiry(
+    studentId,
+    attempt,
+    snapshot
+  );
   // Count Saved Answers
   const answeredQuestions =
     await StudentAnswer.countDocuments({
