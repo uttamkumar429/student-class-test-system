@@ -21,6 +21,7 @@ const studentRoutes = require("./routes/student.routes");
 const errorHandler = require("./middleware/error.middleware");
 const dashboardRoutes = require("./routes/dashboard.routes");
 const adminExamRoutes = require("./routes/adminExam.routes");
+const adminAnalyticsRoutes = require("./routes/adminAnalytics.routes");
 
 
 // =========================
@@ -56,6 +57,10 @@ app.use("/api/auth", authRoutes);
 // Admin
 app.use("/api/admin", adminRoutes);
 app.use("/api/admin/exams", adminExamRoutes);
+app.use(
+    "/api/admin/analytics",
+    adminAnalyticsRoutes
+);
 
 // Profile
 app.use("/api/profile", profileRoutes);
