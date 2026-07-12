@@ -12,6 +12,7 @@ const {
   getExamQuestions: getExamQuestionsService,
   saveAnswer: saveAnswerService,
   submitExam: submitExamService,
+  resumeExam: resumeExamService,
 } = require("../services/student.service");
 
 // STUDENT DASHBOARD
@@ -82,7 +83,22 @@ exports.saveAnswer = asyncHandler(async (req, res) => {
   );
 
 });
+// =====================================
+// RESUME EXAM
+// =====================================
 
+exports.resumeExam = asyncHandler(async (req, res) => {
+
+  const result = await resumeExamService(req.user._id);
+
+  return successResponse(
+    res,
+    200,
+    "Exam resumed successfully.",
+    result
+  );
+
+});
 // SUBMIT EXAM
 
 exports.submitExam = asyncHandler(async (req, res) => {

@@ -40,6 +40,13 @@ router.post(
   studentController.saveAnswer
 
 );
+// Resume Running Exam
+router.get(
+  "/exam/resume",
+  protect,
+  authorize("student"),
+  studentController.resumeExam
+);
 // Submit Exam
 router.post(
   "/attempt/:attemptId/submit",

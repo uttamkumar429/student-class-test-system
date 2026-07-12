@@ -74,7 +74,13 @@ const startExam = async (studentId, snapshotId) => {
   if (existingAttempt) {
     throw new Error("You have already started this exam.");
   }
+  console.log("Current Time :", new Date());
 
+  console.log("Start Time :", snapshot.startTime);
+
+  console.log("End Time :", snapshot.endTime);
+
+  console.log("Snapshot ID :", snapshot._id);
   // Create Attempt
   const attempt = await ExamAttempt.create({
 
@@ -154,11 +160,7 @@ const getExamQuestions = async (studentId, attemptId) => {
 
 };
 
-module.exports = {
-  getDashboard,
-  startExam,
-  getExamQuestions,
-};
+
 // ======================================
 // SAVE ANSWER
 // ======================================
@@ -286,20 +288,67 @@ console.log("2. Question Found:", question);
   return answer;
 
 };
+// ======================================
+// RESUME EXAM
+// ======================================
 
+const resumeExam = async (studentId) => {
 
-module.exports = {
+  // Find Running Attempt
+  const attempt = await ExamAttempt.findOne({
+    student: studentId,
+    status: "in-progress",
+  });
 
-  getDashboard,
+  if (!attempt) {
+    throw new Error("No running exam found.");
+  }
 
-  startExam,
+  // Load Snapshot
+  const snapshot = await TestSnapshot.findById(
+    attempt.testSnapshot
+  );
 
-  getExamQuestions,
+  if (!snapshot) {
+    throw new Error("Test snapshot not found.");
+  }
 
-  saveAnswer,
+  // Remaining Time
+  const now = new Date();
+
+  const remainingTime = Math.max(
+    0,
+    Math.floor((snapshot.endTime - now) / 1000)
+  );
+
+  // Count Saved Answers
+  const answeredQuestions =
+    await StudentAnswer.countDocuments({
+      attempt: attempt._id,
+    });
+
+  return {
+
+    attemptId: attempt._id,
+
+    snapshotId: snapshot._id,
+
+    title: snapshot.title,
+
+    subject: snapshot.subject,
+
+    totalQuestions: attempt.totalQuestions,
+
+    answeredQuestions,
+
+    remainingTime,
+
+    status: attempt.status,
+
+  };
 
 };
-// ======================================
+
 // SUBMIT EXAM
 // ======================================
 const submitExam = async (studentId, attemptId) => {
@@ -369,5 +418,6 @@ module.exports = {
   startExam,
   getExamQuestions,
   saveAnswer,
+  resumeExam,
   submitExam,
 };
