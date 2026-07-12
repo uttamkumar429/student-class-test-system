@@ -20,6 +20,7 @@ const publishRoutes = require("./routes/publish.routes");
 const studentRoutes = require("./routes/student.routes");
 const errorHandler = require("./middleware/error.middleware");
 const dashboardRoutes = require("./routes/dashboard.routes");
+const adminExamRoutes = require("./routes/adminExam.routes");
 
 
 // =========================
@@ -54,6 +55,7 @@ app.use("/api/auth", authRoutes);
 
 // Admin
 app.use("/api/admin", adminRoutes);
+app.use("/api/admin/exams", adminExamRoutes);
 
 // Profile
 app.use("/api/profile", profileRoutes);
