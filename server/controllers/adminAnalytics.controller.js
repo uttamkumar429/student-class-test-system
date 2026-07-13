@@ -6,6 +6,8 @@ const {
 
 const {
   getExamStatistics: getExamStatisticsService,
+  getTopPerformers: getTopPerformersService,
+  getWeakStudents: getWeakStudentsService,
 } = require("../services/adminAnalytics.service");
 
 // =====================================
@@ -22,6 +24,48 @@ exports.getExamStatistics = asyncHandler(async (req, res) => {
     res,
     200,
     "Statistics fetched successfully.",
+    result
+  );
+
+});
+// =====================================
+// TOP PERFORMERS
+// =====================================
+
+exports.getTopPerformers = asyncHandler(async (req, res) => {
+
+  const limit = Number(req.query.limit) || 10;
+
+  const result = await getTopPerformersService(
+    req.params.snapshotId,
+    limit
+  );
+
+  return successResponse(
+    res,
+    200,
+    "Top performers fetched successfully.",
+    result
+  );
+
+});
+// =====================================
+// WEAK STUDENTS
+// =====================================
+
+exports.getWeakStudents = asyncHandler(async (req, res) => {
+
+  const limit = Number(req.query.limit) || 20;
+
+  const result = await getWeakStudentsService(
+    req.params.snapshotId,
+    limit
+  );
+
+  return successResponse(
+    res,
+    200,
+    "Weak students fetched successfully.",
     result
   );
 

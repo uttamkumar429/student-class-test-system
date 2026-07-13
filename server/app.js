@@ -22,6 +22,7 @@ const errorHandler = require("./middleware/error.middleware");
 const dashboardRoutes = require("./routes/dashboard.routes");
 const adminExamRoutes = require("./routes/adminExam.routes");
 const adminAnalyticsRoutes = require("./routes/adminAnalytics.routes");
+const adminReportRoutes=require("./routes/adminReport.routes");
 
 
 // =========================
@@ -60,6 +61,11 @@ app.use("/api/admin/exams", adminExamRoutes);
 app.use(
     "/api/admin/analytics",
     adminAnalyticsRoutes
+);
+
+app.use(
+"/api/admin/reports",
+adminReportRoutes
 );
 
 // Profile

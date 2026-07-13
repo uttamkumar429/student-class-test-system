@@ -1,5 +1,6 @@
 const ExamAttempt = require("../models/ExamAttempt");
 const TestSnapshot = require("../models/TestSnapshot");
+const PASS_PERCENTAGE = 33;
 
 // =====================================
 // EXAM STATISTICS
@@ -115,6 +116,113 @@ const getExamStatistics = async (snapshotId) => {
 
 };
 
+
+// =====================================
+// TOP PERFORMERS
+// =====================================
+
+const getTopPerformers = async (snapshotId, limit) => {
+
+  // Check Snapshot
+  const snapshot = await TestSnapshot.findById(snapshotId);
+
+  if (!snapshot) {
+    throw new Error("Test snapshot not found.");
+  }
+
+  // Load Top Students
+  const attempts = await ExamAttempt.find({
+    testSnapshot: snapshotId,
+    status: "submitted",
+  })
+    .populate({
+      path: "student",
+      select: "userId fullName email",
+    })
+    .sort({
+      obtainedMarks: -1,
+      timeTaken: 1,
+    })
+    .limit(limit);
+
+  // Ranking
+  return attempts.map((attempt, index) => ({
+
+    rank: index + 1,
+
+    studentId: attempt.student?._id,
+
+    userId: attempt.student?.userId,
+
+    fullName: attempt.student?.fullName,
+
+    email: attempt.student?.email,
+
+    obtainedMarks: attempt.obtainedMarks,
+
+    totalMarks: attempt.totalMarks,
+
+    percentage: attempt.percentage,
+
+    timeTaken: attempt.timeTaken,
+
+  }));
+
+};
+// =====================================
+// WEAK STUDENTS
+// =====================================
+
+const getWeakStudents = async (snapshotId, limit) => {
+
+  const snapshot = await TestSnapshot.findById(snapshotId);
+
+  if (!snapshot) {
+    throw new Error("Test snapshot not found.");
+  }
+
+  const attempts = await ExamAttempt.find({
+    testSnapshot: snapshotId,
+    status: "submitted",
+    percentage: { $lt: PASS_PERCENTAGE },
+  })
+    .populate({
+      path: "student",
+      select: "userId fullName email",
+    })
+    .sort({
+      percentage: 1,
+      obtainedMarks: 1,
+    })
+    .limit(limit);
+
+  return attempts.map((attempt, index) => ({
+
+    rank: index + 1,
+
+    studentId: attempt.student?._id,
+
+    userId: attempt.student?.userId,
+
+    fullName: attempt.student?.fullName,
+
+    email: attempt.student?.email,
+
+    obtainedMarks: attempt.obtainedMarks,
+
+    totalMarks: attempt.totalMarks,
+
+    percentage: attempt.percentage,
+
+    timeTaken: attempt.timeTaken,
+
+    status: "Fail",
+
+  }));
+
+};
 module.exports = {
   getExamStatistics,
+  getTopPerformers,
+  getWeakStudents,
 };

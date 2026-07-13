@@ -5,44 +5,50 @@ const router = express.Router();
 const { protect } = require("../middleware/auth.middleware");
 const authorize = require("../middleware/role.middleware");
 
-// =====================================
-// TOP PERFORMERS
-// =====================================
-
 const {
-  getExamStatistics,
-  getTopPerformers,
-  getWeakStudents,
-} = require("../controllers/adminAnalytics.controller");
+  getStudentReport,
+  downloadStudentReportPDF,
+  exportExamCSV,
+  exportExamExcel,
+} = require("../controllers/adminReport.controller");
 
 // =====================================
-// EXAM STATISTICS
-// =====================================
-
-router.get(
-  "/exams/:snapshotId/statistics",
-  protect,
-  authorize("admin", "superAdmin"),
-  getExamStatistics
-);
-// =====================================
-// TOP PERFORMERS
+// STUDENT REPORT
 // =====================================
 
 router.get(
-  "/exams/:snapshotId/top-performers",
+  "/attempts/:attemptId",
   protect,
   authorize("admin", "superAdmin"),
-  getTopPerformers
+  getStudentReport
 );
+// DOWNLOAD PDF
+router.get(
+  "/attempts/:attemptId/pdf",
+  protect,
+  authorize("admin", "superAdmin"),
+  downloadStudentReportPDF
+);
+
 // =====================================
-// WEAK STUDENTS
+// EXPORT CSV
 // =====================================
 
 router.get(
-  "/exams/:snapshotId/weak-students",
+  "/exams/:snapshotId/csv",
   protect,
   authorize("admin", "superAdmin"),
-  getWeakStudents
+  exportExamCSV
 );
+// =====================================
+// EXPORT EXCEL
+// =====================================
+
+router.get(
+  "/exams/:snapshotId/excel",
+  protect,
+  authorize("admin", "superAdmin"),
+  exportExamExcel
+);
+
 module.exports = router;
