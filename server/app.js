@@ -11,6 +11,8 @@ const app = express();
 // =========================
 // Import Routes
 // =========================
+const swaggerUi = require("swagger-ui-express");
+const swaggerSpec = require("./config/swagger");
 const authRoutes = require("./routes/auth.routes");
 const adminRoutes = require("./routes/admin.routes");
 const profileRoutes = require("./routes/profile.routes");
@@ -84,6 +86,12 @@ app.use("/api/tests", publishRoutes);
 app.use("/api/student", studentRoutes);
 app.use(errorHandler);
 app.use("/api/dashboard", dashboardRoutes);
+// Swagger Documentation
+app.use(
+  "/api/docs",
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerSpec)
+);
 
 // =========================
 // 404 Route
