@@ -1,10 +1,10 @@
 // const result = await getAllQuestionsService();
 const asyncHandler = require("../middleware/asyncHandler");
 
-const validateQuestion = require("../validators/question.validator");
+
 const {
   successResponse,
-  errorResponse,
+  
 } = require("../utils/response");
 
 
@@ -17,13 +17,8 @@ const {
 } = require("../services/question.service");
 // CREATE QUESTION
 
+
 exports.createQuestion = asyncHandler(async (req, res) => {
-
-  const errors = validateQuestion(req.body);
-
-  if (errors.length) {
-    return errorResponse(res, 400, errors);
-  }
 
   const question = await createQuestionService({
     ...req.body,

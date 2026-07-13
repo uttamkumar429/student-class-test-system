@@ -5,6 +5,8 @@ const router = express.Router();
 const { protect } = require("../middleware/auth.middleware");
 const authorize = require("../middleware/role.middleware");
 const questionController = require("../controllers/question.controller");
+const validate = require("../middleware/validation.middleware");
+const validateQuestion = require("../validators/question.validator");
 
 /**
  * @swagger
@@ -35,6 +37,7 @@ router.post(
   "/",
   protect,
   authorize("admin", "superAdmin"),
+  validate(validateQuestion),
   questionController.createQuestion
 );
 /**

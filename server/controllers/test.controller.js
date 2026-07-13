@@ -1,10 +1,8 @@
-const validateTest = require("../validators/test.validator");
-
 const asyncHandler = require("../middleware/asyncHandler");
 const ApiError = require("../utils/ApiError");
 const {
   successResponse,
-  errorResponse,
+ 
 } = require("../utils/response");
 
 const {
@@ -18,12 +16,6 @@ const {
 // CREATE TEST
 
 exports.createTest = asyncHandler(async (req, res) => {
-
-  const errors = validateTest(req.body);
-
-  if (errors.length) {
-    return errorResponse(res, 400, errors);
-  }
 
   const test = await createTestService({
     ...req.body,
@@ -100,12 +92,7 @@ exports.getTestById = asyncHandler(async (req, res) => {
 // UPDATE TEST
 exports.updateTest = asyncHandler(async (req, res) => {
 
-  const errors = validateTest(req.body);
-
-  if (errors.length) {
-    return errorResponse(res, 400, errors);
-  }
-
+ 
   const test = await updateTestService(
     req.params.id,
     req.body
