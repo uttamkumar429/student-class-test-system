@@ -1,11 +1,14 @@
 console.log("App.js Loaded");
-
+const mongoSanitize = require("./middleware/mongoSanitize.middleware");
+const {
+  apiLimiter,
+} = require("./middleware/rateLimiter.middleware");
 const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
 const morgan = require("morgan");
 const cookieParser = require("cookie-parser");
-
+const corsOptions = require("./config/corsOptions");
 const app = express();
 
 // =========================
@@ -30,8 +33,11 @@ const adminReportRoutes=require("./routes/adminReport.routes");
 // =========================
 // Global Middleware
 // =========================
+
 app.use(helmet());
-app.use(cors());
+app.use(apiLimiter);
+app.use(mongoSanitize);
+app.use(cors(corsOptions));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

@@ -3,7 +3,9 @@ const express = require("express");
 const router = express.Router();
 
 const { adminLogin } = require("../controllers/auth.controller");
-
+const {
+  loginLimiter,
+} = require("../middleware/rateLimiter.middleware");
 /**
  * @swagger
  * /api/admin/login:
@@ -39,6 +41,10 @@ const { adminLogin } = require("../controllers/auth.controller");
  *         description: Access denied. Admin only.
  */
 
-router.post("/login", adminLogin);
+router.post(
+  "/login",
+  loginLimiter,
+  adminLogin
+);
 
 module.exports = router;

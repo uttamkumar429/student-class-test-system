@@ -79,13 +79,27 @@ exports.login = async (req, res) => {
 
     const loginId = emailOrPhone || email || phone;
 
+    // Required Validation
     if (!loginId || !password) {
       return res.status(400).json({
         success: false,
         message: "Email/Phone and Password are required.",
-    });
-}
+      });
+    }
+
+    // Prevent NoSQL Injection / Invalid Types
+    if (
+      typeof loginId !== "string" ||
+      typeof password !== "string"
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid request data.",
+      });
+    }
+
     const authResult = await authenticateUser(loginId, password);
+
     if (!authResult.success) {
       return res.status(401).json({
         success: false,
@@ -133,6 +147,17 @@ exports.adminLogin = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: "Email/Phone and Password are required.",
+      });
+    }
+
+    // Prevent NoSQL Injection / Invalid Types
+    if (
+      typeof emailOrPhone !== "string" ||
+      typeof password !== "string"
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid request data.",
       });
     }
 

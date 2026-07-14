@@ -3,7 +3,9 @@ const express = require("express");
 const router = express.Router();
 
 const authController = require("../controllers/auth.controller");
-
+const {
+  loginLimiter,
+} = require("../middleware/rateLimiter.middleware");
 // Test Route
 router.get("/test", (req, res) => {
   res.json({
@@ -44,6 +46,10 @@ router.post("/register", authController.register);
  *         description: Invalid Credentials
  */
 
-router.post("/login", authController.login);
+router.post(
+  "/login",
+  loginLimiter,
+  authController.login
+);
 
 module.exports = router;
