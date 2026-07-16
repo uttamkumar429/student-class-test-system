@@ -9,7 +9,7 @@ const PASS_PERCENTAGE = 33;
 const getExamStatistics = async (snapshotId) => {
 
   // Snapshot Exists?
-  const snapshot = await TestSnapshot.findById(snapshotId);
+ const snapshot = await TestSnapshot.findById(snapshotId).lean();
 
   if (!snapshot) {
     throw new Error("Test snapshot not found.");
@@ -18,8 +18,11 @@ const getExamStatistics = async (snapshotId) => {
   // All Attempts
   const attempts = await ExamAttempt.find({
     testSnapshot: snapshotId,
-  });
-
+  })
+  .select(
+    "status obtainedMarks percentage totalMarks timeTaken student"
+  )
+  .lean();
   const totalStudents = attempts.length;
 
   const submitted = attempts.filter(
@@ -124,26 +127,30 @@ const getExamStatistics = async (snapshotId) => {
 const getTopPerformers = async (snapshotId, limit) => {
 
   // Check Snapshot
-  const snapshot = await TestSnapshot.findById(snapshotId);
+const snapshot = await TestSnapshot.findById(snapshotId).lean();
 
   if (!snapshot) {
     throw new Error("Test snapshot not found.");
   }
 
   // Load Top Students
-  const attempts = await ExamAttempt.find({
-    testSnapshot: snapshotId,
-    status: "submitted",
+const attempts = await ExamAttempt.find({
+  testSnapshot: snapshotId,
+  status: "submitted",
+})
+  .select(
+    "student obtainedMarks totalMarks percentage timeTaken"
+  )
+  .populate({
+    path: "student",
+    select: "userId fullName email",
   })
-    .populate({
-      path: "student",
-      select: "userId fullName email",
-    })
-    .sort({
-      obtainedMarks: -1,
-      timeTaken: 1,
-    })
-    .limit(limit);
+  .sort({
+    obtainedMarks: -1,
+    timeTaken: 1,
+  })
+  .limit(limit)
+  .lean();
 
   // Ranking
   return attempts.map((attempt, index) => ({
@@ -175,27 +182,30 @@ const getTopPerformers = async (snapshotId, limit) => {
 
 const getWeakStudents = async (snapshotId, limit) => {
 
-  const snapshot = await TestSnapshot.findById(snapshotId);
+const snapshot = await TestSnapshot.findById(snapshotId).lean();
 
   if (!snapshot) {
     throw new Error("Test snapshot not found.");
   }
 
-  const attempts = await ExamAttempt.find({
-    testSnapshot: snapshotId,
-    status: "submitted",
-    percentage: { $lt: PASS_PERCENTAGE },
+const attempts = await ExamAttempt.find({
+  testSnapshot: snapshotId,
+  status: "submitted",
+  percentage: { $lt: PASS_PERCENTAGE },
+})
+  .select(
+    "student obtainedMarks totalMarks percentage timeTaken"
+  )
+  .populate({
+    path: "student",
+    select: "userId fullName email",
   })
-    .populate({
-      path: "student",
-      select: "userId fullName email",
-    })
-    .sort({
-      percentage: 1,
-      obtainedMarks: 1,
-    })
-    .limit(limit);
-
+  .sort({
+    percentage: 1,
+    obtainedMarks: 1,
+  })
+  .limit(limit)
+  .lean();
   return attempts.map((attempt, index) => ({
 
     rank: index + 1,

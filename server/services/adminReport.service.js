@@ -20,11 +20,13 @@ const getStudentReport = async (attemptId) => {
    */
 
   // Snapshot id find
-  const ExamAttempt = require("../models/ExamAttempt");
+
 
   const attempt = await ExamAttempt.findById(
     attemptId
-  );
+  )
+  .select("testSnapshot")
+  .lean();
 
   if (!attempt) {
     throw new Error("Exam attempt not found.");
@@ -207,7 +209,7 @@ const generateStudentReportPDF = async (
 
 const getExamExportData = async (snapshotId) => {
 
-  const snapshot = await TestSnapshot.findById(snapshotId);
+  const snapshot = await TestSnapshot.findById(snapshotId).lean();
 
   if (!snapshot) {
     throw new Error("Test snapshot not found.");
@@ -217,13 +219,17 @@ const getExamExportData = async (snapshotId) => {
     testSnapshot: snapshotId,
     status: "submitted",
   })
-    .populate({
-      path: "student",
-      select: "userId fullName email",
-    })
-    .sort({
-      obtainedMarks: -1,
-    });
+  .select(
+    "student obtainedMarks totalMarks percentage timeTaken submittedAt"
+  )
+  .populate({
+    path: "student",
+    select: "userId fullName email",
+  })
+  .sort({
+    obtainedMarks: -1,
+  })
+  .lean();
 
   return {
     snapshot,

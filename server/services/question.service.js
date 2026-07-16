@@ -1,11 +1,15 @@
 const Question = require("../models/Question");
 
-// CREATE
+// =====================================
+// CREATE QUESTION
+// =====================================
 const createQuestion = async (questionData) => {
   return await Question.create(questionData);
 };
 
-// GET ALL
+// =====================================
+// GET ALL QUESTIONS
+// =====================================
 const getAllQuestions = async (
   page = 1,
   limit = 10,
@@ -15,7 +19,6 @@ const getAllQuestions = async (
   sortBy = "createdAt",
   order = "desc"
 ) => {
-
   const skip = (page - 1) * limit;
 
   const filter = {};
@@ -44,7 +47,7 @@ const getAllQuestions = async (
     ];
   }
 
-  // Filter
+  // Filters
   if (subject) {
     filter.subject = subject;
   }
@@ -55,16 +58,19 @@ const getAllQuestions = async (
 
   // Sorting
   const sort = {};
-
   sort[sortBy] = order === "asc" ? 1 : -1;
 
-  const total = await Question.countDocuments(filter);
+  // Execute in Parallel
+  const [total, questions] = await Promise.all([
+    Question.countDocuments(filter),
 
-  const questions = await Question.find(filter)
-    .populate("createdBy", "fullName email")
-    .sort(sort)
-    .skip(skip)
-    .limit(limit);
+    Question.find(filter)
+      .populate("createdBy", "fullName email")
+      .sort(sort)
+      .skip(skip)
+      .limit(limit)
+      .lean(),
+  ]);
 
   return {
     total,
@@ -75,15 +81,18 @@ const getAllQuestions = async (
   };
 };
 
-// GET BY ID
+// =====================================
+// GET QUESTION BY ID
+// =====================================
 const getQuestionById = async (id) => {
-  return await Question.findById(id).populate(
-    "createdBy",
-    "fullName email"
-  );
+  return await Question.findById(id)
+    .populate("createdBy", "fullName email")
+    .lean();
 };
 
-// UPDATE
+// =====================================
+// UPDATE QUESTION
+// =====================================
 const updateQuestion = async (id, data) => {
   return await Question.findByIdAndUpdate(
     id,
@@ -92,10 +101,14 @@ const updateQuestion = async (id, data) => {
       new: true,
       runValidators: true,
     }
-  ).populate("createdBy", "fullName email");
+  )
+    .populate("createdBy", "fullName email")
+    .lean();
 };
 
-// DELETE
+// =====================================
+// DELETE QUESTION
+// =====================================
 const deleteQuestion = async (id) => {
   return await Question.findByIdAndDelete(id);
 };

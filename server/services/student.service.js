@@ -15,7 +15,8 @@ const getDashboard = async () => {
     .select(
       "title subject duration totalMarks totalQuestions startTime endTime"
     )
-    .sort({ startTime: 1 });
+    .sort({ startTime: 1 })
+    .lean();
 
   const active = await TestSnapshot.find({
     startTime: { $lte: now },
@@ -24,7 +25,8 @@ const getDashboard = async () => {
     .select(
       "title subject duration totalMarks totalQuestions startTime endTime"
     )
-    .sort({ startTime: 1 });
+    .sort({ startTime: 1 })
+    .lean();
 
   const completed = await TestSnapshot.find({
     endTime: { $lt: now }
@@ -32,7 +34,8 @@ const getDashboard = async () => {
     .select(
       "title subject duration totalMarks totalQuestions startTime endTime"
     )
-    .sort({ endTime: -1 });
+    .sort({ endTime: -1 })
+    .lean();
 
   return {
     upcoming,
@@ -48,7 +51,11 @@ const getDashboard = async () => {
 const startExam = async (studentId, snapshotId) => {
 
   // Find Snapshot
-  const snapshot = await TestSnapshot.findById(snapshotId);
+  const snapshot = await TestSnapshot.findById(snapshotId)
+  .select(
+  "_id startTime endTime totalQuestions totalMarks"
+  )
+  .lean();
 
   if (!snapshot) {
     throw new Error("Test not found.");
@@ -74,13 +81,7 @@ const startExam = async (studentId, snapshotId) => {
   if (existingAttempt) {
     throw new Error("You have already started this exam.");
   }
-  console.log("Current Time :", new Date());
 
-  console.log("Start Time :", snapshot.startTime);
-
-  console.log("End Time :", snapshot.endTime);
-
-  console.log("Snapshot ID :", snapshot._id);
   // Create Attempt
   const attempt = await ExamAttempt.create({
 
@@ -129,7 +130,10 @@ const checkExamExpiry = async (
 const getExamQuestions = async (studentId, attemptId) => {
 
   // Find Attempt
-  const attempt = await ExamAttempt.findById(attemptId);
+  const attempt = await ExamAttempt.findById(attemptId)
+  .select(
+  "student status testSnapshot"
+  );
 
   if (!attempt) {
     throw new Error("Exam attempt not found.");
@@ -147,8 +151,12 @@ const getExamQuestions = async (studentId, attemptId) => {
 
   // Load Snapshot
   const snapshot = await TestSnapshot.findById(
-    attempt.testSnapshot
-  );
+  attempt.testSnapshot
+  )
+  .select(
+  "title questions endTime"
+  )
+  .lean();
 
   if (!snapshot) {
     throw new Error("Test snapshot not found.");
@@ -213,7 +221,7 @@ const saveAnswer = async (
   // Check Attempt
 
   const attempt = await ExamAttempt.findById(attemptId);
-  console.log("1. Attempt Found:", attempt);
+
   if (!attempt) {
 
     throw new Error("Exam attempt not found.");
@@ -264,7 +272,7 @@ const saveAnswer = async (
     (q) => q.questionId.toString() === questionId
 
 );
-console.log("2. Question Found:", question);
+
 
   if (!question) {
 
@@ -286,7 +294,7 @@ console.log("2. Question Found:", question);
     questionId,
 
   });
-  console.log("3. Existing Answer:", existingAnswer);
+
 
   if (existingAnswer) {
 
@@ -303,7 +311,7 @@ console.log("2. Question Found:", question);
 
       await existingAnswer.save();
 
-      console.log("4. Updated Answer:", existingAnswer);
+    
  
        return existingAnswer;
     }
@@ -327,7 +335,7 @@ console.log("2. Question Found:", question);
       : 0,
 
   });
-  console.log("5. Created Answer:", answer);
+
   return answer;
 
 };
@@ -339,18 +347,24 @@ const resumeExam = async (studentId) => {
 
   // Find Running Attempt
   const attempt = await ExamAttempt.findOne({
-    student: studentId,
-    status: "in-progress",
-  });
-
+  student: studentId,
+  status:"in-progress"
+  })
+  .select(
+  "_id totalQuestions status testSnapshot"
+  );
   if (!attempt) {
     throw new Error("No running exam found.");
   }
 
   // Load Snapshot
   const snapshot = await TestSnapshot.findById(
-    attempt.testSnapshot
-  );
+  attempt.testSnapshot
+  )
+  .select(
+  "_id title subject endTime"
+  )
+  .lean();
 
   if (!snapshot) {
     throw new Error("Test snapshot not found.");
@@ -419,8 +433,9 @@ const submitExam = async (studentId, attemptId) => {
 
   // Load Answers
   const answers = await StudentAnswer.find({
-    attempt: attemptId,
-  });
+  attempt:attemptId
+  })
+  .select("marksAwarded");
 
   // Calculate Score
   const obtainedMarks = answers.reduce(
@@ -484,8 +499,12 @@ const getResult = async (studentId, attemptId) => {
 
   // Load Snapshot
   const snapshot = await TestSnapshot.findById(
-    attempt.testSnapshot
-  );
+  attempt.testSnapshot
+  )
+  .select(
+  "title subject"
+  )
+  .lean();
 
   if (!snapshot) {
     throw new Error("Test snapshot not found.");
@@ -493,8 +512,9 @@ const getResult = async (studentId, attemptId) => {
 
   // Load Answers
   const answers = await StudentAnswer.find({
-    attempt: attemptId,
-  });
+  attempt:attemptId
+  })
+  .select("isCorrect");
 
   const correctAnswers = answers.filter(
     (answer) => answer.isCorrect
@@ -539,7 +559,8 @@ const getResultHistory = async (studentId) => {
       path: "testSnapshot",
       select: "title subject",
     })
-    .sort({ submittedAt: -1 });
+    .sort({ submittedAt: -1 })
+    .lean();
 
   const results = attempts.map((attempt) => ({
     attemptId: attempt._id,

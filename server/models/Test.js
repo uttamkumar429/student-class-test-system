@@ -12,6 +12,7 @@ const testSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
+      index: true,
     },
 
     description: {
@@ -48,6 +49,7 @@ const testSchema = new mongoose.Schema(
     startTime: {
       type: Date,
       required: true,
+      index: true,
     },
 
     endTime: {
@@ -64,6 +66,7 @@ const testSchema = new mongoose.Schema(
         "archived",
       ],
       default: "draft",
+      index: true,
     },
 
     createdBy: {

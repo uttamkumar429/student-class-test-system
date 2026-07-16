@@ -4,16 +4,17 @@ const examAttemptSchema = new mongoose.Schema(
 
 {
 
-    student:{
-        type:mongoose.Schema.Types.ObjectId,
-        ref:"User",
-        required:true
+    student: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        required: true,
+        index: true
     },
-
-    testSnapshot:{
-        type:mongoose.Schema.Types.ObjectId,
-        ref:"TestSnapshot",
-        required:true
+    testSnapshot: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "TestSnapshot",
+        required: true,
+        index: true
     },
 
     startedAt:{
@@ -25,13 +26,14 @@ const examAttemptSchema = new mongoose.Schema(
         type:Date
     },
 
-    status:{
-        type:String,
-        enum:[
+    status: {
+        type: String,
+        enum: [
             "in-progress",
             "submitted"
         ],
-        default:"in-progress"
+        default: "in-progress",
+        index: true
     },
 
     totalQuestions:{

@@ -6,6 +6,7 @@ const questionSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
+      index: true,
     },
 
     chapter: {
@@ -18,6 +19,7 @@ const questionSchema = new mongoose.Schema(
       type: String,
       enum: ["Easy", "Medium", "Hard"],
       default: "Medium",
+      index: true,
     },
 
     question: {
