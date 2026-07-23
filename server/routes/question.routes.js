@@ -119,6 +119,7 @@ router.put(
   "/:id",
   protect,
   authorize("admin", "superAdmin"),
+  validate(validateQuestion),
   questionController.updateQuestion
 );
 /**

@@ -1,7 +1,23 @@
+// const { errorResponse } = require("../utils/response");
+
+// const errorHandler = (err, req, res, next) => {
+//   console.error(err);
+
+//   return errorResponse(
+//     res,
+//     err.statusCode || 500,
+//     err.message || "Internal Server Error"
+//   );
+// };
+
+// module.exports = errorHandler;
 const { errorResponse } = require("../utils/response");
 
 const errorHandler = (err, req, res, next) => {
-  console.error(err);
+
+  if (process.env.NODE_ENV !== "test") {
+    console.error(err);
+  }
 
   return errorResponse(
     res,

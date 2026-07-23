@@ -1,4 +1,4 @@
-console.log("App.js Loaded");
+// console.log("App.js Loaded");
 const mongoSanitize = require("./middleware/mongoSanitize.middleware");
 const {
   apiLimiter,

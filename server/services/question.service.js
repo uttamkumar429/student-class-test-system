@@ -93,12 +93,27 @@ const getQuestionById = async (id) => {
 // =====================================
 // UPDATE QUESTION
 // =====================================
+// const updateQuestion = async (id, data) => {
+//   return await Question.findByIdAndUpdate(
+//     id,
+//     data,
+//     {
+//       new: true,
+//       runValidators: true,
+//     }
+//   )
+//     .populate("createdBy", "fullName email")
+//     .lean();
+// };
+// =====================================
+// UPDATE QUESTION
+// =====================================
 const updateQuestion = async (id, data) => {
   return await Question.findByIdAndUpdate(
     id,
     data,
     {
-      new: true,
+      returnDocument: "after",
       runValidators: true,
     }
   )

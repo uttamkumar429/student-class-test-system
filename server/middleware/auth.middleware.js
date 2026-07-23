@@ -21,17 +21,15 @@ const protect = async (req, res, next) => {
     }
 
     // Verify JWT
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    console.log("======================");
-    console.log("TOKEN :", token);
-    console.log("SECRET :", process.env.JWT_SECRET);
-    console.log("DECODED :", decoded);
-    console.log("======================");
-    console.log("Decoded Token:", decoded);
-    // Get user details
-    const user = await User.findById(decoded.id).select("-password");
-    console.log("USER :", user);
-    console.log("User Found:", user); 
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET
+    );
+
+    // Get User
+    const user = await User.findById(decoded.id)
+      .select("-password")
+      .lean();
 
     if (!user) {
       return res.status(401).json({
@@ -50,6 +48,7 @@ const protect = async (req, res, next) => {
     req.user = user;
 
     next();
+
   } catch (error) {
     return res.status(401).json({
       success: false,

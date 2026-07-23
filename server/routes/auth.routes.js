@@ -51,5 +51,10 @@ router.post(
   loginLimiter,
   authController.login
 );
+router.post(
+  "/admin/login",
+  loginLimiter,
+  authController.adminLogin
+);
 
 module.exports = router;
