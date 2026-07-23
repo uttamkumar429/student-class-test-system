@@ -1,6 +1,10 @@
 const Test = require("../../models/Test");
 
-const createTest = async (adminId, questionIds) => {
+const createTest = async (
+  adminId,
+  questionIds,
+  overrides = {}
+) => {
   return await Test.create({
     title: "Physics Mock Test",
 
@@ -21,6 +25,8 @@ const createTest = async (adminId, questionIds) => {
     totalQuestions: questionIds.length,
 
     createdBy: adminId,
+
+    ...overrides,
   });
 };
 
