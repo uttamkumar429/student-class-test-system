@@ -218,24 +218,42 @@ const updateTest = async (id, data) => {
     throw new Error("Published test cannot be updated.");
   }
 
-  const result = await processQuestions(
-    data.questions
-  );
+  const questionIds = data.questions || test.questions;
 
+  const result = await processQuestions(questionIds);
+
+  const updateData = {
+    title: data.title,
+    subject: data.subject,
+    description: data.description,
+    duration: data.duration,
+    questions: questionIds,
+    startTime: data.startTime,
+    endTime: data.endTime,
+    totalMarks: result.totalMarks,
+    totalQuestions: result.totalQuestions,
+  };
+  if (data.title) {
+    const duplicate = await Test.findOne({
+      title: data.title,
+      _id: { $ne: id },
+    });
+
+  if (duplicate) {
+    throw new Error("Test with this title already exists.");
+  }
+}
   return await Test.findByIdAndUpdate(
     id,
+    updateData,
     {
-      ...data,
-      totalMarks: result.totalMarks,
-      totalQuestions: result.totalQuestions,
-    },
-    {
-      new: true,
+      returnDocument: "after",
       runValidators: true,
     }
   )
   .populate("questions")
   .populate("createdBy", "fullName email");
+    
 
 };
 // =====================================
