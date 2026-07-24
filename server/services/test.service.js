@@ -1,6 +1,6 @@
 const Test = require("../models/Test");
 const Question = require("../models/Question");
-
+const ApiError = require("../utils/ApiError");
 // =====================================
 // COMMON BUSINESS LOGIC
 // =====================================
@@ -10,7 +10,10 @@ const processQuestions = async (questionIds) => {
   const uniqueIds = [...new Set(questionIds)];
 
   if (uniqueIds.length !== questionIds.length) {
-    throw new Error("Duplicate questions are not allowed.");
+    throw new ApiError(
+      400,
+      "Duplicate questions are not allowed."
+    );
   }
 
   // Fetch Questions
@@ -20,7 +23,10 @@ const processQuestions = async (questionIds) => {
 
   // Invalid IDs
   if (questions.length !== questionIds.length) {
-    throw new Error("One or more Question IDs are invalid.");
+    throw new ApiError(
+      400,
+      "One or more Question IDs are invalid."
+    );
   }
 
   // Same Subject Check
@@ -31,8 +37,9 @@ const processQuestions = async (questionIds) => {
   );
 
   if (differentSubject) {
-    throw new Error(
-      "All selected questions must belong to the same subject."
+    throw new ApiError(
+        400,
+        "All selected questions must belong to the same subject."
     );
   }
 
@@ -56,21 +63,33 @@ const createTest = async (testData) => {
 
   // Check Duplicate Title
   const existingTest = await Test.findOne({
-    title: testData.title,
+    title: {
+      $regex: `^${testData.title}$`,
+      $options: "i",
+    },
   });
 
   if (existingTest) {
-    throw new Error("Test with this title already exists.");
+    throw new ApiError(
+        409,
+        "Test with this title already exists."
+    );
   }
   // Validate Start Time
 const now = new Date();
 
 if (new Date(testData.startTime) < now) {
-  throw new Error("Start time cannot be in the past.");
+  throw new ApiError(
+      400,
+      "Start time cannot be in the past."
+  );
 }
 // Validate End Time
 if (new Date(testData.endTime) <= new Date(testData.startTime)) {
-  throw new Error("End time must be greater than start time.");
+  throw new ApiError(
+    400,
+    "End time must be greater than start time."
+  );
 }
 
   // Process Questions
@@ -102,6 +121,9 @@ const getAllTests = async (
   endDate = "",
   duration=""
 ) => {
+
+  page = Math.max(1, Number(page));
+  limit = Math.max(1, Number(limit));
 
   const skip = (page - 1) * limit;
 
@@ -210,12 +232,18 @@ const updateTest = async (id, data) => {
   const test = await Test.findById(id);
 
   if (!test) {
-    throw new Error("Test not found.");
+    throw new ApiError(
+      404,
+      "Test not found."
+    );
   }
 
   // Prevent editing published test
   if (test.status === "published") {
-    throw new Error("Published test cannot be updated.");
+    throw new ApiError(
+        409,
+        "Published test cannot be updated."
+    );
   }
 
   const questionIds = data.questions || test.questions;
@@ -223,26 +251,48 @@ const updateTest = async (id, data) => {
   const result = await processQuestions(questionIds);
 
   const updateData = {
-    title: data.title,
-    subject: data.subject,
-    description: data.description,
-    duration: data.duration,
+    title: data.title ?? test.title,
+    subject: data.subject ?? test.subject,
+    description: data.description ?? test.description,
+    duration: data.duration ?? test.duration,
     questions: questionIds,
-    startTime: data.startTime,
-    endTime: data.endTime,
+    startTime: data.startTime ?? test.startTime,
+    endTime: data.endTime ?? test.endTime,
     totalMarks: result.totalMarks,
     totalQuestions: result.totalQuestions,
   };
   if (data.title) {
     const duplicate = await Test.findOne({
-      title: data.title,
+      title: {
+        $regex: `^${data.title}$`,
+        $options: "i",
+      },
       _id: { $ne: id },
     });
 
   if (duplicate) {
-    throw new Error("Test with this title already exists.");
+    throw new ApiError(
+        409,
+        "Test with this title already exists."
+    );
   }
 }
+  const startTime = data.startTime ?? test.startTime;
+  const endTime = data.endTime ?? test.endTime;
+
+  if (new Date(startTime) < new Date()) {
+    throw new ApiError(
+        400,
+        "Start time cannot be in the past."
+    );
+  }
+
+  if (new Date(endTime) <= new Date(startTime)) {
+    throw new ApiError(
+        400,
+        "End time must be greater than start time."
+    );
+  }
   return await Test.findByIdAndUpdate(
     id,
     updateData,
@@ -264,12 +314,18 @@ const deleteTest = async (id) => {
   const test = await Test.findById(id);
 
   if (!test) {
-    throw new Error("Test not found.");
+    throw new ApiError(
+        404,
+        "Test not found."
+    );
   }
 
   // Prevent deleting published test
   if (test.status === "published") {
-    throw new Error("Published test cannot be deleted.");
+    throw new ApiError(
+        409,
+        "Published test cannot be deleted."
+    );
   }
 
   return await Test.findByIdAndDelete(id);

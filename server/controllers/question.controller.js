@@ -1,6 +1,6 @@
 // const result = await getAllQuestionsService();
 const asyncHandler = require("../middleware/asyncHandler");
-
+const ApiError = require("../utils/ApiError");
 
 const {
   successResponse,
@@ -76,8 +76,8 @@ exports.getQuestionById = asyncHandler(async (req, res) => {
   const question = await getQuestionByIdService(req.params.id);
 
   if (!question) {
-    throw new Error("Question not found.");
-  }
+      throw new ApiError(404, "Question not found.");
+  } 
 
   return successResponse(
     res,
@@ -98,7 +98,7 @@ exports.updateQuestion = asyncHandler(async (req, res) => {
   );
 
   if (!question) {
-    throw new Error("Question not found.");
+      throw new ApiError(404, "Question not found.");
   }
 
   return successResponse(
@@ -115,9 +115,8 @@ exports.deleteQuestion = asyncHandler(async (req, res) => {
   const question = await deleteQuestionService(req.params.id);
 
   if (!question) {
-    throw new Error("Question not found.");
+      throw new ApiError(404, "Question not found.");
   }
-
   return successResponse(
     res,
     200,

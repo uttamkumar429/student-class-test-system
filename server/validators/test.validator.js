@@ -58,9 +58,9 @@ if (!Array.isArray(data.questions)) {
     const start = new Date(data.startTime);
     const end = new Date(data.endTime);
 
-    if (start >= end) {
-      errors.push("End Time must be greater than Start Time.");
-    }
+  if (start >= end) {
+    errors.push("End time must be greater than start time.");
+  }
 
   }
 

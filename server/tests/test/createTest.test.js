@@ -80,254 +80,253 @@ describe("Create Test API", () => {
       .toBe(questions.length);
 
   });
-  test("Should reject without token", async () => {
+    test("Should reject without token", async () => {
 
-  const payload = {
-    ...validTest,
-    questions: questions.map((q) => q._id),
-  };
+      const payload = {
+        ...validTest,
+        questions: questions.map((q) => q._id),
+      };
 
-  const response = await request(app)
-    .post("/api/tests")
-    .send(payload);
+      const response = await request(app)
+        .post("/api/tests")
+        .send(payload);
 
-  expect(response.statusCode).toBe(401);
+      expect(response.statusCode).toBe(401);
 
-  expect(response.body.success).toBe(false);
+      expect(response.body.success).toBe(false);
 
-});
-test("Student should not create test", async () => {
+    });
+    test("Student should not create test", async () => {
 
-  await cleanup();
+      await cleanup();
 
-  await createUser(users.student);
+      await createUser(users.student);
 
-  const adminToken = await loginAdmin();
+      const adminToken = await loginAdmin();
 
-  const admin = await User.findOne({
-    role: "admin",
+      const admin = await User.findOne({
+        role: "admin",
+      });
+
+      questions = await createQuestions(
+        admin._id,
+        "Physics"
+      );
+
+      const studentLogin = await request(app)
+        .post("/api/auth/login")
+        .send({
+          email: users.student.email,
+          password: users.student.password,
+        });
+
+      const studentToken = studentLogin.body.token;
+
+      const payload = {
+        ...validTest,
+        questions: questions.map((q) => q._id),
+      };
+
+      const response = await request(app)
+        .post("/api/tests")
+        .set(
+          "Authorization",
+          `Bearer ${studentToken}`
+        )
+        .send(payload);
+
+      expect(response.statusCode).toBe(403);
+
+      expect(response.body.success).toBe(false);
+
+    });
+  test("Should return validation error", async () => {
+
+    const payload = {
+      title: "",
+      subject: "",
+      duration: 0,
+      questions: [],
+      startTime: "",
+      endTime: "",
+    };
+
+    const response = await request(app)
+      .post("/api/tests")
+      .set("Authorization", `Bearer ${token}`)
+      .send(payload);
+
+    expect(response.statusCode).toBe(400);
+
+    expect(response.body.success).toBe(false);
+
   });
+  test("Should reject duplicate test title", async () => {
 
-  questions = await createQuestions(
-    admin._id,
-    "Physics"
-  );
+    const payload = {
+      ...validTest,
+      questions: questions.map((q) => q._id),
+    };
 
-  const studentLogin = await request(app)
-    .post("/api/auth/login")
-    .send({
-      email: users.student.email,
-      password: users.student.password,
+    await request(app)
+      .post("/api/tests")
+      .set("Authorization", `Bearer ${token}`)
+      .send(payload);
+
+    const response = await request(app)
+      .post("/api/tests")
+      .set("Authorization", `Bearer ${token}`)
+      .send(payload);
+
+    expect(response.statusCode).toBe(409);
+
+    expect(response.body.success).toBe(false);
+
+    expect(response.body.message).toBe(
+      "Test with this title already exists."
+    );
+  });
+  test("Should reject duplicate question IDs", async () => {
+
+    const payload = {
+      ...validTest,
+      questions: [
+        questions[0]._id,
+        questions[0]._id,
+      ],
+    };
+
+    const response = await request(app)
+      .post("/api/tests")
+      .set("Authorization", `Bearer ${token}`)
+      .send(payload);
+
+    expect(response.statusCode).toBe(400);
+
+    expect(response.body.success).toBe(false);
+
+    expect(response.body.message).toBe(
+      "Duplicate questions are not allowed."
+    );
+
+  });
+  test("Should reject invalid question IDs", async () => {
+
+    const payload = {
+      ...validTest,
+      questions: [
+        new mongoose.Types.ObjectId(),
+      ],
+    };
+
+    const response = await request(app)
+      .post("/api/tests")
+      .set("Authorization", `Bearer ${token}`)
+      .send(payload);
+
+    expect(response.statusCode).toBe(400);
+
+    expect(response.body.success).toBe(false);
+
+    expect(response.body.message).toBe(
+      "One or more Question IDs are invalid."
+    );
+
+  });
+  test("Should reject different subject questions", async () => {
+
+    await cleanup();
+
+    token = await loginAdmin();
+
+    const admin = await User.findOne({
+      role: "admin",
     });
 
-  const studentToken = studentLogin.body.token;
+    const mixedQuestions =
+      await createQuestions(admin._id);
 
-  const payload = {
-    ...validTest,
-    questions: questions.map((q) => q._id),
-  };
+    const payload = {
+      ...validTest,
+      questions: mixedQuestions.map(
+        (q) => q._id
+      ),
+    };
 
-  const response = await request(app)
-    .post("/api/tests")
-    .set(
-      "Authorization",
-      `Bearer ${studentToken}`
-    )
-    .send(payload);
+    const response = await request(app)
+      .post("/api/tests")
+      .set("Authorization", `Bearer ${token}`)
+      .send(payload);
 
-  expect(response.statusCode).toBe(403);
+    expect(response.statusCode).toBe(400);
 
-  expect(response.body.success).toBe(false);
+    expect(response.body.success).toBe(false);
 
-});
-test("Should return validation error", async () => {
+    expect(response.body.message).toBe(
+      "All selected questions must belong to the same subject."
+    );
 
-  const payload = {
-    title: "",
-    subject: "",
-    duration: 0,
-    questions: [],
-    startTime: "",
-    endTime: "",
-  };
-
-  const response = await request(app)
-    .post("/api/tests")
-    .set("Authorization", `Bearer ${token}`)
-    .send(payload);
-
-  expect(response.statusCode).toBe(400);
-
-  expect(response.body.success).toBe(false);
-
-});
-test("Should reject duplicate test title", async () => {
-
-  const payload = {
-    ...validTest,
-    questions: questions.map((q) => q._id),
-  };
-
-  await request(app)
-    .post("/api/tests")
-    .set("Authorization", `Bearer ${token}`)
-    .send(payload);
-
-  const response = await request(app)
-    .post("/api/tests")
-    .set("Authorization", `Bearer ${token}`)
-    .send(payload);
-
-  expect(response.statusCode).toBe(500);
-
-  expect(response.body.success).toBe(false);
-
-  expect(response.body.message).toBe(
-    "Test with this title already exists."
-  );
-
-});
-test("Should reject duplicate question IDs", async () => {
-
-  const payload = {
-    ...validTest,
-    questions: [
-      questions[0]._id,
-      questions[0]._id,
-    ],
-  };
-
-  const response = await request(app)
-    .post("/api/tests")
-    .set("Authorization", `Bearer ${token}`)
-    .send(payload);
-
-  expect(response.statusCode).toBe(500);
-
-  expect(response.body.success).toBe(false);
-
-  expect(response.body.message).toBe(
-    "Duplicate questions are not allowed."
-  );
-
-});
-test("Should reject invalid question IDs", async () => {
-
-  const payload = {
-    ...validTest,
-    questions: [
-      new mongoose.Types.ObjectId(),
-    ],
-  };
-
-  const response = await request(app)
-    .post("/api/tests")
-    .set("Authorization", `Bearer ${token}`)
-    .send(payload);
-
-  expect(response.statusCode).toBe(500);
-
-  expect(response.body.success).toBe(false);
-
-  expect(response.body.message).toBe(
-    "One or more Question IDs are invalid."
-  );
-
-});
-test("Should reject different subject questions", async () => {
-
-  await cleanup();
-
-  token = await loginAdmin();
-
-  const admin = await User.findOne({
-    role: "admin",
   });
+  test("Should reject past start time", async () => {
 
-  const mixedQuestions =
-    await createQuestions(admin._id);
+    const payload = {
+      ...validTest,
 
-  const payload = {
-    ...validTest,
-    questions: mixedQuestions.map(
-      (q) => q._id
-    ),
-  };
+      questions: questions.map(
+        (q) => q._id
+      ),
 
-  const response = await request(app)
-    .post("/api/tests")
-    .set("Authorization", `Bearer ${token}`)
-    .send(payload);
+      startTime: new Date(
+        Date.now() - 60 * 60 * 1000
+      ),
 
-  expect(response.statusCode).toBe(500);
+      endTime: new Date(
+        Date.now() + 60 * 60 * 1000
+      ),
+    };
 
-  expect(response.body.success).toBe(false);
+    const response = await request(app)
+      .post("/api/tests")
+      .set("Authorization", `Bearer ${token}`)
+      .send(payload);
 
-  expect(response.body.message).toBe(
-    "All selected questions must belong to the same subject."
-  );
+    expect(response.statusCode).toBe(400);
 
-});
-test("Should reject past start time", async () => {
+    expect(response.body.success).toBe(false);
 
-  const payload = {
-    ...validTest,
+    expect(response.body.message).toBe(
+      "Start time cannot be in the past."
+    );
 
-    questions: questions.map(
-      (q) => q._id
-    ),
+  });
+  test("Should reject end time before start time", async () => {
 
-    startTime: new Date(
-      Date.now() - 60 * 60 * 1000
-    ),
+    const payload = {
+      ...validTest,
 
-    endTime: new Date(
-      Date.now() + 60 * 60 * 1000
-    ),
-  };
+      questions: questions.map(
+        (q) => q._id
+      ),
 
-  const response = await request(app)
-    .post("/api/tests")
-    .set("Authorization", `Bearer ${token}`)
-    .send(payload);
+      startTime: new Date(
+        Date.now() + 2 * 60 * 60 * 1000
+      ),
 
-  expect(response.statusCode).toBe(500);
+      endTime: new Date(
+        Date.now() + 60 * 60 * 1000
+      ),
+    };
 
-  expect(response.body.success).toBe(false);
+    const response = await request(app)
+      .post("/api/tests")
+      .set("Authorization", `Bearer ${token}`)
+      .send(payload);
 
-  expect(response.body.message).toBe(
-    "Start time cannot be in the past."
-  );
+    // Validator catches this first
+    expect(response.statusCode).toBe(400);
 
-});
-test("Should reject end time before start time", async () => {
+    expect(response.body.success).toBe(false);
 
-  const payload = {
-    ...validTest,
-
-    questions: questions.map(
-      (q) => q._id
-    ),
-
-    startTime: new Date(
-      Date.now() + 2 * 60 * 60 * 1000
-    ),
-
-    endTime: new Date(
-      Date.now() + 60 * 60 * 1000
-    ),
-  };
-
-  const response = await request(app)
-    .post("/api/tests")
-    .set("Authorization", `Bearer ${token}`)
-    .send(payload);
-
-  // Validator catches this first
-  expect(response.statusCode).toBe(400);
-
-  expect(response.body.success).toBe(false);
-
-});
+  });
 
 });

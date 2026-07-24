@@ -154,7 +154,7 @@ describe("Update Question API", () => {
         marks: 4,
     });
 
-    expect(response.statusCode).toBe(500);
+    expect(response.statusCode).toBe(400);
   });
 
   test("Should return error when question not found", async () => {
@@ -177,7 +177,7 @@ describe("Update Question API", () => {
         marks: 4,
     });
 
-    expect(response.statusCode).toBe(500);
+    expect(response.statusCode).toBe(404);
     // expect(response.statusCode).toBe(400);
 
   });

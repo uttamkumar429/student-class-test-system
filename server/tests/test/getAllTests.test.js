@@ -276,5 +276,74 @@ describe("Get All Tests API", () => {
         expect(response.body.data.tests).toHaveLength(0);
 
     });
+    test("Should filter tests by duration", async () => {
+
+        const response = await request(app)
+            .get("/api/tests?duration=60")
+            .set("Authorization", `Bearer ${token}`);
+
+        expect(response.statusCode).toBe(200);
+
+        expect(response.body.success).toBe(true);
+
+        response.body.data.tests.forEach((test) => {
+            expect(test.duration).toBe(60);
+        });
+
+    });
+    test("Should sort tests by title", async () => {
+
+        const response = await request(app)
+            .get("/api/tests?sort=title")
+            .set("Authorization", `Bearer ${token}`);
+
+        expect(response.statusCode).toBe(200);
+
+        expect(response.body.success).toBe(true);
+
+        const tests = response.body.data.tests;
+
+        for (let i = 1; i < tests.length; i++) {
+            expect(
+                tests[i - 1].title.localeCompare(tests[i].title)
+            ).toBeLessThanOrEqual(0);
+        }
+
+    });
+    test("Should sort tests by subject", async () => {
+
+        const response = await request(app)
+            .get("/api/tests?sort=subject")
+            .set("Authorization", `Bearer ${token}`);
+
+        expect(response.statusCode).toBe(200);
+
+        expect(response.body.success).toBe(true);
+
+    });
+    test("Should handle invalid page number", async () => {
+
+        const response = await request(app)
+            .get("/api/tests?page=-1")
+            .set("Authorization", `Bearer ${token}`);
+
+        expect(response.statusCode).toBe(200);
+
+        expect(response.body.data.page).toBe(1);
+
+    });
+    test("Should return all tests when limit is large", async () => {
+
+        const response = await request(app)
+            .get("/api/tests?limit=100")
+            .set("Authorization", `Bearer ${token}`);
+
+        expect(response.statusCode).toBe(200);
+
+        expect(response.body.success).toBe(true);
+
+        expect(response.body.data.tests.length).toBeGreaterThan(0);
+
+    });
 });
   

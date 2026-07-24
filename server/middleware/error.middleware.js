@@ -19,6 +19,15 @@ const errorHandler = (err, req, res, next) => {
     console.error(err);
   }
 
+  // MongoDB Invalid ObjectId
+  if (err.name === "CastError") {
+    return errorResponse(
+      res,
+      400,
+      "Invalid ID."
+    );
+  }
+
   return errorResponse(
     res,
     err.statusCode || 500,

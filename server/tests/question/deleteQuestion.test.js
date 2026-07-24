@@ -99,17 +99,20 @@ describe("Delete Question API", () => {
       .delete("/api/questions/abc123")
       .set("Authorization", `Bearer ${token}`);
 
-    expect(response.statusCode).toBe(500);
+    expect(response.statusCode).toBe(400);
+    expect(response.body.success).toBe(false);
+    expect(response.body.message).toBe("Invalid ID.");
   });
 
   test("Should return error when question not found", async () => {
-    const fakeId =
-      new mongoose.Types.ObjectId();
+    const fakeId = new mongoose.Types.ObjectId();
 
     const response = await request(app)
       .delete(`/api/questions/${fakeId}`)
       .set("Authorization", `Bearer ${token}`);
 
-    expect(response.statusCode).toBe(500);
+    expect(response.statusCode).toBe(404);
+    expect(response.body.success).toBe(false);
+    expect(response.body.message).toBe("Question not found.");
   });
 });
