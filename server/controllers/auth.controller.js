@@ -87,9 +87,14 @@ exports.register = async (req, res) => {
 // ===============================
 exports.login = async (req, res) => {
   try {
-    const { emailOrPhone, password } = req.body;
+  const {
+    emailOrPhone,
+    email,
+    phone,
+    password,
+  } = req.body;
 
-    const loginId = emailOrPhone || email || phone;
+  const loginId = emailOrPhone || email || phone;
 
     // Required Validation
     if (!loginId || !password) {
