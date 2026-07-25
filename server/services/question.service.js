@@ -19,6 +19,8 @@ const getAllQuestions = async (
   sortBy = "createdAt",
   order = "desc"
 ) => {
+  page = Math.max(1, Number(page));
+  limit = Math.min(100, Math.max(1, Number(limit)));
   const skip = (page - 1) * limit;
 
   const filter = {};
@@ -57,8 +59,20 @@ const getAllQuestions = async (
   }
 
   // Sorting
+  const allowedSortFields = [
+    "createdAt",
+    "subject",
+    "difficulty",
+    "marks",
+  ];
+
   const sort = {};
-  sort[sortBy] = order === "asc" ? 1 : -1;
+
+  sort[
+    allowedSortFields.includes(sortBy)
+      ? sortBy
+      : "createdAt"
+  ] = order === "asc" ? 1 : -1;
 
   // Execute in Parallel
   const [total, questions] = await Promise.all([
@@ -125,7 +139,7 @@ const updateQuestion = async (id, data) => {
 // DELETE QUESTION
 // =====================================
 const deleteQuestion = async (id) => {
-  return await Question.findByIdAndDelete(id);
+  return await Question.findByIdAndDelete(id).lean();
 };
 
 module.exports = {

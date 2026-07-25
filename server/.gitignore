@@ -1,3 +1,42 @@
-node_modules
+# node_modules
+# .env
+# node_modules/
+
+# .env
+
+# coverage/
+
+# reports/
+
+# *.log
+
+# npm-debug.log*
+
+# .DS_Store
+
+# .vscode/
+
+# .idea/
+# uploads
+# Dependencies
+node_modules/
+
+# Environment Variables
 .env
-uploads
+
+# Test Coverage
+coverage/
+
+# Reports
+reports/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS Files
+.DS_Store
+
+# IDE Files
+.vscode/
+.idea/

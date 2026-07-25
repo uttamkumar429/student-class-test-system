@@ -12,7 +12,10 @@ const getExamStatistics = async (snapshotId) => {
  const snapshot = await TestSnapshot.findById(snapshotId).lean();
 
   if (!snapshot) {
-    throw new Error("Test snapshot not found.");
+    throw new ApiError(
+      404,
+      "Test snapshot not found."
+    );
   }
 
   // All Attempts
@@ -72,7 +75,7 @@ const getExamStatistics = async (snapshotId) => {
       : 0;
 
   const passed = attempts.filter(
-    (a) => a.percentage >= 33
+    (a) => a.percentage >= PASS_PERCENTAGE
   ).length;
 
   const failed = totalStudents - passed;
@@ -130,7 +133,10 @@ const getTopPerformers = async (snapshotId, limit) => {
 const snapshot = await TestSnapshot.findById(snapshotId).lean();
 
   if (!snapshot) {
-    throw new Error("Test snapshot not found.");
+    throw new ApiError(
+      404,
+      "Test snapshot not found."
+    );
   }
 
   // Load Top Students
@@ -185,7 +191,10 @@ const getWeakStudents = async (snapshotId, limit) => {
 const snapshot = await TestSnapshot.findById(snapshotId).lean();
 
   if (!snapshot) {
-    throw new Error("Test snapshot not found.");
+    throw new ApiError(
+      404,
+      "Test snapshot not found."
+    );
   }
 
 const attempts = await ExamAttempt.find({

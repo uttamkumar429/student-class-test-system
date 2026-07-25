@@ -33,19 +33,56 @@ const profileController = require("../controllers/profile.controller");
  *       - Profile
  *     security:
  *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               fullName:
- *                 type: string
- *                 example: Rahul Kumar
- *               phone:
- *                 type: string
- *                 example: 9876543210
+requestBody:
+  required: true
+  content:
+    application/json:
+      schema:
+        type: object
+        required:
+          - schoolName
+          - className
+        properties:
+          schoolName:
+            type: string
+            example: ABC Public School
+
+          className:
+            type: string
+            example: "12"
+
+          section:
+            type: string
+            example: A
+
+          rollNumber:
+            type: string
+            example: "24"
+
+          dob:
+            type: string
+            format: date
+            example: "2007-08-14"
+
+          gender:
+            type: string
+            enum:
+              - Male
+              - Female
+              - Other
+            example: Male
+
+          state:
+            type: string
+            example: Bihar
+
+          district:
+            type: string
+            example: Gaya
+
+          bio:
+            type: string
+            example: Preparing for JEE
  *     responses:
  *       200:
  *         description: Profile updated successfully.

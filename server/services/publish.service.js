@@ -8,19 +8,21 @@ const publishTest = async (testId) => {
 
   // Find Test
   const test = await Test.findById(testId)
-
     .populate("questions");
-    // Already Published Validation
-  if (test.status === "published") {
-    throw new Error("Test is already published.");
-  }
-  // Question Validation
-  if (!test.questions || test.questions.length === 0) {
-    throw new Error("Cannot publish a test without questions.");
-  } 
 
   if (!test) {
-    throw new Error("Test not found.");
+    throw new ApiError(404, "Test not found.");
+  }
+
+  if (test.status === "published") {
+    throw new ApiError(409, "Test is already published.");
+  }
+
+  if (!test) {
+    throw new ApiError(
+      404,
+      "Test not found."
+    );
   }
 
   // Only Draft can be published
@@ -34,7 +36,10 @@ const publishTest = async (testId) => {
   });
 
   if (existingSnapshot) {
-    throw new Error("Snapshot already exists.");
+    throw new ApiError(
+      409,
+      "Snapshot already exists."
+    );
   }
 
   // Create Snapshot
@@ -86,9 +91,15 @@ const publishTest = async (testId) => {
   });
 
   // Update Status
-  test.status = "published";
-
-  await test.save();
+  await Test.findByIdAndUpdate(
+    test._id,
+    {
+      status: "published",
+    },
+    {
+      runValidators: true,
+    }
+  );
 
   return test;
 };

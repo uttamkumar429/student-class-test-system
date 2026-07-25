@@ -62,9 +62,11 @@ const processQuestions = async (questionIds) => {
 const createTest = async (testData) => {
 
   // Check Duplicate Title
+const title = testData.title.trim();
+
   const existingTest = await Test.findOne({
     title: {
-      $regex: `^${testData.title}$`,
+      $regex: `^${title}$`,
       $options: "i",
     },
   });
@@ -123,7 +125,7 @@ const getAllTests = async (
 ) => {
 
   page = Math.max(1, Number(page));
-  limit = Math.max(1, Number(limit));
+  limit = Math.min(100, Math.max(1, Number(limit)));
 
   const skip = (page - 1) * limit;
 
@@ -195,14 +197,17 @@ const getAllTests = async (
 
   }
 
-  const total = await Test.countDocuments(filter);
+  const [total, tests] = await Promise.all([
+    Test.countDocuments(filter),
 
-  const tests = await Test.find(filter)
-    .populate("createdBy", "fullName email")
-    .populate("questions")
-    .sort(sortOption)
-    .skip(skip)
-    .limit(limit);
+    Test.find(filter)
+      .populate("createdBy", "fullName email")
+      .populate("questions")
+      .sort(sortOption)
+      .skip(skip)
+      .limit(limit)
+      .lean(),
+  ]);
 
   return {
     total,
@@ -221,7 +226,8 @@ const getTestById = async (id) => {
 
   return await Test.findById(id)
     .populate("createdBy", "fullName email")
-    .populate("questions");
+    .populate("questions")
+    .lean();
 
 };
 // =====================================
@@ -302,7 +308,8 @@ const updateTest = async (id, data) => {
     }
   )
   .populate("questions")
-  .populate("createdBy", "fullName email");
+  .populate("createdBy", "fullName email")
+  .lean();
     
 
 };

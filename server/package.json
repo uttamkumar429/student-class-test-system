@@ -1,8 +1,8 @@
 {
   "name": "server",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Production-ready Student Class Test & Result Management System built with Node.js, Express.js, MongoDB and JWT Authentication.",
+  "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
@@ -13,8 +13,19 @@
     "test:student": "cross-env NODE_ENV=test jest tests/student",
     "test:admin": "cross-env NODE_ENV=test jest tests/admin"
   },
-  "keywords": [],
-  "author": "",
+  "keywords":[
+  "nodejs",
+  "express",
+  "mongodb",
+  "jwt",
+  "student-management",
+  "exam-system",
+  "education",
+  "api",
+  "backend",
+  "jest"
+  ],
+  "author": "Uttam",
   "license": "ISC",
   "dependencies": {
     "bcrypt": "^6.0.0",

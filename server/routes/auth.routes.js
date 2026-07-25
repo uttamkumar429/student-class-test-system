@@ -7,12 +7,13 @@ const {
   loginLimiter,
 } = require("../middleware/rateLimiter.middleware");
 // Test Route
-router.get("/test", (req, res) => {
-  res.json({
-    message: "Auth Route Working",
+if (process.env.NODE_ENV !== "production") {
+  router.get("/test", (req, res) => {
+    res.json({
+      message: "Auth Route Working",
+    });
   });
-});
-
+}
 // Register
 router.post("/register", authController.register);
 

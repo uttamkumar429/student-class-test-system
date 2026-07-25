@@ -6,13 +6,13 @@ const storage = multer.memoryStorage();
 // Image Filter
 const fileFilter = (req, file, cb) => {
 
-  if (file.mimetype.startsWith("image")) {
+  if (file.mimetype.startsWith("image/")) {
     cb(null, true);
   } else {
     cb(new Error("Only Image Files Allowed"), false);
   }
 
-};
+}
 
 const upload = multer({
   storage,

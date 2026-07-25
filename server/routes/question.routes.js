@@ -24,6 +24,16 @@ const validateQuestion = require("../validators/question.validator");
  *         application/json:
  *           schema:
  *             type: object
+ *                  subject:
+                    chapter:
+                    question:
+                    optionA:
+                    optionB:
+                    optionC:
+                    optionD:
+                    correctAnswer:
+                    difficulty:
+                    marks:
  *     responses:
  *       201:
  *         description: Question created successfully.

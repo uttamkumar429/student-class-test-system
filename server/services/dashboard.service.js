@@ -42,13 +42,15 @@ const getDashboardStats = async () => {
     Test.find()
       .select("title subject duration status createdAt")
       .sort({ createdAt: -1 })
-      .limit(5),
+      .limit(5)
+      .lean(),
 
     // Recent Questions
     Question.find()
       .select("question subject chapter difficulty marks createdAt")
       .sort({ createdAt: -1 })
-      .limit(5),
+      .limit(5)
+      .lean(),
 
     // Test Subject Analytics
     Test.aggregate([

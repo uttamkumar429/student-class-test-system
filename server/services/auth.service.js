@@ -5,7 +5,7 @@ const authenticateUser = async (emailOrPhone, password) => {
 
   const user = await User.findOne({
     $or: [
-      { email: emailOrPhone.toLowerCase() },
+      { email: emailOrPhone.trim().toLowerCase() },
       { phone: emailOrPhone }
     ]
   });

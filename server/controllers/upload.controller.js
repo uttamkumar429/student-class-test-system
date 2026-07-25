@@ -1,14 +1,11 @@
 const cloudinary = require("../config/cloudinary");
 const Profile = require("../models/Profile");
 
-exports.uploadProfilePhoto = async (req, res) => {
+exports.uploadProfilePhoto = asyncHandler(async (req, res) => {
   try {
 
     if (!req.file) {
-      return res.status(400).json({
-        success: false,
-        message: "Please select an image."
-      });
+      throw new ApiError(400, "Please select an image.");
     }
 
     const image = req.file.buffer.toString("base64");
@@ -45,11 +42,14 @@ exports.uploadProfilePhoto = async (req, res) => {
 
     await profile.save();
 
-    res.status(200).json({
-      success: true,
-      message: "Profile photo uploaded successfully.",
-      profilePhoto: profile.profilePhoto,
-    });
+    return successResponse(
+      res,
+      200,
+      "Profile photo uploaded successfully.",
+      {
+        profilePhoto: profile.profilePhoto,
+      }
+    );
 
   } catch (error) {
 
@@ -61,4 +61,4 @@ exports.uploadProfilePhoto = async (req, res) => {
     });
 
   }
-};
+});

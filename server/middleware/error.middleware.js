@@ -18,7 +18,11 @@ const errorHandler = (err, req, res, next) => {
   if (process.env.NODE_ENV !== "test") {
     console.error(err);
   }
-
+  if (err.code === "LIMIT_FILE_SIZE") {
+    return next(
+      new ApiError(400, "Image size must not exceed 2 MB.")
+    );
+  }
   // MongoDB Invalid ObjectId
   if (err.name === "CastError") {
     return errorResponse(

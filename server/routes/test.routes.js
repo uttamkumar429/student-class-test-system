@@ -22,8 +22,14 @@ const validateTest = require("../validators/test.validator");
  *       required: true
  *       content:
  *         application/json:
- *           schema:
- *             type: object
+            title:
+            subject:
+            description:
+            duration:
+            questions:
+            startTime:
+            endTime:
+            status:
  *     responses:
  *       201:
  *         description: Test created successfully.

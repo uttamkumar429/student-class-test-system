@@ -21,10 +21,20 @@ exports.register = async (req, res) => {
       });
     }
 
-    const { fullName, email, phone, password } = req.body;
+    const {
+      fullName,
+      email,
+      phone,
+      password,
+    } = req.body;
+
+    const normalizedEmail = email.trim().toLowerCase();
 
     const existingUser = await User.findOne({
-      $or: [{ email }, { phone }],
+      $or: [
+        { email: normalizedEmail },
+        { phone }
+      ]
     });
 
     if (existingUser) {
@@ -34,12 +44,14 @@ exports.register = async (req, res) => {
       });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 12);
+    const saltRounds = Number(process.env.BCRYPT_SALT_ROUNDS) || 12;
+
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
 
     const user = await User.create({
       userId: generateUserId(),
       fullName,
-      email,
+      email: normalizedEmail,
       phone,
       password: hashedPassword,
     });
@@ -61,7 +73,7 @@ exports.register = async (req, res) => {
     });
 
   } catch (error) {
-    console.error(error);
+    console.error("Register Error:", error);
 
     return res.status(500).json({
       success: false,
@@ -75,7 +87,7 @@ exports.register = async (req, res) => {
 // ===============================
 exports.login = async (req, res) => {
   try {
-    const { email, phone, emailOrPhone, password } = req.body;
+    const { emailOrPhone, password } = req.body;
 
     const loginId = emailOrPhone || email || phone;
 
@@ -111,8 +123,9 @@ exports.login = async (req, res) => {
 
     const token = generateToken(user._id, user.role);
 
-    user.lastLogin = new Date();
-    await user.save();
+    await User.findByIdAndUpdate(user._id, {
+      lastLogin: new Date(),
+    });
 
     return res.status(200).json({
       success: true,

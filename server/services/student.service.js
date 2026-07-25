@@ -58,7 +58,10 @@ const startExam = async (studentId, snapshotId) => {
   .lean();
 
   if (!snapshot) {
-    throw new Error("Test not found.");
+  throw new ApiError(
+      404,
+      "Test not found."
+  )
   }
 
   const now = new Date();

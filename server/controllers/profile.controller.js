@@ -13,11 +13,13 @@ exports.getProfile = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      user: req.user,
-      profile,
+      data: {
+        user: req.user,
+        profile,
+      },
     });
   } catch (error) {
-    console.log(error);
+    console.error("Get Profile Error:", error);
 
     res.status(500).json({
       success: false,
@@ -66,16 +68,17 @@ exports.updateProfile = async (req, res) => {
     }
 
     // Update Profile
-    profile.schoolName = schoolName;
-    profile.className = className;
-    profile.section = section;
-    profile.rollNumber = rollNumber;
-    profile.dob = dob;
-    profile.gender = gender;
-    profile.state = state;
-    profile.district = district;
-    profile.bio = bio;
-
+    Object.assign(profile, {
+      schoolName,
+      className,
+      section,
+      rollNumber,
+      dob,
+      gender,
+      state,
+      district,
+      bio,
+    });
     await profile.save();
 
     // Mark Profile Completed
@@ -90,7 +93,7 @@ exports.updateProfile = async (req, res) => {
     });
 
   } catch (error) {
-    console.log(error);
+    console.error("Update Profile Error:", error);
 
     res.status(500).json({
       success: false,

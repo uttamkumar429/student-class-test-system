@@ -29,7 +29,10 @@ const getStudentReport = async (attemptId) => {
   .lean();
 
   if (!attempt) {
-    throw new Error("Exam attempt not found.");
+    throw new ApiError(
+      404,
+      "Exam attempt not found."
+    );
   }
 
   return await getAttemptDetails(
@@ -172,7 +175,9 @@ const generateStudentReportPDF = async (
 
   report.questions.forEach(
     (question, index) => {
-
+      if (doc.y > 720) {
+          doc.addPage();
+        }
       doc
         .fontSize(13)
         .text(
@@ -209,7 +214,9 @@ const generateStudentReportPDF = async (
 
 const getExamExportData = async (snapshotId) => {
 
-  const snapshot = await TestSnapshot.findById(snapshotId).lean();
+  const snapshot = await TestSnapshot.findById(snapshotId)
+    .select("title subject")
+    .lean();
 
   if (!snapshot) {
     throw new Error("Test snapshot not found.");
@@ -270,7 +277,11 @@ const exportExamCSV = async (snapshotId, res) => {
 
     csv += `${attempt.timeTaken},`;
 
-    csv += `${attempt.submittedAt || ""}\n`;
+    csv += `${
+      attempt.submittedAt
+        ? attempt.submittedAt.toISOString()
+        : ""
+    }\n`;
 
   });
 
@@ -336,17 +347,18 @@ const exportExamExcel = async (snapshotId, res) => {
 
       timeTaken: attempt.timeTaken,
 
-      submittedAt: attempt.submittedAt,
+    submittedAt: attempt.submittedAt
+      ? attempt.submittedAt.toISOString()
+      : "",
 
     });
 
   });
 
   // Header Style
-  worksheet.getRow(1).font = {
-    bold: true,
+  worksheet.getRow(1).alignment = {
+    horizontal: "center",
   };
-
   res.setHeader(
     "Content-Type",
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"

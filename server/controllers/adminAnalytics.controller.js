@@ -34,7 +34,10 @@ exports.getExamStatistics = asyncHandler(async (req, res) => {
 
 exports.getTopPerformers = asyncHandler(async (req, res) => {
 
-  const limit = Number(req.query.limit) || 10;
+  const limit = Math.min(
+    100,
+    Math.max(1, Number(req.query.limit) || 10)
+  );
 
   const result = await getTopPerformersService(
     req.params.snapshotId,
@@ -55,7 +58,10 @@ exports.getTopPerformers = asyncHandler(async (req, res) => {
 
 exports.getWeakStudents = asyncHandler(async (req, res) => {
 
-  const limit = Number(req.query.limit) || 20;
+  const limit = Math.min(
+    100,
+    Math.max(1, Number(req.query.limit) || 20)
+  );
 
   const result = await getWeakStudentsService(
     req.params.snapshotId,

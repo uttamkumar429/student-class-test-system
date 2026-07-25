@@ -8,10 +8,15 @@ const StudentAnswer = require("../models/StudentAnswer");
 const getExamMonitoring = async (snapshotId) => {
 
   // Find Snapshot
-  const snapshot = await TestSnapshot.findById(snapshotId);
+  const snapshot = await TestSnapshot.findById(snapshotId)
+    .select("title subject")
+    .lean();
 
   if (!snapshot) {
-    throw new Error("Test snapshot not found.");
+    throw new ApiError(
+      404,
+      "Test snapshot not found."
+    );
   }
 
   // Total Attempts
@@ -46,10 +51,15 @@ const getExamMonitoring = async (snapshotId) => {
 const getStudentAttempts = async (snapshotId) => {
 
   // Snapshot Exists?
-  const snapshot = await TestSnapshot.findById(snapshotId);
+  const snapshot = await TestSnapshot.findById(snapshotId)
+    .select("_id")
+    .lean();
 
   if (!snapshot) {
-    throw new Error("Test snapshot not found.");
+    throw new ApiError(
+      404,
+      "Test snapshot not found."
+    );
   }
 
   // Load Attempts
@@ -60,7 +70,8 @@ const getStudentAttempts = async (snapshotId) => {
       path: "student",
       select: "userId fullName email phone isBlocked",
     })
-    .sort({ createdAt: -1 });
+    .sort({ createdAt: -1 })
+    .lean();
 
   return attempts.map((attempt) => ({
     attemptId: attempt._id,
@@ -87,10 +98,15 @@ const getStudentAttempts = async (snapshotId) => {
 const getAttemptDetails = async (snapshotId, attemptId) => {
 
   // Check Snapshot
-  const snapshot = await TestSnapshot.findById(snapshotId);
+  const snapshot = await TestSnapshot.findById(snapshotId)
+    .select("title subject questions")
+    .lean();
 
   if (!snapshot) {
-    throw new Error("Test snapshot not found.");
+    throw new ApiError(
+      404,
+      "Test snapshot not found."
+    );
   }
 
   // Load Attempt
@@ -101,7 +117,10 @@ const getAttemptDetails = async (snapshotId, attemptId) => {
     });
 
   if (!attempt) {
-    throw new Error("Exam attempt not found.");
+    throw new ApiError(
+      404,
+      "Test snapshot not found."
+    );
   }
 
   // Check attempt belongs to snapshot

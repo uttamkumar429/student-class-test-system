@@ -90,14 +90,21 @@ app.use("/api/tests", publishRoutes);
 
 // Student APIs
 app.use("/api/student", studentRoutes);
-app.use(errorHandler);
+
 app.use("/api/dashboard", dashboardRoutes);
+
+// app.use(errorHandler);
 // Swagger Documentation
-app.use(
+if(process.env.NODE_ENV!=="production"){
+
+  app.use(
   "/api/docs",
   swaggerUi.serve,
   swaggerUi.setup(swaggerSpec)
-);
+  );
+
+}
+app.use(errorHandler);
 
 // =========================
 // 404 Route
@@ -112,13 +119,13 @@ app.use((req, res) => {
 // =========================
 // Global Error Handler
 // =========================
-app.use((err, req, res, next) => {
-  console.error("Global Error:", err);
+// app.use((err, req, res, next) => {
+//   console.error("Global Error:", err);
 
-  return res.status(err.status || 500).json({
-    success: false,
-    message: err.message || "Internal Server Error",
-  });
-});
+//   return res.status(err.status || 500).json({
+//     success: false,
+//     message: err.message || "Internal Server Error",
+//   });
+// });
 
 module.exports = app;
