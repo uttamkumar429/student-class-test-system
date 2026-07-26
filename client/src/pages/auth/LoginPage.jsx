@@ -14,6 +14,7 @@ import Button from "../../components/ui/Button";
 import api from "../../services/api";
 import { useDispatch } from "react-redux";
 import { loginSuccess } from "../../redux/slices/authSlice";
+import { useNavigate } from "react-router-dom";
 
 function LoginPage() {
     const [formData, setFormData] = useState({
@@ -25,7 +26,7 @@ function LoginPage() {
     const [loading, setLoading] = useState(false);
     // const [loading] = useState(false);
     const dispatch = useDispatch();
-
+    const navigate = useNavigate();
     const handleChange = (e) => {
     const { name, value } = e.target;
 
@@ -45,11 +46,18 @@ function LoginPage() {
         const data = response.data;
 
         dispatch(
-        loginSuccess({
-            user: data.user,
-            token: data.token,
-        })
+            loginSuccess({
+                user: data.user,
+                token: data.token,
+            })
         );
+
+        if (data.user.role === "admin") {
+        navigate("/admin/dashboard");
+        } else {
+        navigate("/student/dashboard");
+        }
+        
         console.log("Token after dispatch:", localStorage.getItem("token"));
         console.log("User after dispatch:", localStorage.getItem("user"));
         console.log("Login Success:", data);

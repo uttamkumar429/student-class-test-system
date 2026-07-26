@@ -28,7 +28,7 @@ const dashboardRoutes = require("./routes/dashboard.routes");
 const adminExamRoutes = require("./routes/adminExam.routes");
 const adminAnalyticsRoutes = require("./routes/adminAnalytics.routes");
 const adminReportRoutes=require("./routes/adminReport.routes");
-
+const adminStudentRoutes = require("./routes/adminStudent.routes");
 
 // =========================
 // Global Middleware
@@ -74,6 +74,10 @@ app.use(
 app.use(
 "/api/admin/reports",
 adminReportRoutes
+);
+app.use(
+  "/api/admin/students",
+  adminStudentRoutes
 );
 
 // Profile
