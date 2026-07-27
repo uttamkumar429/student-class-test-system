@@ -61,7 +61,7 @@ const questionSchema = new mongoose.Schema(
 
     marks: {
       type: Number,
-      default: 1,
+      min:1,
     },
 
     createdBy: {
