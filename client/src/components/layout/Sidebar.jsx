@@ -11,6 +11,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { logout } from "../../redux/slices/authSlice";
 
+
 function Sidebar() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -31,6 +32,12 @@ function Sidebar() {
       title: "Students",
       icon: Users,
       path: "/admin/students",
+    },
+  
+    {
+      title: "Exams",
+      icon: ClipboardList,
+      path: "/admin/exams",
     },
     {
       title: "Tests",

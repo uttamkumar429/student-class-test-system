@@ -13,17 +13,17 @@
     "test:student": "cross-env NODE_ENV=test jest tests/student",
     "test:admin": "cross-env NODE_ENV=test jest tests/admin"
   },
-  "keywords":[
-  "nodejs",
-  "express",
-  "mongodb",
-  "jwt",
-  "student-management",
-  "exam-system",
-  "education",
-  "api",
-  "backend",
-  "jest"
+  "keywords": [
+    "nodejs",
+    "express",
+    "mongodb",
+    "jwt",
+    "student-management",
+    "exam-system",
+    "education",
+    "api",
+    "backend",
+    "jest"
   ],
   "author": "Uttam",
   "license": "ISC",
@@ -41,6 +41,7 @@
     "mongoose": "^9.7.3",
     "morgan": "^1.11.0",
     "multer": "^2.2.0",
+    "nanoid": "^6.0.0",
     "pdfkit": "^0.19.1",
     "swagger-jsdoc": "^6.3.0",
     "swagger-ui-express": "^5.0.1",

@@ -2,6 +2,7 @@ import { Routes, Route } from "react-router-dom";
 import LoginPage from "../pages/auth/LoginPage";
 import AdminDashboard from "../pages/admin/AdminDashboard";
 import Students from "../pages/admin/Students";
+import Exams from "../pages/admin/Exams";
 import Tests from "../pages/admin/Tests";
 import Results from "../pages/admin/Results";
 import Settings from "../pages/admin/Settings";
@@ -31,7 +32,14 @@ function AppRoutes() {
                 </ProtectedRoute>
             }
         />
-
+        <Route
+            path="/admin/exams"
+            element={
+                <ProtectedRoute>
+                <Exams />
+                </ProtectedRoute>
+            }
+        />
         <Route
             path="/admin/tests"
             element={
