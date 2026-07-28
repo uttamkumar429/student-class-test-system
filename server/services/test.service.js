@@ -1,6 +1,7 @@
 const Test = require("../models/Test");
 const Question = require("../models/Question");
 const ApiError = require("../utils/ApiError");
+const TestSnapshot = require("../models/TestSnapshot");
 // =====================================
 // COMMON BUSINESS LOGIC
 // =====================================
@@ -338,6 +339,82 @@ const deleteTest = async (id) => {
   return await Test.findByIdAndDelete(id);
 
 };
+// =====================================
+// PUBLISH TEST
+// =====================================
+
+const publishTest = async (id) => {
+
+  const test = await Test.findById(id)
+    .populate("questions");
+
+  if (!test) {
+    throw new ApiError(
+      404,
+      "Test not found."
+    );
+  }
+
+  if (test.status === "published") {
+    throw new ApiError(
+      409,
+      "Test is already published."
+    );
+  }
+
+  // Create Snapshot
+
+  const snapshot = await TestSnapshot.create({
+
+    testId: test._id,
+
+    title: test.title,
+
+    subject: test.subject,
+
+    duration: test.duration,
+
+    totalMarks: test.totalMarks,
+
+    totalQuestions: test.totalQuestions,
+
+    startTime: test.startTime,
+
+    endTime: test.endTime,
+
+    questions: test.questions.map((question) => ({
+      questionId: question._id,
+
+      subject: question.subject,
+
+      chapter: question.chapter,
+
+      difficulty: question.difficulty,
+
+      question: question.question,
+
+      optionA: question.optionA,
+
+      optionB: question.optionB,
+
+      optionC: question.optionC,
+
+      optionD: question.optionD,
+
+      correctAnswer: question.correctAnswer,
+
+      explanation: question.explanation,
+
+      marks: question.marks,
+    })),
+  });
+
+  test.status = "published";
+
+  await test.save();
+
+  return snapshot;
+};
 
 module.exports = {
   createTest,
@@ -346,4 +423,5 @@ module.exports = {
   updateTest,
   deleteTest,
   processQuestions,
+  publishTest,
 };

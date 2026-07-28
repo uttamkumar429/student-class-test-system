@@ -11,6 +11,7 @@ const {
   getTestById: getTestByIdService,
   updateTest: updateTestService,
   deleteTest: deleteTestService,
+  publishTest: publishTestService,
 } = require("../services/test.service");
 
 // CREATE TEST
@@ -128,6 +129,24 @@ exports.deleteTest = asyncHandler(async (req, res) => {
     res,
     200,
     "Test deleted successfully."
+  );
+
+});
+// =====================================
+// PUBLISH TEST
+// =====================================
+
+exports.publishTest = asyncHandler(async (req, res) => {
+
+  const snapshot = await publishTestService(
+    req.params.id
+  );
+
+  return successResponse(
+    res,
+    200,
+    "Test published successfully.",
+    snapshot
   );
 
 });

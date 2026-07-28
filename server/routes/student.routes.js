@@ -248,4 +248,10 @@ router.get(
   authorize("student"),
   studentController.getResultHistory
 );
+router.get(
+  "/exams",
+  protect,
+  authorize("student"),
+  studentController.getAvailableExams
+);
 module.exports = router;

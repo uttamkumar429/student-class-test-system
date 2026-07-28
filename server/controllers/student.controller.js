@@ -159,3 +159,25 @@ exports.getResultHistory = asyncHandler(async (req, res) => {
   );
 
 });
+
+const TestSnapshot = require("../models/TestSnapshot");
+
+exports.getAvailableExams = asyncHandler(async (req, res) => {
+
+  const exams = await TestSnapshot.find()
+    .select(
+      "title subject duration totalMarks totalQuestions startTime endTime"
+    )
+    .sort({ startTime: 1 })
+    .lean();
+
+  return successResponse(
+    res,
+    200,
+    "Available exams fetched successfully.",
+    {
+      exams,
+    }
+  );
+
+});

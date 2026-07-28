@@ -157,6 +157,11 @@ router.delete(
   authorize("admin", "superAdmin"),
   testController.deleteTest
 );
-
+router.post(
+  "/:id/publish",
+  protect,
+  authorize("admin"),
+  testController.publishTest
+);
 
 module.exports = router;
