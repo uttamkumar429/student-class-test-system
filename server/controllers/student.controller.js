@@ -1,9 +1,4 @@
 const asyncHandler = require("../middleware/asyncHandler");
-
-// const {
-//   successResponse,
-//   errorResponse,
-// } = require("../utils/response");
 const {
   successResponse,
   
@@ -12,6 +7,7 @@ const {
 
 const {
   getDashboard: getDashboardService,
+  getAvailableExams: getAvailableExamsService,
   startExam: startExamService,
   getExamQuestions: getExamQuestionsService,
   saveAnswer: saveAnswerService,
@@ -32,6 +28,20 @@ exports.getDashboard = asyncHandler(async (req, res) => {
     200,
     "Dashboard fetched successfully.",
     dashboard
+  );
+
+});
+
+exports.getAvailableExams = asyncHandler(async (req, res) => {
+
+  const exams = await getAvailableExamsService();
+  return successResponse(
+    res,
+    200,
+    "Available exams fetched successfully.",
+    {
+      exams,
+    }
   );
 
 });
@@ -79,7 +89,8 @@ exports.saveAnswer = asyncHandler(async (req, res) => {
     req.user._id,
     req.params.attemptId,
     req.body.questionId,
-    req.body.selectedAnswer
+    req.body.selectedAnswer,
+    req.body.currentQuestionIndex
   );
 
   return successResponse(
@@ -160,24 +171,4 @@ exports.getResultHistory = asyncHandler(async (req, res) => {
 
 });
 
-const TestSnapshot = require("../models/TestSnapshot");
 
-exports.getAvailableExams = asyncHandler(async (req, res) => {
-
-  const exams = await TestSnapshot.find()
-    .select(
-      "title subject duration totalMarks totalQuestions startTime endTime"
-    )
-    .sort({ startTime: 1 })
-    .lean();
-
-  return successResponse(
-    res,
-    200,
-    "Available exams fetched successfully.",
-    {
-      exams,
-    }
-  );
-
-});

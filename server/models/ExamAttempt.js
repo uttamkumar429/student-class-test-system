@@ -17,6 +17,7 @@ const examAttemptSchema = new mongoose.Schema(
         index: true
     },
 
+
     startedAt:{
         type:Date,
         default:Date.now
@@ -29,12 +30,28 @@ const examAttemptSchema = new mongoose.Schema(
     status: {
         type: String,
         enum: [
-            "in-progress",
-            "submitted"
+            "IN-PROGRESS",
+            "SUBMITTED"
         ],
-        default: "in-progress",
+        default: "IN-PROGRESS",
         index: true
     },
+    currentQuestionIndex: {
+        type: Number,
+        default: 0,
+    },
+
+    visitedQuestions: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+        },
+    ],
+
+    reviewQuestions: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+        },
+    ],
 
     totalQuestions:{
         type:Number,
@@ -68,6 +85,16 @@ const examAttemptSchema = new mongoose.Schema(
 }
 
 );
+examAttemptSchema.index(
+    {
+        student: 1,
+        testSnapshot: 1
+    },
+    {
+        unique: true
+    }
+);
+
 
 module.exports=mongoose.model(
     "ExamAttempt",

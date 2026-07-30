@@ -23,10 +23,10 @@ const handleStartExam = async () => {
     setLoading(true);
 
     const response = await startExam(exam._id);
-
-    toast.success(response.message);
-
     console.log(response);
+    toast.success(response.message);
+    // Navigate to Exam Page using Attempt ID
+    navigate(`/student/exam/${response.data._id}`);
 
     // Next step:
     // Navigate after attempt is created

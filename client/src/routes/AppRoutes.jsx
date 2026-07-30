@@ -31,7 +31,12 @@ function AppRoutes() {
         />
         <Route
             path="/admin/tests/create"
-            element={<CreateTest />}
+            element={
+              <ProtectedRoute>
+                <CreateTest />
+              </ProtectedRoute>
+            }
+            
         />
         <Route
             path="/admin/students"
@@ -90,6 +95,10 @@ function AppRoutes() {
                     path="exam/instructions"
                     element={<ExamInstructions />}
                 />
+                  {/* New */}
+                {/* <Route path="exam/:attemptId" element={<ExamPage />} /> */}
+                  {/* Future */}
+                {/* <Route path="result/:attemptId" element={<StudentResult />} /> */}
             </Route>
 
         </Routes>

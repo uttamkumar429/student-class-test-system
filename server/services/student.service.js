@@ -1,7 +1,7 @@
 const ExamAttempt = require("../models/ExamAttempt");
 const TestSnapshot = require("../models/TestSnapshot");
 const StudentAnswer = require("../models/StudentAnswer");
-
+const ApiError = require("../utils/ApiError");
 // ==========================================
 // STUDENT DASHBOARD
 // ==========================================
@@ -44,7 +44,27 @@ const getDashboard = async () => {
   };
 
 };
+// ==========================================
+// AVAILABLE EXAMS
+// ==========================================
+const getAvailableExams = async () => {
 
+  const now = new Date();
+
+  const exams = await TestSnapshot.find({
+    endTime: { $gte: now },
+  })
+    .sort({ startTime: 1 })
+    .select(
+      "title subject duration totalMarks totalQuestions startTime endTime"
+    )
+    .lean();
+
+  return exams.map((exam) => ({
+    ...exam,
+    status: exam.startTime <= now ? "ACTIVE" : "UPCOMING",
+  }));
+};
 
 // START EXAM
 // =====================================
@@ -68,11 +88,17 @@ const startExam = async (studentId, snapshotId) => {
 
   // Check Exam Time
   if (now < snapshot.startTime) {
-    throw new Error("Exam has not started yet.");
+    throw new ApiError(
+      400,
+      "Exam has not started yet."
+    );
   }
 
   if (now > snapshot.endTime) {
-    throw new Error("Exam has already ended.");
+  throw new ApiError(
+      409,
+      "Exam has already ended."
+  );
   }
 
   // Check Existing Attempt
@@ -82,7 +108,15 @@ const startExam = async (studentId, snapshotId) => {
   });
 
   if (existingAttempt) {
-    throw new Error("You have already started this exam.");
+
+    if (existingAttempt.status === "IN-PROGRESS") {
+      return existingAttempt;
+    }
+
+    throw new ApiError(
+      400,
+      "Exam already submitted."
+    );
   }
 
   // Create Attempt
@@ -120,7 +154,7 @@ const checkExamExpiry = async (
       attempt._id
     );
 
-    throw new Error(
+    throw new ApiError(409,
       "Exam time is over. Your exam has been submitted automatically."
     );
 
@@ -139,17 +173,17 @@ const getExamQuestions = async (studentId, attemptId) => {
   );
 
   if (!attempt) {
-    throw new Error("Exam attempt not found.");
+    throw new ApiError(404,"Exam attempt not found.");
   }
 
   // Security Check
   if (attempt.student.toString() !== studentId.toString()) {
-    throw new Error("Unauthorized access.");
+    throw new ApiError(401,"Unauthorized access.");
   }
 
   // Already Submitted?
-  if (attempt.status === "submitted") {
-    throw new Error("Exam already submitted.");
+  if (attempt.status === "SUBMITTED") {
+    throw new ApiError(409,"Exam already submitted.");
   }
 
   // Load Snapshot
@@ -162,7 +196,7 @@ const getExamQuestions = async (studentId, attemptId) => {
   .lean();
 
   if (!snapshot) {
-    throw new Error("Test snapshot not found.");
+    throw new ApiError(404,"Test snapshot not found.");
   }
   // =====================================
   // AUTO SUBMIT IF EXAM TIME IS OVER
@@ -209,16 +243,16 @@ const getExamQuestions = async (studentId, attemptId) => {
 // ======================================
 // SAVE ANSWER
 // ======================================
+
 const saveAnswer = async (
 
   studentId,
 
   attemptId,
-
+  
   questionId,
-
-  selectedAnswer
-
+  selectedAnswer,
+  currentQuestionIndex
 ) => {
 
   // Check Attempt
@@ -227,7 +261,7 @@ const saveAnswer = async (
 
   if (!attempt) {
 
-    throw new Error("Exam attempt not found.");
+    throw new ApiError(404,"Exam attempt not found.");
 
   }
 
@@ -235,15 +269,15 @@ const saveAnswer = async (
 
   if (attempt.student.toString() !== studentId.toString()) {
 
-    throw new Error("Unauthorized access.");
+    throw new ApiError(401,"Unauthorized access.");
 
   }
 
   // Already Submitted?
 
-  if (attempt.status === "submitted") {
+  if (attempt.status ==="SUBMITTED") {
 
-    throw new Error("Exam already submitted.");
+    throw new ApiError(409,"Exam already submitted.");
 
   }
 
@@ -255,7 +289,7 @@ const saveAnswer = async (
 
   if (!snapshot) {
 
-    throw new Error("Snapshot not found.");
+    throw new ApiError(404,"Snapshot not found.");
 
   }
     // ======================================
@@ -279,7 +313,7 @@ const saveAnswer = async (
 
   if (!question) {
 
-    throw new Error("Question not found.");
+    throw new ApiError(404,"Question not found.");
 
   }
 
@@ -299,47 +333,54 @@ const saveAnswer = async (
   });
 
 
-  if (existingAnswer) {
+let savedAnswer;
+
+if (existingAnswer) {
 
     existingAnswer.selectedAnswer = selectedAnswer;
-
-    existingAnswer.correctAnswer =
-      question.correctAnswer;
-
+    existingAnswer.correctAnswer = question.correctAnswer;
     existingAnswer.isCorrect = isCorrect;
+    existingAnswer.marksAwarded = isCorrect ? question.marks : 0;
 
-    existingAnswer.marksAwarded = isCorrect
-      ? question.marks
-      : 0;
+    await existingAnswer.save();
 
-      await existingAnswer.save();
+    savedAnswer = existingAnswer;
 
-    
- 
-       return existingAnswer;
-    }
+} else {
 
-  // Create New Answer
+    savedAnswer = await StudentAnswer.create({
+        attempt: attemptId,
+        questionId,
+        selectedAnswer,
+        correctAnswer: question.correctAnswer,
+        isCorrect,
+        marksAwarded: isCorrect ? question.marks : 0,
+    });
 
-  const answer = await StudentAnswer.create({
+}
+if (
+  currentQuestionIndex < 0 ||
+  currentQuestionIndex >= snapshot.questions.length
+) {
+  throw new ApiError(400,"Invalid question index.");
+}
 
-    attempt: attemptId,
 
-    questionId,
+attempt.currentQuestionIndex = currentQuestionIndex;
 
-    selectedAnswer,
+const alreadyVisited = attempt.visitedQuestions.some(
+  (id) => id.toString() === questionId.toString()
+);
 
-    correctAnswer: question.correctAnswer,
+if (!alreadyVisited) {
+  attempt.visitedQuestions.push(questionId);
+}
 
-    isCorrect,
+await attempt.save();
 
-    marksAwarded: isCorrect
-      ? question.marks
-      : 0,
+return savedAnswer;
 
-  });
 
-  return answer;
 
 };
 // ======================================
@@ -351,13 +392,13 @@ const resumeExam = async (studentId) => {
   // Find Running Attempt
   const attempt = await ExamAttempt.findOne({
   student: studentId,
-  status:"in-progress"
+  status:"IN-PROGRESS"
   })
   .select(
-  "_id totalQuestions status testSnapshot"
+    "_id totalQuestions status testSnapshot currentQuestionIndex visitedQuestions reviewQuestions"
   );
   if (!attempt) {
-    throw new Error("No running exam found.");
+    throw new ApiError(404,"No running exam found.");
   }
 
   // Load Snapshot
@@ -370,7 +411,7 @@ const resumeExam = async (studentId) => {
   .lean();
 
   if (!snapshot) {
-    throw new Error("Test snapshot not found.");
+    throw new ApiError(404,"Test snapshot not found.");
   }
 
   // Remaining Time
@@ -391,27 +432,24 @@ const resumeExam = async (studentId) => {
       attempt: attempt._id,
     });
 
-  return {
+    return {
+      attemptId: attempt._id,
+      snapshotId: snapshot._id,
+      title: snapshot.title,
+      subject: snapshot.subject,
 
-    attemptId: attempt._id,
+      totalQuestions: attempt.totalQuestions,
+      answeredQuestions: answeredQuestions,
 
-    snapshotId: snapshot._id,
+      currentQuestionIndex: attempt.currentQuestionIndex,
+      visitedQuestions: attempt.visitedQuestions,
+      reviewQuestions: attempt.reviewQuestions,
 
-    title: snapshot.title,
-
-    subject: snapshot.subject,
-
-    totalQuestions: attempt.totalQuestions,
-
-    answeredQuestions,
-
-    remainingTime,
-
-    status: attempt.status,
+      remainingTime: remainingTime,
+      status: attempt.status,
+    };
 
   };
-
-};
 
 // SUBMIT EXAM
 // ======================================
@@ -421,17 +459,17 @@ const submitExam = async (studentId, attemptId) => {
   const attempt = await ExamAttempt.findById(attemptId);
 
   if (!attempt) {
-    throw new Error("Exam attempt not found.");
+    throw new ApiError(404,"Exam attempt not found.");
   }
 
   // Security Check
   if (attempt.student.toString() !== studentId.toString()) {
-    throw new Error("Unauthorized access.");
+    throw new ApiError(401,"Unauthorized access.");
   }
 
   // Already Submitted?
-  if (attempt.status === "submitted") {
-    throw new Error("Exam already submitted.");
+  if (attempt.status === "SUBMITTED") {
+    throw new ApiError(409,"Exam already submitted.");
   }
 
   // Load Answers
@@ -457,24 +495,26 @@ const submitExam = async (studentId, attemptId) => {
   // Time Taken (Minutes)
   const submittedAt = new Date();
 
-  const timeTaken = Math.ceil(
-    (submittedAt - attempt.startedAt) / (1000 * 60)
+  const timeTaken = Math.floor(
+      (submittedAt - attempt.startedAt) / 1000
   );
-
   // Update Attempt
   attempt.obtainedMarks = obtainedMarks;
   attempt.percentage = percentage;
   attempt.timeTaken = timeTaken;
   attempt.submittedAt = submittedAt;
-  attempt.status = "submitted";
+  attempt.status = "SUBMITTED";
 
   await attempt.save();
 
   return {
+    attemptId: attempt._id,
+    status: attempt.status,
     obtainedMarks,
     totalMarks: attempt.totalMarks,
     percentage,
     timeTaken,
+    submittedAt,
   };
 
 };
@@ -487,17 +527,17 @@ const getResult = async (studentId, attemptId) => {
   const attempt = await ExamAttempt.findById(attemptId);
 
   if (!attempt) {
-    throw new Error("Exam attempt not found.");
+    throw new ApiError(404,"Exam attempt not found.");
   }
 
   // Security Check
   if (attempt.student.toString() !== studentId.toString()) {
-    throw new Error("Unauthorized access.");
+    throw new ApiError(401,"Unauthorized access.");
   }
 
   // Result only after submission
-  if (attempt.status !== "submitted") {
-    throw new Error("Exam is not submitted yet.");
+  if (attempt.status !== "SUBMITTED") {
+    throw new ApiError(400,"Exam is not submitted yet.");
   }
 
   // Load Snapshot
@@ -510,7 +550,7 @@ const getResult = async (studentId, attemptId) => {
   .lean();
 
   if (!snapshot) {
-    throw new Error("Test snapshot not found.");
+    throw new ApiError(404,"Test snapshot not found.");
   }
 
   // Load Answers
@@ -529,7 +569,10 @@ const getResult = async (studentId, attemptId) => {
 
   const skippedAnswers =
     attempt.totalQuestions - answers.length;
-
+  const status =
+      attempt.percentage >= PASS_PERCENTAGE
+        ? "Pass"
+        : "Fail"
   return {
     examTitle: snapshot.title,
     subject: snapshot.subject,
@@ -541,10 +584,8 @@ const getResult = async (studentId, attemptId) => {
     skippedAnswers,
     timeTaken: attempt.timeTaken,
     submittedAt: attempt.submittedAt,
-    status:
-      attempt.percentage >= 33
-        ? "Pass"
-        : "Fail",
+    Status,
+
   };
 
 };
@@ -556,7 +597,7 @@ const getResultHistory = async (studentId) => {
   // Load Submitted Attempts
   const attempts = await ExamAttempt.find({
     student: studentId,
-    status: "submitted",
+    status: "SUBMITTED",
   })
     .populate({
       path: "testSnapshot",
@@ -568,6 +609,7 @@ const getResultHistory = async (studentId) => {
   const results = attempts.map((attempt) => ({
     attemptId: attempt._id,
     examTitle: attempt.testSnapshot?.title || "Unknown Test",
+    totalQuestions: attempt.totalQuestions,
     subject: attempt.testSnapshot?.subject || "Unknown Subject",
     obtainedMarks: attempt.obtainedMarks,
     totalMarks: attempt.totalMarks,
@@ -580,6 +622,7 @@ const getResultHistory = async (studentId) => {
 };
 module.exports = {
   getDashboard,
+  getAvailableExams,   // ← add
   startExam,
   getExamQuestions,
   saveAnswer,

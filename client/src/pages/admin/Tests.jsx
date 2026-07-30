@@ -10,9 +10,6 @@ function Tests() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const navigate = useNavigate();
-  useEffect(() => {
-    fetchTests();
-  }, []);
 
   const fetchTests = async () => {
     try {
@@ -27,6 +24,10 @@ function Tests() {
       setLoading(false);
     }
   };
+    useEffect(() => {
+    fetchTests();
+  }, []);
+
   const handlePublish = async (id) => {
   try {
     await publishTest(id);
