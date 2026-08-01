@@ -1,3 +1,8 @@
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+
+import { fetchDashboardThunk } from "../../redux/studentDashboard";
+
 import DashboardHeader from "../../components/students/dashboard/DashboardHeader";
 import StudentStats from "../../components/students/dashboard/StudentStats";
 import UpcomingExams from "../../components/students/dashboard/UpcomingExams";
@@ -7,37 +12,69 @@ import QuickActions from "../../components/students/dashboard/QuickActions";
 import AnnouncementCard from "../../components/students/dashboard/AnnouncementCard";
 
 function StudentDashboard() {
-  // Temporary
-  // Later we'll get this from Redux/Profile API
-  const userName = "Uttam";
+  const dispatch = useDispatch();
+
+  const {
+    loading,
+    error,
+    student,
+    stats,
+    upcoming,
+    
+    completed,
+  } = useSelector(
+    (state) => state.studentDashboard
+  );
+
+  useEffect(() => {
+    dispatch(fetchDashboardThunk());
+  }, [dispatch]);
+
+  if (loading) {
+    return (
+      <div className="flex h-96 items-center justify-center">
+        <h2 className="text-xl font-semibold">
+          Loading Dashboard...
+        </h2>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="rounded-xl bg-red-100 p-6 text-red-600">
+        {error}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
 
-      {/* Header */}
       <DashboardHeader
-        userName={userName}
+        userName={student?.fullName}
       />
 
-      {/* Statistics */}
-      <StudentStats />
+      <StudentStats
+        stats={stats}
+      />
 
-      {/* Quick Actions */}
       <QuickActions />
 
-      {/* Upcoming Exams */}
-      <UpcomingExams />
+      <UpcomingExams
+        exams={upcoming}
+      />
 
-      {/* Results + Analytics */}
       <div className="grid gap-8 xl:grid-cols-2">
 
-       <RecentResultTable />
+        <RecentResultTable
+          results={completed}
+        />
 
         <PerformanceChart />
 
       </div>
 
-      {/* Announcements */}
       <AnnouncementCard />
 
     </div>

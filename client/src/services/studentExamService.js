@@ -1,52 +1,51 @@
 import api from "./api";
 
-/**
- * Fetch all available exams for the logged-in student.
- */
-export const getAvailableExams = async () => {
-  const { data } = await api.get("/student/exams");
-  return data;
-};
+class StudentExamService {
 
-/**
- * Start a new exam attempt.
- * @param {string} snapshotId
- */
-export const startExam = async (snapshotId) => {
-  const { data } = await api.post(
-    `/student/tests/${snapshotId}/start`
-  );
+  async getAvailableExams() {
+    const { data } = await api.get("/student/exams");
     return data;
-};
-/**
- * Resume an existing exam attempt.
- */
-export const resumeExam = async () => {
-  const { data } = await api.get("/student/exam/resume");
-  return data;
-};
-/**
- * Save answer for a question.
- * @param {string} attemptId
- * @param {Object} payload
- */
-export const saveAnswer = async (attemptId, payload) => {
-  const { data } = await api.post(
-    `/student/attempt/${attemptId}/answer`,
-    payload
-  );
+  }
 
-  return data;
-};
+  async startExam(snapshotId) {
+    const { data } = await api.post(
+      `/student/tests/${snapshotId}/start`
+    );
+    return data;
+  }
 
-/**
- * Submit exam attempt.
- * @param {string} attemptId
- */
-export const submitExam = async (attemptId) => {
-  const { data } = await api.post(
-    `/student/attempt/${attemptId}/submit`
-  );
+  async resumeExam() {
+    const { data } = await api.get("/student/exam/resume");
+    return data;
+  }
 
-  return data;
-};
+  async saveAnswer(attemptId, payload) {
+    const { data } = await api.post(
+      `/student/attempt/${attemptId}/answer`,
+      payload
+    );
+    return data;
+  }
+
+  async submitExam(attemptId) {
+    const { data } = await api.post(
+      `/student/attempt/${attemptId}/submit`
+    );
+    return data;
+  }
+
+async getExamQuestions(attemptId) {
+
+    const { data } = await api.get(
+
+        `/student/exam/${attemptId}`
+
+    );
+
+    return data;
+
+}
+}
+const studentExamService = new StudentExamService();
+
+export default studentExamService;

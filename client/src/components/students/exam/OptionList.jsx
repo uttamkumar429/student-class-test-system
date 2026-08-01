@@ -1,30 +1,41 @@
 const OptionList = ({
-  options,
+  options = [],
   selectedAnswer,
   onOptionSelect,
+  disabled = false,
 }) => {
-  if (!options?.length) {
+  if (!options.length) {
     return (
-      <p className="text-gray-500">
-        No options available.
-      </p>
+      <div className="rounded-xl border border-dashed border-slate-300 p-6 text-center">
+        <p className="text-slate-500">
+          No options available.
+        </p>
+      </div>
     );
   }
 
   return (
-    <div className="space-y-4">
+    <fieldset className="space-y-4">
+
+      <legend className="sr-only">
+        Question Options
+      </legend>
+
       {options.map((option, index) => {
-        const isSelected = selectedAnswer === option.value;
+
+        const isSelected =
+          selectedAnswer === option.value;
 
         return (
+
           <label
             key={option.value}
             className={`
               flex
               cursor-pointer
-              items-center
+              items-start
               gap-4
-              rounded-lg
+              rounded-xl
               border
               p-4
               transition-all
@@ -32,33 +43,83 @@ const OptionList = ({
 
               ${
                 isSelected
-                  ? "border-blue-600 bg-blue-50"
-                  : "border-gray-300 hover:border-blue-400 hover:bg-gray-50"
+                  ? "border-blue-600 bg-blue-50 shadow-sm"
+                  : "border-slate-300 hover:border-blue-400 hover:bg-slate-50"
+              }
+
+              ${
+                disabled
+                  ? "cursor-not-allowed opacity-70"
+                  : ""
               }
             `}
           >
+
             <input
               type="radio"
               name="question-option"
               value={option.value}
               checked={isSelected}
+              disabled={disabled}
               onChange={() =>
                 onOptionSelect(option.value)
               }
-              className="h-4 w-4"
+              className="mt-1 h-4 w-4"
             />
 
-            <span className="font-medium">
-              {String.fromCharCode(65 + index)}.
-            </span>
+            {/* Option Label */}
 
-            <span>
-              {option.text}
-            </span>
+            <div className="flex flex-1 gap-3">
+
+              <span
+                className={`
+                  flex
+                  h-7
+                  w-7
+                  items-center
+                  justify-center
+                  rounded-full
+                  text-sm
+                  font-semibold
+
+                  ${
+                    isSelected
+                      ? "bg-blue-600 text-white"
+                      : "bg-slate-200 text-slate-700"
+                  }
+                `}
+              >
+                {String.fromCharCode(65 + index)}
+              </span>
+
+              <div className="flex-1">
+
+                <p className="whitespace-pre-wrap text-slate-700">
+                  {option.text}
+                </p>
+
+                {/* Future Image Support */}
+
+                {option.image && (
+                  <img
+                    src={option.image}
+                    alt={`Option ${index + 1}`}
+                    loading="lazy"
+                    className="mt-3 max-h-48 rounded-lg border border-slate-200"
+                  />
+                )}
+
+              </div>
+
+            </div>
+
           </label>
+
         );
+
       })}
-    </div>
+
+    </fieldset>
   );
 };
 

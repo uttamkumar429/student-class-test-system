@@ -12,6 +12,8 @@ const CountdownTimer = ({
   const intervalRef = useRef(null);
 
   const timeRef = useRef(remainingTime);
+  const submittedRef = useRef(false);
+
   useEffect(() => {
     timeRef.current = remainingTime;
 }, [remainingTime]);
@@ -23,11 +25,16 @@ useEffect(() => {
 
             clearInterval(intervalRef.current);
 
-            onTimeUp?.();
+            if (!submittedRef.current) {
+
+                submittedRef.current = true;
+
+                onTimeUp?.();
+
+            }
 
             return;
         }
-
         const nextTime = timeRef.current - 1;
 
         timeRef.current = nextTime;
@@ -38,7 +45,11 @@ useEffect(() => {
 
     return () => {
 
-        clearInterval(intervalRef.current);
+        if (intervalRef.current) {
+
+            clearInterval(intervalRef.current);
+
+        }
 
         intervalRef.current = null;
 
@@ -55,9 +66,22 @@ const seconds = remainingTime % 60;
 
 const format = (time)=>
 String(time).padStart(2,"0");
+const timerColor =
+        remainingTime <= 60
+            ? "border-red-500 bg-red-100 text-red-700 animate-pulse"
+            : remainingTime <= 300
+            ? "border-orange-400 bg-orange-100 text-orange-700"
+            : remainingTime <= 600
+            ? "border-yellow-400 bg-yellow-100 text-yellow-700"
+            : "border-green-400 bg-green-100 text-green-700";
     return (
+        
 
-    <div className="rounded-xl border border-red-200 bg-red-50 px-5 py-3 shadow">
+        <div
+          role="timer"
+          aria-live="polite"
+          className={`rounded-xl border px-5 py-3 shadow ${timerColor}`}
+        >
 
         <p className="text-sm font-medium text-gray-500">
 

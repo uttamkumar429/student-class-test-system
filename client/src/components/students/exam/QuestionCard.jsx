@@ -2,57 +2,91 @@ import OptionList from "./OptionList";
 
 const QuestionCard = ({
   question,
-  questionNumber,
-  totalQuestions,
+  questionNumber = 1,
+  totalQuestions = 0,
   selectedAnswer,
   onOptionSelect,
 }) => {
   if (!question) {
     return (
-      <div className="rounded-lg bg-white p-6 shadow-md">
-        <p className="text-center text-gray-500">
-          No Question Available
-        </p>
+      <div className="rounded-xl border border-slate-200 bg-white p-10 shadow-sm">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-slate-700">
+            No Question Available
+          </h2>
+
+          <p className="mt-2 text-slate-500">
+            Unable to load the current question.
+          </p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="rounded-lg bg-white p-6 shadow-md">
-
+    <article
+      aria-label={`Question ${questionNumber}`}
+      className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
+    >
       {/* Header */}
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-lg font-semibold">
-          Question {questionNumber} / {totalQuestions}
-        </h2>
 
-        <span className="rounded bg-blue-100 px-3 py-1 text-sm font-medium text-blue-700">
-          {question.marks} Marks
-        </span>
+      <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+
+        <div>
+
+          <span className="rounded-md bg-blue-50 px-3 py-1 text-sm font-semibold text-blue-700">
+            Question {questionNumber} of {totalQuestions}
+          </span>
+
+        </div>
+
+        <div className="flex items-center gap-3">
+
+          <span className="rounded-lg bg-green-100 px-3 py-1 text-sm font-semibold text-green-700">
+            {question.marks} Marks
+          </span>
+
+        </div>
+
       </div>
 
       {/* Question */}
-      <p className="mb-6 text-lg leading-7">
-        {question.questionText}
-      </p>
 
-      {/* Future Image Support */}
+      <div className="mb-6">
+
+        <p className="whitespace-pre-wrap text-lg leading-8 text-slate-800">
+          {question.questionText}
+        </p>
+
+      </div>
+
+      {/* Question Image */}
+
       {question.questionImage && (
-        <img
-          src={question.questionImage}
-          alt="Question"
-          className="mb-6 max-h-80 rounded-lg"
-        />
+        <div className="mb-6">
+
+          <img
+            src={question.questionImage}
+            alt={`Question ${questionNumber}`}
+            loading="lazy"
+            onError={(e) => {
+              e.currentTarget.style.display = "none";
+            }}
+            className="max-h-96 w-full rounded-lg border border-slate-200 object-contain"
+          />
+
+        </div>
       )}
 
       {/* Options */}
+
       <OptionList
-        options={question.options}
+        options={question.options || []}
         selectedAnswer={selectedAnswer}
         onOptionSelect={onOptionSelect}
       />
 
-    </div>
+    </article>
   );
 };
 

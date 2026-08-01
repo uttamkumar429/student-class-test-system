@@ -1,13 +1,36 @@
-const STATUS_COLORS = {
-  NOT_VISITED: "bg-gray-300 text-gray-700",
+const STATUS_COLORS = Object.freeze({
+  NOT_VISITED: "bg-slate-200 text-slate-700",
   VISITED: "bg-red-500 text-white",
   ANSWERED: "bg-green-600 text-white",
   REVIEW: "bg-purple-600 text-white",
   ANSWERED_REVIEW: "bg-orange-500 text-white",
-};
+});
+
+const LEGEND = [
+  {
+    color: "bg-slate-200",
+    label: "Not Visited",
+  },
+  {
+    color: "bg-red-500",
+    label: "Visited",
+  },
+  {
+    color: "bg-green-600",
+    label: "Answered",
+  },
+  {
+    color: "bg-purple-600",
+    label: "Marked for Review",
+  },
+  {
+    color: "bg-orange-500",
+    label: "Answered & Review",
+  },
+];
 
 const QuestionPalette = ({
-  questions,
+  questions = [],
   currentQuestionIndex,
   visitedQuestions,
   selectedAnswers,
@@ -20,38 +43,76 @@ const QuestionPalette = ({
     const review = reviewQuestions[questionId];
 
     if (!visited) return "NOT_VISITED";
-    if (review && answered) return "ANSWERED_REVIEW";
-    if (review) return "REVIEW";
-    if (answered) return "ANSWERED";
+
+    if (review && answered) {
+      return "ANSWERED_REVIEW";
+    }
+
+    if (review) {
+      return "REVIEW";
+    }
+
+    if (answered) {
+      return "ANSWERED";
+    }
 
     return "VISITED";
   };
 
+  if (!questions.length) {
+    return (
+      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 className="text-lg font-semibold text-slate-700">
+          Question Palette
+        </h2>
+
+        <div className="mt-6 text-center text-slate-500">
+          No Questions Available
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="bg-white rounded-lg shadow-md p-5">
-      <h2 className="text-lg font-semibold mb-4">
+    <aside className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+
+      {/* Heading */}
+
+      <h2 className="mb-5 text-lg font-semibold text-slate-800">
         Question Palette
       </h2>
 
+      {/* Question Numbers */}
+
       <div className="grid grid-cols-5 gap-3">
+
         {questions.map((question, index) => {
           const status = getQuestionStatus(question._id);
 
           return (
             <button
               key={question._id}
+              type="button"
+              title={`Question ${index + 1}`}
+              aria-label={`Question ${index + 1}`}
               onClick={() => onQuestionClick(index)}
               className={`
+                flex
                 h-11
                 w-11
-                rounded-md
+                items-center
+                justify-center
+                rounded-lg
+                text-sm
                 font-semibold
                 transition-all
                 duration-200
+                hover:scale-105
+                hover:shadow-md
                 ${STATUS_COLORS[status]}
                 ${
                   currentQuestionIndex === index
-                    ? "ring-2 ring-blue-600 ring-offset-2"
+                    ? "scale-105 ring-2 ring-blue-600 ring-offset-2"
                     : ""
                 }
               `}
@@ -60,35 +121,39 @@ const QuestionPalette = ({
             </button>
           );
         })}
+
       </div>
 
-      <div className="mt-6 space-y-2 text-sm">
-        <div className="flex items-center gap-2">
-          <span className="h-4 w-4 rounded bg-gray-300"></span>
-          <span>Not Visited</span>
+      {/* Legend */}
+
+      <div className="mt-8 border-t border-slate-200 pt-5">
+
+        <h3 className="mb-3 text-sm font-semibold text-slate-700">
+          Legend
+        </h3>
+
+        <div className="space-y-2">
+
+          {LEGEND.map((item) => (
+            <div
+              key={item.label}
+              className="flex items-center gap-3"
+            >
+              <span
+                className={`h-4 w-4 rounded ${item.color}`}
+              />
+
+              <span className="text-sm text-slate-600">
+                {item.label}
+              </span>
+            </div>
+          ))}
+
         </div>
 
-        <div className="flex items-center gap-2">
-          <span className="h-4 w-4 rounded bg-red-500"></span>
-          <span>Visited</span>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <span className="h-4 w-4 rounded bg-green-600"></span>
-          <span>Answered</span>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <span className="h-4 w-4 rounded bg-purple-600"></span>
-          <span>Marked for Review</span>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <span className="h-4 w-4 rounded bg-orange-500"></span>
-          <span>Answered & Review</span>
-        </div>
       </div>
-    </div>
+
+    </aside>
   );
 };
 

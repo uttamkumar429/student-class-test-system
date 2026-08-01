@@ -1,9 +1,11 @@
 import { createSlice } from "@reduxjs/toolkit";
 import {
-  startExam,
-  resumeExam,
-  saveAnswer,
-  submitExam,
+    fetchAvailableExams,
+    fetchExamQuestions,
+    startExam,
+    resumeExam,
+    saveAnswer,
+    submitExam,
 } from "./examThunk";
 const initialState = {
   // Exam Details
@@ -28,7 +30,9 @@ const initialState = {
 
   // Exam Status
   submitted: false,
-
+  availableExams: [],
+  activeExams: [],
+  completedExams: [],
   // UI State
   loading: false,
   error: null,
@@ -89,6 +93,58 @@ const examSlice = createSlice({
   },
   extraReducers: (builder) => {
   builder
+  .addCase(fetchAvailableExams.pending, (state) => {
+
+    state.loading = true;
+    state.error = null;
+
+})
+
+.addCase(fetchAvailableExams.fulfilled, (state, action) => {
+
+    state.loading = false;
+
+    state.availableExams =
+    action.payload.data.exams || [];
+
+})
+
+.addCase(fetchAvailableExams.rejected, (state, action) => {
+
+    state.loading = false;
+
+    state.error = action.payload;
+
+})
+.addCase(fetchExamQuestions.pending, (state) => {
+
+    state.loading = true;
+
+    state.error = null;
+
+})
+
+.addCase(fetchExamQuestions.fulfilled, (state, action) => {
+
+    state.loading = false;
+
+    hydrateExamState(
+
+        state,
+
+        action.payload.data
+
+    );
+
+})
+
+.addCase(fetchExamQuestions.rejected, (state, action) => {
+
+    state.loading = false;
+
+    state.error = action.payload;
+
+})
     .addCase(startExam.pending, (state) => {
       state.loading = true;
       state.error = null;
@@ -144,7 +200,7 @@ export const {
   markVisited,
   toggleReviewQuestion,
   updateRemainingTime,
-
+  
   markSubmitted,
   resetExam,
 } = examSlice.actions;

@@ -9,7 +9,7 @@ import {
   Award,
 } from "lucide-react";
 
-import { startExam } from "../../services/studentExamService";
+import studentExamService from "../../services/studentExamService";
 
 const ExamInstructions = () => {
   const navigate = useNavigate();
@@ -22,7 +22,7 @@ const handleStartExam = async () => {
   try {
     setLoading(true);
 
-    const response = await startExam(exam._id);
+    const response = await studentExamService.startExam(exam._id);
     console.log(response);
     toast.success(response.message);
     // Navigate to Exam Page using Attempt ID

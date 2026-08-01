@@ -1,6 +1,5 @@
-// import React from "react";
-// import React, { useEffect } from "react";
 import { useEffect } from "react";
+import { AlertTriangle, CheckCircle2, XCircle } from "lucide-react";
 
 function SubmitModal({
   isOpen,
@@ -10,92 +9,185 @@ function SubmitModal({
   totalQuestions,
   loading = false,
 }) {
-  if (!isOpen) return null;
-
-    const unansweredQuestions = Math.max(
-    0,
-    totalQuestions - answeredQuestions
-    );
   useEffect(() => {
     if (!isOpen) return;
 
     const handleKeyDown = (e) => {
-        if (e.key === "Escape") {
+      if (e.key === "Escape" && !loading) {
         onClose();
-        }
+      }
     };
+
+    document.body.style.overflow = "hidden";
 
     window.addEventListener("keydown", handleKeyDown);
 
-    return () =>
-        window.removeEventListener("keydown", handleKeyDown);
-    }, [isOpen, onClose]);
-    return (
-       <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
-            onClick={onClose}
-        >
-        <div
-            className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl"
-            onClick={(e) => e.stopPropagation()}
-        >
-        <h2 className="text-2xl font-bold text-gray-800">
-          Submit Examination
-        </h2>
+    return () => {
+      document.body.style.overflow = "auto";
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isOpen, onClose, loading]);
 
-        <div className="mt-6 space-y-4">
+  if (!isOpen) return null;
 
-          <div className="flex justify-between rounded-lg bg-green-50 p-3">
-            <span className="font-medium text-gray-700">
-              Answered
-            </span>
+  const unansweredQuestions = Math.max(
+    0,
+    totalQuestions - answeredQuestions
+  );
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="submit-exam-title"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+      onClick={!loading ? onClose : undefined}
+    >
+      <div
+        className="w-full max-w-lg rounded-2xl bg-white shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+
+        <div className="border-b border-slate-200 p-6">
+
+          <div className="flex items-center gap-3">
+
+            <AlertTriangle
+              size={28}
+              className="text-amber-500"
+            />
+
+            <div>
+
+              <h2
+                id="submit-exam-title"
+                className="text-2xl font-bold text-slate-800"
+              >
+                Submit Examination
+              </h2>
+
+              <p className="mt-1 text-sm text-slate-500">
+                Please review your progress before submitting.
+              </p>
+
+            </div>
+
+          </div>
+
+        </div>
+
+        {/* Statistics */}
+
+        <div className="space-y-4 p-6">
+
+          <div className="flex items-center justify-between rounded-xl bg-green-50 p-4">
+
+            <div className="flex items-center gap-2">
+
+              <CheckCircle2
+                size={20}
+                className="text-green-600"
+              />
+
+              <span className="font-medium text-slate-700">
+                Answered
+              </span>
+
+            </div>
 
             <span className="font-bold text-green-600">
               {answeredQuestions} / {totalQuestions}
             </span>
+
           </div>
 
-          <div className="flex justify-between rounded-lg bg-red-50 p-3">
-            <span className="font-medium text-gray-700">
-              Unanswered
-            </span>
+          <div className="flex items-center justify-between rounded-xl bg-red-50 p-4">
+
+            <div className="flex items-center gap-2">
+
+              <XCircle
+                size={20}
+                className="text-red-600"
+              />
+
+              <span className="font-medium text-slate-700">
+                Unanswered
+              </span>
+
+            </div>
 
             <span className="font-bold text-red-600">
               {unansweredQuestions}
             </span>
+
           </div>
 
-          <p className="text-sm text-gray-600">
-            Once you submit the exam, you won't be able to
-            change your answers.
-          </p>
+          <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+
+            <p className="text-sm leading-6 text-amber-800">
+
+              Once you submit your examination,
+              <span className="font-semibold">
+                {" "}
+                you will not be able to modify any answers.
+              </span>
+
+            </p>
+
+          </div>
 
         </div>
 
-        <div className="mt-8 flex justify-end gap-3">
+        {/* Footer */}
+
+        <div className="flex flex-col-reverse gap-3 border-t border-slate-200 p-6 sm:flex-row sm:justify-end">
 
           <button
             type="button"
-            onClick={onClose}
             disabled={loading}
-            className="rounded-lg border border-gray-300 px-4 py-2 font-medium hover:bg-gray-100 disabled:cursor-not-allowed"
+            onClick={onClose}
+            className="
+              rounded-xl
+              border
+              border-slate-300
+              px-5
+              py-3
+              font-medium
+              transition
+              hover:bg-slate-100
+              disabled:cursor-not-allowed
+              disabled:opacity-50
+            "
           >
             Cancel
           </button>
 
           <button
             type="button"
-            onClick={onConfirm}
             disabled={loading}
-            className="rounded-lg bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+            onClick={onConfirm}
+            className="
+              rounded-xl
+              bg-red-600
+              px-5
+              py-3
+              font-semibold
+              text-white
+              transition
+              hover:bg-red-700
+              disabled:cursor-not-allowed
+              disabled:opacity-60
+            "
           >
-            {loading ? "Submitting..." : "Submit Exam"}
+            {loading
+              ? "Submitting..."
+              : "Submit Exam"}
           </button>
 
         </div>
 
       </div>
-
     </div>
   );
 }

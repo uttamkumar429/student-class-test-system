@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-
+import { useParams } from "react-router-dom";
 import SubmitModal from "../../components/students/exam/SubmitModal";
 import QuestionCard from "../../components/students/exam/QuestionCard";
 import QuestionPalette from "../../components/students/exam/QuestionPalette";
 import ExamNavigation from "../../components/students/exam/ExamNavigation";
 import ExamHeader from "../../components/students/exam/ExamHeader";
 import {
+  fetchExamQuestions,
   saveAnswer,
   submitExam,
 } from "../../redux/studentExam/examThunk";
@@ -21,7 +22,7 @@ function ExamPage() {
 
     const dispatch = useDispatch();
     const navigate = useNavigate();
-
+    const { attemptId: routeAttemptId } = useParams();
     const [isSubmitModalOpen, setIsSubmitModalOpen] =
       useState(false);
 
@@ -78,6 +79,13 @@ function ExamPage() {
       );
 
     };
+
+    useEffect(() => {
+      if (routeAttemptId) {
+        dispatch(fetchExamQuestions(routeAttemptId));
+      }
+    }, [dispatch, routeAttemptId]);
+
     useEffect(() => {
         if (!currentQuestion) return;
 
@@ -160,9 +168,10 @@ if (!questions.length) {
           title={title}
           subject={subject}
           remainingTime={remainingTime}
+          answeredQuestions={answeredQuestions}
+          totalQuestions={questions.length}
           onTimeUp={handleAutoSubmit}
         />
-
       <div className="mt-6 grid grid-cols-1 lg:grid-cols-4 gap-6">
 
         <div className="lg:col-span-3">
