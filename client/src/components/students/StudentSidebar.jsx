@@ -7,42 +7,42 @@ import {
   LogOut,
 } from "lucide-react";
 
-const StudentSidebar = () => {
+const STUDENT_MENUS = [
+  {
+    name: "Dashboard",
+    icon: LayoutDashboard,
+    path: "/student/dashboard",
+  },
+  {
+    name: "Available Exams",
+    icon: BookOpen,
+    path: "/student/exams",
+  },
+  {
+    name: "Results",
+    icon: Trophy,
+    path: "/student/results/history",
+  },
+  {
+    name: "Profile",
+    icon: User,
+    path: "/student/profile",
+  },
+];
+
+function StudentSidebar() {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    localStorage.clear();
 
-    navigate("/");
+    navigate("/", {
+      replace: true,
+    });
   };
 
-  const menus = [
-    {
-      name: "Dashboard",
-      icon: LayoutDashboard,
-      path: "/student/dashboard",
-    },
-    {
-      name: "Available Exams",
-      icon: BookOpen,
-      path: "/student/exams",
-    },
-    {
-      name: "Results",
-      icon: Trophy,
-      path: "/student/results",
-    },
-    {
-      name: "Profile",
-      icon: User,
-      path: "/student/profile",
-    },
-  ];
-
   return (
-    <aside className="w-64 bg-white border-r shadow-sm">
-
+    <aside className="flex h-screen w-64 flex-col border-r bg-white shadow-sm">
       {/* Logo */}
       <div className="border-b p-6">
         <h2 className="text-2xl font-bold text-blue-600">
@@ -54,10 +54,9 @@ const StudentSidebar = () => {
         </p>
       </div>
 
-      {/* Menu */}
-      <nav className="mt-6 px-3">
-
-        {menus.map((menu) => {
+      {/* Navigation */}
+      <nav className="mt-6 flex-1 px-3">
+        {STUDENT_MENUS.map((menu) => {
           const Icon = menu.icon;
 
           return (
@@ -65,38 +64,35 @@ const StudentSidebar = () => {
               key={menu.path}
               to={menu.path}
               className={({ isActive }) =>
-                `mb-2 flex items-center gap-3 rounded-lg px-4 py-3 transition ${
+                `mb-2 flex items-center gap-3 rounded-lg px-4 py-3 font-medium transition-all duration-200 ${
                   isActive
-                    ? "bg-blue-600 text-white"
-                    : "text-slate-700 hover:bg-slate-100"
+                    ? "bg-blue-600 text-white shadow-md"
+                    : "text-slate-700 hover:bg-slate-100 hover:text-blue-600"
                 }`
               }
             >
               <Icon size={20} />
 
-              {menu.name}
+              <span>{menu.name}</span>
             </NavLink>
           );
         })}
-
       </nav>
 
       {/* Logout */}
-      <div className="absolute bottom-6 w-64 px-3">
-
+      <div className="border-t p-3">
         <button
+          type="button"
           onClick={handleLogout}
-          className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-red-600 transition hover:bg-red-50"
+          className="flex w-full items-center gap-3 rounded-lg px-4 py-3 font-medium text-red-600 transition hover:bg-red-50"
         >
           <LogOut size={20} />
 
-          Logout
+          <span>Logout</span>
         </button>
-
       </div>
-
     </aside>
   );
-};
+}
 
 export default StudentSidebar;

@@ -1,96 +1,47 @@
-import StudentStatCard from "../../components/students/StudentStatCard";
+import DashboardHeader from "../../components/students/dashboard/DashboardHeader";
+import StudentStats from "../../components/students/dashboard/StudentStats";
+import UpcomingExams from "../../components/students/dashboard/UpcomingExams";
+import RecentResultTable from "../../components/students/dashboard/RecentResultTable";
+import PerformanceChart from "../../components/students/dashboard/PerformanceChart";
+import QuickActions from "../../components/students/dashboard/QuickActions";
+import AnnouncementCard from "../../components/students/dashboard/AnnouncementCard";
 
-const StudentDashboard = () => {
+function StudentDashboard() {
+  // Temporary
+  // Later we'll get this from Redux/Profile API
+  const userName = "Uttam";
+
   return (
-    <div className="p-6">
+    <div className="space-y-8">
 
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-slate-800">
-          Welcome 👋
-        </h1>
-
-        <p className="mt-2 text-slate-500">
-          Manage your exams and track your performance.
-        </p>
-      </div>
+      <DashboardHeader
+        userName={userName}
+      />
 
       {/* Statistics */}
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
+      <StudentStats />
 
-        <StudentStatCard
-          title="Available Exams"
-          value={5}
-          color="border-blue-200"
-        />
+      {/* Quick Actions */}
+      <QuickActions />
 
-        <StudentStatCard
-          title="Attempted Exams"
-          value={2}
-          color="border-green-200"
-        />
+      {/* Upcoming Exams */}
+      <UpcomingExams />
 
-        <StudentStatCard
-          title="Average Score"
-          value="85%"
-          color="border-yellow-200"
-        />
+      {/* Results + Analytics */}
+      <div className="grid gap-8 xl:grid-cols-2">
 
-        <StudentStatCard
-          title="Results"
-          value={2}
-          color="border-purple-200"
-        />
+       <RecentResultTable />
+
+        <PerformanceChart />
 
       </div>
 
-      {/* Recent Exams */}
-      <div className="mt-10 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-
-        <h2 className="mb-5 text-xl font-semibold text-slate-800">
-          Recent Exams
-        </h2>
-
-        <div className="space-y-4">
-
-          <div className="flex items-center justify-between rounded-lg border p-4">
-            <div>
-              <h3 className="font-semibold">
-                Java Programming Test
-              </h3>
-
-              <p className="text-sm text-slate-500">
-                Duration: 60 Minutes
-              </p>
-            </div>
-
-            <button className="rounded-lg bg-blue-600 px-5 py-2 text-white hover:bg-blue-700">
-              Start
-            </button>
-          </div>
-
-          <div className="flex items-center justify-between rounded-lg border p-4">
-            <div>
-              <h3 className="font-semibold">
-                DBMS Class Test
-              </h3>
-
-              <p className="text-sm text-slate-500">
-                Duration: 45 Minutes
-              </p>
-            </div>
-
-            <button className="rounded-lg bg-blue-600 px-5 py-2 text-white hover:bg-blue-700">
-              Start
-            </button>
-          </div>
-
-        </div>
-
-      </div>
+      {/* Announcements */}
+      <AnnouncementCard />
 
     </div>
   );
-};
+}
 
 export default StudentDashboard;

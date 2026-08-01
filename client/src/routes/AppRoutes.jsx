@@ -11,9 +11,14 @@ import StudentDashboard from "../pages/student/StudentDashboard";
 import StudentExams from "../pages/student/StudentExams";
 import ExamInstructions from "../pages/student/ExamInstructions";
 import CreateTest from "../pages/admin/CreateTest";
+import ProfilePage from "../pages/student/ProfilePage";
+import ResultPage from "../pages/student/ResultPage";
+import ResultHistory from "../pages/student/ResultHistory";
+import ExamPage from "../pages/student/ExamPage";
 import ProtectedRoute from "./ProtectedRoute";
 
 function AppRoutes() {
+    console.log("AppRoutes Rendered");
   return (
         <Routes>
 
@@ -21,6 +26,7 @@ function AppRoutes() {
         <Route path="/" element={<LoginPage />} />
 
         {/* Protected Route */}
+        {/* console.log("AppRoutes Rendered"); */}
         <Route
             path="/admin/dashboard"
             element={
@@ -90,15 +96,30 @@ function AppRoutes() {
                 }
                 >
                 <Route path="dashboard" element={<StudentDashboard />} />
+
+                <Route path="profile" element={<ProfilePage />} />
+
                 <Route path="exams" element={<StudentExams />} />
+
                 <Route
                     path="exam/instructions"
                     element={<ExamInstructions />}
                 />
-                  {/* New */}
-                {/* <Route path="exam/:attemptId" element={<ExamPage />} /> */}
-                  {/* Future */}
-                {/* <Route path="result/:attemptId" element={<StudentResult />} /> */}
+
+                <Route
+                    path="exam/:attemptId"
+                    element={<ExamPage />}
+                />
+
+                <Route
+                    path="result/:attemptId"
+                    element={<ResultPage />}
+                />
+
+                <Route
+                    path="results/history"
+                    element={<ResultHistory />}
+                />
             </Route>
 
         </Routes>

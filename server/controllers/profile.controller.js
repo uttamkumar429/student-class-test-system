@@ -7,15 +7,39 @@ const validateProfile = require("../validators/profile.validator");
 // ===============================
 exports.getProfile = async (req, res) => {
   try {
-    const profile = await Profile.findOne({
+    let profile = await Profile.findOne({
       userId: req.user._id,
     });
+
+    // Create empty profile if it doesn't exist
+    if (!profile) {
+      profile = await Profile.create({
+        userId: req.user._id,
+      });
+    }
 
     res.status(200).json({
       success: true,
       data: {
-        user: req.user,
-        profile,
+        userId: req.user.userId,
+        fullName: req.user.fullName,
+        email: req.user.email,
+        phone: req.user.phone,
+
+        profilePhoto: profile.profilePhoto,
+
+        schoolName: profile.schoolName,
+        className: profile.className,
+        section: profile.section,
+        rollNumber: profile.rollNumber,
+
+        dob: profile.dob,
+        gender: profile.gender,
+
+        state: profile.state,
+        district: profile.district,
+
+        bio: profile.bio,
       },
     });
   } catch (error) {
@@ -86,12 +110,31 @@ exports.updateProfile = async (req, res) => {
       profileCompleted: true,
     });
 
-    res.status(200).json({
-      success: true,
-      message: "Profile Updated Successfully",
-      profile,
-    });
+  res.status(200).json({
+    success: true,
+    message: "Profile Updated Successfully",
+    data: {
+      userId: req.user.userId,
+      fullName: req.user.fullName,
+      email: req.user.email,
+      phone: req.user.phone,
 
+      profilePhoto: profile.profilePhoto,
+
+      schoolName: profile.schoolName,
+      className: profile.className,
+      section: profile.section,
+      rollNumber: profile.rollNumber,
+
+      dob: profile.dob,
+      gender: profile.gender,
+
+      state: profile.state,
+      district: profile.district,
+
+      bio: profile.bio,
+    },
+  });
   } catch (error) {
     console.error("Update Profile Error:", error);
 

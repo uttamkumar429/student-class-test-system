@@ -30,7 +30,7 @@ const adminAnalyticsRoutes = require("./routes/adminAnalytics.routes");
 const adminReportRoutes=require("./routes/adminReport.routes");
 const adminStudentRoutes = require("./routes/adminStudent.routes");
 const examRoutes = require("./routes/exam.routes");
-
+const studentDashboardRoutes = require("./routes/studentDashboard.routes");
 // =========================
 // Global Middleware
 // =========================
@@ -97,7 +97,7 @@ app.use("/api/tests", publishRoutes);
 app.use("/api/student", studentRoutes);
 
 app.use("/api/dashboard", dashboardRoutes);
-
+app.use("/api/student/dashboard", studentDashboardRoutes);
 // app.use(errorHandler);
 // Swagger Documentation
 if(process.env.NODE_ENV!=="production"){

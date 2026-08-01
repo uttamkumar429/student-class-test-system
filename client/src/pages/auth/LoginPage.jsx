@@ -11,9 +11,9 @@ import AuthLayout from "../../layouts/AuthLayout";
 import Input from "../../components/ui/Input";
 import Button from "../../components/ui/Button";
 
-import api from "../../services/api";
+
 import { useDispatch } from "react-redux";
-import { loginSuccess } from "../../redux/slices/authSlice";
+import { loginThunk } from "../../redux/auth/authThunk";
 import { useNavigate } from "react-router-dom";
 
 function LoginPage() {
@@ -35,43 +35,19 @@ function LoginPage() {
         [name]: value,
     }));
     };
-    const handleSubmit = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    try {
-        setLoading(true);
+    setLoading(true);
 
-        const response = await api.post("/auth/login", formData);
-
-        const data = response.data;
-
-        dispatch(
-            loginSuccess({
-                user: data.user,
-                token: data.token,
-            })
-        );
-
-        if (data.user.role === "admin") {
-        navigate("/admin/dashboard");
-        } else {
-        navigate("/student/dashboard");
-        }
-        
-        console.log("Token after dispatch:", localStorage.getItem("token"));
-        console.log("User after dispatch:", localStorage.getItem("user"));
-        console.log("Login Success:", data);
-        console.log(response.data);
-    } catch (error) {
-        console.error(error);
-
-        alert(
-        error.response?.data?.message || "Login Failed"
-        );
-    } finally {
-        setLoading(false);
-    }
-    };
+  try {
+    await dispatch(loginThunk(formData, navigate));
+  } catch {
+    // Error already handled in loginThunk
+  } finally {
+    setLoading(false);
+  }
+  };
     
     return (
     <AuthLayout>
@@ -176,12 +152,13 @@ function LoginPage() {
             </button>
 
             </div>
-            <Button
+          <Button
             type="submit"
             loading={loading}
-            >
+            disabled={loading}
+          >
             Login
-            </Button>
+          </Button>
 
           </form>
 

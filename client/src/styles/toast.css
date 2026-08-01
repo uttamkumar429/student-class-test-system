@@ -1,0 +1,33 @@
+/* Premium Toast */
+
+[data-sonner-toast] {
+  transition: all 0.25s ease !important;
+}
+
+[data-sonner-toast]:hover {
+  transform: translateY(-2px) scale(1.01);
+}
+
+[data-sonner-toast] [data-title] {
+  font-weight: 600;
+}
+
+[data-sonner-toast] [data-description] {
+  opacity: .85;
+}
+
+[data-sonner-toast][data-type="success"] {
+  border-left: 4px solid #22c55e;
+}
+
+[data-sonner-toast][data-type="error"] {
+  border-left: 4px solid #ef4444;
+}
+
+[data-sonner-toast][data-type="warning"] {
+  border-left: 4px solid #f59e0b;
+}
+
+[data-sonner-toast][data-type="info"] {
+  border-left: 4px solid #3b82f6;
+}

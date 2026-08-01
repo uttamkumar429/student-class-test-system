@@ -1,9 +1,21 @@
 import { createSlice } from "@reduxjs/toolkit";
 
+const storedToken = localStorage.getItem("token");
+const storedUser = localStorage.getItem("user");
+
+let parsedUser = null;
+
+try {
+  parsedUser = storedUser ? JSON.parse(storedUser) : null;
+} catch {
+  parsedUser = null;
+  localStorage.removeItem("user");
+}
+
 const initialState = {
-  user: null,
-  token: null,
-  isAuthenticated: false,
+  user: parsedUser,
+  token: storedToken,
+  isAuthenticated: !!storedToken,
 };
 
 const authSlice = createSlice({
@@ -11,26 +23,26 @@ const authSlice = createSlice({
   initialState,
 
   reducers: {
-    loginSuccess: (state, action) => {
-    state.user = action.payload.user;
-    state.token = action.payload.token;
-    state.isAuthenticated = true;
+    loginSuccess(state, action) {
+      state.user = action.payload.user;
+      state.token = action.payload.token;
+      state.isAuthenticated = true;
 
-    localStorage.setItem("token", action.payload.token);
-    localStorage.setItem(
+      // Persist login
+      localStorage.setItem("token", action.payload.token);
+      localStorage.setItem(
         "user",
         JSON.stringify(action.payload.user)
-    );
-    console.log(localStorage.getItem("token"));
-    console.log(localStorage.getItem("user"));
+      );
     },
-    logout: (state) => {
-    state.user = null;
-    state.token = null;
-    state.isAuthenticated = false;
 
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    logout(state) {
+      state.user = null;
+      state.token = null;
+      state.isAuthenticated = false;
+
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
     },
   },
 });
