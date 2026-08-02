@@ -1,6 +1,21 @@
 import ResultHistoryRow from "./ResultHistoryRow";
 
 function ResultHistoryTable({ results }) {
+  if (!results.length) {
+    return (
+        <section className="rounded-2xl border border-slate-200 bg-white p-12 text-center shadow-sm">
+
+            <h2 className="text-xl font-semibold text-slate-700">
+                No Results Found
+            </h2>
+
+            <p className="mt-3 text-slate-500">
+                Your completed examinations will appear here.
+            </p>
+
+        </section>
+    );
+}
   return (
     <section className="overflow-hidden rounded-xl bg-white shadow">
       <div className="overflow-x-auto">

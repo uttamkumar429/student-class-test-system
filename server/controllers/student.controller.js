@@ -15,6 +15,7 @@ const {
   resumeExam: resumeExamService,
   getResult: getResultService,
   getResultHistory: getResultHistoryService,
+  getReviewAnswers,
 } = require("../services/student.service");
 
 // STUDENT DASHBOARD
@@ -171,4 +172,24 @@ exports.getResultHistory = asyncHandler(async (req, res) => {
 
 });
 
+
+// =====================================
+// REVIEW ANSWERS
+// =====================================
+
+exports.getReviewAnswers = asyncHandler(async (req, res) => {
+
+  const review = await getReviewAnswers(
+    req.user._id,
+    req.params.attemptId
+  );
+
+  return successResponse(
+    res,
+    200,
+    "Review answers fetched successfully.",
+    review
+  );
+
+});
 

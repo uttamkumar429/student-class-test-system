@@ -2,6 +2,7 @@ const ExamAttempt = require("../models/ExamAttempt");
 const TestSnapshot = require("../models/TestSnapshot");
 const StudentAnswer = require("../models/StudentAnswer");
 const ApiError = require("../utils/ApiError");
+const { PASS_PERCENTAGE } = require("../config/constants");
 // ==========================================
 // STUDENT DASHBOARD
 // ==========================================
@@ -505,9 +506,13 @@ const submitExam = async (studentId, attemptId) => {
   attempt.submittedAt = submittedAt;
   attempt.status = "SUBMITTED";
 
-  await attempt.save();
+await attempt.save();
 
-  return {
+console.log("===== AFTER SAVE =====");
+console.log("Attempt ID :", attempt._id.toString());
+console.log("Status     :", attempt.status);
+
+return {
     attemptId: attempt._id,
     status: attempt.status,
     obtainedMarks,
@@ -564,7 +569,7 @@ const getResult = async (studentId, attemptId) => {
   ).length;
 
   const wrongAnswers = answers.filter(
-    (answer) => !answer.isCorrect
+    (answer) => answer.isCorrect === false
   ).length;
 
   const skippedAnswers =
@@ -574,21 +579,35 @@ const getResult = async (studentId, attemptId) => {
         ? "Pass"
         : "Fail"
   return {
-    examTitle: snapshot.title,
-    subject: snapshot.subject,
-    obtainedMarks: attempt.obtainedMarks,
-    totalMarks: attempt.totalMarks,
-    percentage: attempt.percentage,
-    correctAnswers,
-    wrongAnswers,
-    skippedAnswers,
-    timeTaken: attempt.timeTaken,
-    submittedAt: attempt.submittedAt,
-    Status,
+      attemptId: attempt._id,
 
+      examTitle: snapshot.title,
+
+      subject: snapshot.subject,
+
+      totalQuestions: attempt.totalQuestions,
+
+      answeredQuestions: answers.length,
+
+      correctAnswers,
+
+      wrongAnswers,
+
+      skippedAnswers,
+
+      obtainedMarks: attempt.obtainedMarks,
+
+      totalMarks: attempt.totalMarks,
+
+      percentage: attempt.percentage,
+
+      status,
+
+      timeTaken: attempt.timeTaken,
+
+      submittedAt: attempt.submittedAt,
+    };
   };
-
-};
 // ======================================
 // GET RESULT HISTORY
 // ======================================
@@ -614,11 +633,225 @@ const getResultHistory = async (studentId) => {
     obtainedMarks: attempt.obtainedMarks,
     totalMarks: attempt.totalMarks,
     percentage: attempt.percentage,
-    status: attempt.percentage >= 33 ? "Pass" : "Fail",
+    status:
+    attempt.percentage >= PASS_PERCENTAGE
+    ? "Pass"
+    : "Fail",
     submittedAt: attempt.submittedAt,
   }));
 
   return results;
+};
+
+// ======================================================
+// GET REVIEW ANSWERS
+// ======================================================
+
+const getReviewAnswers = async (
+  studentId,
+  attemptId
+) => {
+
+  // ----------------------------------
+  // Validate Attempt
+  // ----------------------------------
+
+  const attempt = await ExamAttempt.findById(
+    attemptId
+  ).lean();
+  console.log("===== REVIEW =====");
+  console.log("Attempt ID :", attempt?._id.toString());
+  console.log("Status     :", attempt?.status);
+  if (!attempt) {
+    throw new ApiError(
+      404,
+      "Exam attempt not found."
+    );
+  }
+
+  // ----------------------------------
+  // Verify Student Ownership
+  // ----------------------------------
+    console.log("Attempt Student :", attempt.student.toString());
+    console.log("Logged User     :", studentId.toString());
+    console.log("Attempt ID      :", attemptId);
+  if (
+    attempt.student.toString() !==
+    studentId.toString()
+  ) {
+    throw new ApiError(
+      403,
+      "You are not allowed to access this review."
+    );
+  }
+
+  // ----------------------------------
+  // Review Available Only After Submission
+  // ----------------------------------
+
+  if (attempt.status !== "SUBMITTED") {
+    throw new ApiError(
+      400,
+      "Please submit the exam first."
+    );
+  }
+
+  // ----------------------------------
+  // Load Snapshot
+  // ----------------------------------
+
+  const snapshot =
+    await TestSnapshot.findById(
+      attempt.testSnapshot
+    ).lean();
+
+  if (!snapshot) {
+    throw new ApiError(
+      404,
+      "Test snapshot not found."
+    );
+  }
+
+  // ----------------------------------
+  // Load Student Answers
+  // ----------------------------------
+
+  const answers =
+    await StudentAnswer.find({
+      attempt: attemptId,
+    }).lean();
+
+  // ----------------------------------
+  // Convert Answers Into Map
+  // O(1) Lookup
+  // ----------------------------------
+
+  const answerMap = new Map();
+
+  answers.forEach((answer) => {
+
+    answerMap.set(
+      answer.questionId.toString(),
+      answer
+    );
+
+  });
+
+  // ----------------------------------
+  // Merge Snapshot + Student Answers
+  // ----------------------------------
+
+  const reviewQuestions =
+    snapshot.questions.map(
+      (question, index) => {
+
+        const studentAnswer =
+          answerMap.get(
+            question.questionId.toString()
+          );
+
+        return {
+
+          questionId:
+            question.questionId,
+
+          questionNumber:
+            index + 1,
+
+          subject:
+            question.subject,
+
+          chapter:
+            question.chapter,
+
+          difficulty:
+            question.difficulty,
+
+          question:
+            question.question,
+
+          marks:
+            question.marks,
+
+          options: [
+
+            {
+              value: "A",
+              text: question.optionA,
+            },
+
+            {
+              value: "B",
+              text: question.optionB,
+            },
+
+            {
+              value: "C",
+              text: question.optionC,
+            },
+
+            {
+              value: "D",
+              text: question.optionD,
+            },
+
+          ],
+
+          selectedAnswer:
+            studentAnswer
+              ?.selectedAnswer ?? null,
+
+          correctAnswer:
+            question.correctAnswer,
+
+          isCorrect:
+            studentAnswer
+              ?.isCorrect ?? false,
+
+          marksAwarded:
+            studentAnswer
+              ?.marksAwarded ?? 0,
+
+          explanation:
+            question.explanation || "",
+
+        };
+
+      }
+    );
+
+  // ----------------------------------
+  // Final Response
+  // ----------------------------------
+
+  return {
+
+    examTitle:
+      snapshot.title,
+
+    subject:
+      snapshot.subject,
+
+    obtainedMarks:
+      attempt.obtainedMarks,
+
+    totalMarks:
+      attempt.totalMarks,
+
+    percentage:
+      attempt.percentage,
+
+    totalQuestions:
+      attempt.totalQuestions,
+
+    submittedAt:
+      attempt.submittedAt,
+
+    questions:
+      reviewQuestions,
+
+  };
+
 };
 module.exports = {
   getDashboard,
@@ -630,4 +863,5 @@ module.exports = {
   submitExam,
   getResult,
   getResultHistory,
+  getReviewAnswers,
 };

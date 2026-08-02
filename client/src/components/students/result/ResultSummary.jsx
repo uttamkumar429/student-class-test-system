@@ -6,6 +6,7 @@ function ResultSummary({
   percentage,
   status,
 }) {
+  const isPassed = status?.toLowerCase() === "pass";
   return (
     <section className="rounded-xl bg-white p-8 shadow">
       <div className="text-center">
@@ -32,12 +33,12 @@ function ResultSummary({
 
           <span
             className={`mt-5 inline-flex rounded-full px-5 py-2 text-sm font-semibold ${
-              status === "Pass"
+              isPassed
                 ? "bg-green-100 text-green-700"
                 : "bg-red-100 text-red-700"
             }`}
           >
-            {status === "Pass" ? "✅ PASS" : "❌ FAIL"}
+            {isPassed ? "PASS" : "FAIL"}
           </span>
         </div>
       </div>

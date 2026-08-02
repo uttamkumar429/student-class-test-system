@@ -15,6 +15,7 @@ import ProfilePage from "../pages/student/ProfilePage";
 import ResultPage from "../pages/student/ResultPage";
 import ResultHistory from "../pages/student/ResultHistory";
 import ExamPage from "../pages/student/ExamPage";
+import ReviewAnswersPage from "../pages/student/ReviewAnswersPage";
 import ProtectedRoute from "./ProtectedRoute";
 
 function AppRoutes() {
@@ -119,6 +120,10 @@ function AppRoutes() {
                 <Route
                     path="results/history"
                     element={<ResultHistory />}
+                />
+                <Route
+                    path="/student/result/:attemptId/review"
+                    element={<ReviewAnswersPage />}
                 />
             </Route>
 

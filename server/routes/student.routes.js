@@ -254,4 +254,13 @@ router.get(
   authorize("student"),
   studentController.getAvailableExams
 );
+// =====================================
+// REVIEW ANSWERS
+// =====================================
+
+router.get(
+  "/result/:attemptId/review",
+  protect,
+  studentController.getReviewAnswers
+);
 module.exports = router;

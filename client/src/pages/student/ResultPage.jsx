@@ -32,20 +32,55 @@ function ResultPage() {
 
   if (error) {
     return (
-      <div className="flex min-h-screen items-center justify-center text-red-600">
-        {error}
+      <div className="flex min-h-screen items-center justify-center p-6">
+        <div className="w-full max-w-md rounded-2xl border border-red-200 bg-white p-8 text-center shadow-sm">
+
+          <h2 className="text-2xl font-bold text-red-600">
+            Failed to Load Result
+          </h2>
+
+          <p className="mt-3 text-slate-600">
+            {error}
+          </p>
+
+          <button
+            type="button"
+            onClick={() => dispatch(fetchResult(attemptId))}
+            className="mt-6 rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white transition hover:bg-blue-700"
+          >
+            Retry
+          </button>
+
+        </div>
       </div>
     );
   }
 
   if (!result) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        Result not found.
+      <div className="flex min-h-screen items-center justify-center p-6">
+        <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+
+          <h2 className="text-2xl font-bold text-slate-700">
+            Result Not Found
+          </h2>
+
+          <p className="mt-3 text-slate-500">
+            The requested exam result could not be found.
+          </p>
+
+          <button
+            type="button"
+            onClick={() => navigate("/student/dashboard")}
+            className="mt-6 rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white transition hover:bg-blue-700"
+          >
+            Back to Dashboard
+          </button>
+
+        </div>
       </div>
     );
   }
-
   const {
     examTitle,
     subject,
@@ -84,7 +119,7 @@ function ResultPage() {
         <ResultActions
         onBack={() => navigate("/student/dashboard")}
         onReview={() => navigate(`/student/result/${attemptId}/review`)}
-        reviewEnabled={false}
+        reviewEnabled={true}
         />
       </div>
     </div>

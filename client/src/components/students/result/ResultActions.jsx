@@ -1,3 +1,8 @@
+import {
+    ArrowLeft,
+    Eye,
+} from "lucide-react";
+
 function ResultActions({
   onBack,
   onReview,
@@ -13,6 +18,7 @@ function ResultActions({
             onClick={onReview}
             className="rounded-lg border border-blue-600 px-6 py-3 font-medium text-blue-600 transition duration-200 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-400"
           >
+            <Eye size={18}/>
             Review Answers
           </button>
         )}
@@ -22,6 +28,7 @@ function ResultActions({
           onClick={onBack}
           className="rounded-lg bg-blue-600 px-6 py-3 font-medium text-white transition duration-200 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400"
         >
+          <ArrowLeft size={18}/>
           Back to Dashboard
         </button>
 
