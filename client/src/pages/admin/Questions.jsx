@@ -1,156 +1,275 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import DashboardLayout from "../../layouts/DashboardLayout";
+import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+
 import { toast } from "sonner";
 
-import {
-  getQuestions,
-  deleteQuestion,
-} from "../../services/questionService";
+import DashboardLayout from "../../layouts/DashboardLayout";
 
-import QuestionToolbar from "../../components/questions/QuestionToolbar";
+import QuestionHeader from "../../components/questions/QuestionHeader";
+import QuestionFilters from "../../components/questions/QuestionFilters";
 import QuestionTable from "../../components/questions/QuestionTable";
-import AddQuestionModal from "../../components/questions/AddQuestionModal";
+import QuestionPagination from "../../components/questions/QuestionPagination";
+import DeleteQuestionModal from "../../components/questions/DeleteQuestionModal";
 
-const Questions = () => {
-  const [questions, setQuestions] = useState([]);
+import {
+  fetchQuestions,
+  deleteQuestion,
+} from "../../redux/adminQuestion/questionThunk";
 
-  const [loading, setLoading] = useState(false);
+import {
+  setFilters,
+  resetFilters,
+  setPage,
+} from "../../redux/adminQuestion/questionSlice";
 
-  const [error, setError] = useState("");
+import {
+  selectQuestions,
+  selectQuestionLoading,
+  selectQuestionError,
+  selectQuestionPagination,
+  selectQuestionFilters,
+} from "../../redux/adminQuestion/questionSelectors";
 
-  const [search, setSearch] = useState("");
+function Questions() {
+  const dispatch = useDispatch();
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const navigate = useNavigate();
 
-  const [selectedQuestion, setSelectedQuestion] = useState(null);
-  
-  const fetchQuestions = useCallback(async () => {
-  try {
-    setLoading(true);
-    setError("");
+  // ===========================
+  // Redux State
+  // ===========================
 
-    const response = await getQuestions();
-
-    setQuestions(response.data.questions);
-
-  } catch (error) {
-    console.error(error);
-
-    setError(
-      error.response?.data?.message ||
-      "Failed to fetch questions."
-    );
-
-    toast.error(
-      error.response?.data?.message ||
-      "Failed to fetch questions."
-    );
-
-  } finally {
-    setLoading(false);
-  }
-}, []);
-
-  useEffect(() => {
-  fetchQuestions();
-}, [fetchQuestions]);
-
-  const filteredQuestions = useMemo(() => {
-
-  const keyword = search.trim().toLowerCase();
-
-  return questions.filter((question) => {
-
-    return (
-
-      question.question?.toLowerCase().includes(keyword) ||
-
-      question.subject?.toLowerCase().includes(keyword) ||
-
-      question.chapter?.toLowerCase().includes(keyword)
-
-    );
-
-  });
-
-}, [questions, search]);
-
-  const handleEdit = (question) => {
-
-  setSelectedQuestion(question);
-
-  setIsModalOpen(true);
-
-};
-
-  const handleDelete = async (id) => {
-
-  const confirmDelete = window.confirm(
-    "Are you sure you want to delete this question?"
+  const questions = useSelector(
+    selectQuestions
   );
 
-  if (!confirmDelete) return;
+  const loading = useSelector(
+    selectQuestionLoading
+  );
 
-  try {
+  const error = useSelector(
+    selectQuestionError
+  );
 
-    await deleteQuestion(id);
+  const pagination = useSelector(
+    selectQuestionPagination
+  );
 
-    toast.success("Question deleted successfully.");
+  const filters = useSelector(
+    selectQuestionFilters
+  );
 
-    fetchQuestions();
+  // ===========================
+  // Local State
+  // ===========================
 
-  } catch (error) {
+  const [selectedQuestion, setSelectedQuestion] =
+    useState(null);
 
-    toast.error(
-      error.response?.data?.message ||
-      "Failed to delete question."
+  const [isDeleteModalOpen, setDeleteModalOpen] =
+    useState(false);
+
+  // ===========================
+  // Fetch Questions
+  // ===========================
+
+  useEffect(() => {
+    dispatch(
+      fetchQuestions({
+        page: pagination.page,
+        limit: pagination.limit,
+        search: filters.search,
+        subject: filters.subject,
+        chapter: filters.chapter,
+        difficulty: filters.difficulty,
+      })
     );
+  }, [
+    dispatch,
+    pagination.page,
+    pagination.limit,
+    filters.search,
+    filters.subject,
+    filters.chapter,
+    filters.difficulty,
+  ]);
+    // ==========================================
+  // Add Question
+  // ==========================================
 
-  }
+  const handleAddQuestion = () => {
+    navigate("/admin/questions/create");
+  };
 
+  // ==========================================
+  // Preview Question
+  // ==========================================
+
+  const handlePreview = (question) => {
+    navigate(`/admin/questions/${question._id}`);
+  };
+
+  // ==========================================
+  // Edit Question
+  // ==========================================
+
+  const handleEdit = (question) => {
+    navigate(`/admin/questions/edit/${question._id}`);
+  };
+
+  // ==========================================
+  // Open Delete Modal
+  // ==========================================
+
+  const handleDeleteClick = (question) => {
+    setSelectedQuestion(question);
+    setDeleteModalOpen(true);
+  };
+
+  // ==========================================
+  // Close Delete Modal
+  // ==========================================
+
+  const handleCloseDeleteModal = () => {
+    setDeleteModalOpen(false);
+    setSelectedQuestion(null);
+  };
+
+  // ==========================================
+  // Confirm Delete
+  // ==========================================
+
+  const handleDeleteConfirm = async () => {
+    if (!selectedQuestion) return;
+
+    try {
+      await dispatch(
+        deleteQuestion(selectedQuestion._id)
+      ).unwrap();
+
+      toast.success(
+        "Question deleted successfully."
+      );
+
+      handleCloseDeleteModal();
+
+      dispatch(
+        fetchQuestions({
+          page: pagination.page,
+          limit: pagination.limit,
+          search: filters.search,
+          subject: filters.subject,
+          chapter: filters.chapter,
+          difficulty: filters.difficulty,
+        })
+      );
+
+    } catch (error) {
+      toast.error(
+        error || "Failed to delete question."
+      );
+    }
+  };
+
+    // ==========================
+    // Search / Filter
+    // ==========================
+
+    const handleFilterChange = (data) => {
+      dispatch(setFilters(data));
+    };
+
+    // ==========================
+    // Reset
+    // ==========================
+
+    const handleResetFilters = () => {
+      dispatch(resetFilters());
+    };
+
+    // ==========================
+    // Pagination
+    // ==========================
+
+    const handlePageChange = (page) => {
+      dispatch(setPage(page));
+    };
+    return (
+      <DashboardLayout>
+
+      <div className="space-y-8">
+
+        {/* ==========================
+            Header
+        ========================== */}
+
+        <QuestionHeader
+          totalQuestions={pagination.total}
+          onAddQuestion={handleAddQuestion}
+          onImportQuestions={() =>
+            toast.info("Import Questions feature is coming soon.")
+          }
+        />
+
+        {/* ==========================
+            Filters
+        ========================== */}
+
+        <QuestionFilters
+          filters={filters}
+          subjects={[
+            "Physics",
+            "Chemistry",
+            "Mathematics",
+          ]}
+          chapters={[]}
+          onChange={handleFilterChange}
+          onReset={handleResetFilters}
+        />
+
+        {/* ==========================
+            Questions Table
+        ========================== */}
+
+        <QuestionTable
+          questions={questions}
+          loading={loading}
+          error={error}
+          onPreview={handlePreview}
+          onEdit={handleEdit}
+          onDelete={handleDeleteClick}
+        />
+
+        {/* ==========================
+            Pagination
+        ========================== */}
+
+        <QuestionPagination
+          currentPage={pagination.page}
+          totalPages={pagination.totalPages}
+          totalItems={pagination.total}
+          pageSize={pagination.limit}
+          onPageChange={handlePageChange}
+        />
+
+        {/* ==========================
+            Delete Modal
+        ========================== */}
+
+        <DeleteQuestionModal
+          isOpen={isDeleteModalOpen}
+          question={selectedQuestion}
+          loading={loading}
+          onClose={handleCloseDeleteModal}
+          onConfirm={handleDeleteConfirm}
+        />
+
+      </div>
+
+    </DashboardLayout>
+  );
 };
-return (
 
-  <DashboardLayout>
-
-    <h1 className="text-3xl font-bold mb-2">
-      Question Bank
-    </h1>
-
-    <p className="text-slate-500 mb-8">
-      Manage all questions here.
-    </p>
-
-    <QuestionToolbar
-      search={search}
-      setSearch={setSearch}
-      onAdd={() => {
-        setSelectedQuestion(null);
-        setIsModalOpen(true);
-      }}
-    />
-
-    <QuestionTable
-      questions={filteredQuestions}
-      loading={loading}
-      error={error}
-      onEdit={handleEdit}
-      onDelete={handleDelete}
-    />
-
-    <AddQuestionModal
-      isOpen={isModalOpen}
-      onClose={() => {
-        setIsModalOpen(false);
-        setSelectedQuestion(null);
-      }}
-      fetchQuestions={fetchQuestions}
-      question={selectedQuestion}
-    />
-
-  </DashboardLayout>
-
-);
-};
 
 export default Questions;

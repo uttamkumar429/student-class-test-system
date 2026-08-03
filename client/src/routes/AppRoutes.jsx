@@ -10,6 +10,7 @@ import StudentLayout from "../layouts/StudentLayout";
 import StudentDashboard from "../pages/student/StudentDashboard";
 import StudentExams from "../pages/student/StudentExams";
 import ExamInstructions from "../pages/student/ExamInstructions";
+import CreateQuestion from "../pages/admin/CreateQuestion";
 import CreateTest from "../pages/admin/CreateTest";
 import ProfilePage from "../pages/student/ProfilePage";
 import ResultPage from "../pages/student/ResultPage";
@@ -34,6 +35,14 @@ function AppRoutes() {
             <ProtectedRoute>
                 <AdminDashboard />
             </ProtectedRoute>
+            }
+        />
+        <Route
+            path="/admin/questions/create"
+            element={
+                <ProtectedRoute>
+                <CreateQuestion />
+                </ProtectedRoute>
             }
         />
         <Route
@@ -122,7 +131,7 @@ function AppRoutes() {
                     element={<ResultHistory />}
                 />
                 <Route
-                    path="/student/result/:attemptId/review"
+                    path="result/:attemptId/review"
                     element={<ReviewAnswersPage />}
                 />
             </Route>

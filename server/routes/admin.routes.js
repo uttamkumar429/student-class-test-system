@@ -2,49 +2,45 @@ const express = require("express");
 
 const router = express.Router();
 
-const { adminLogin } = require("../controllers/auth.controller");
 const {
-  loginLimiter,
-} = require("../middleware/rateLimiter.middleware");
+  getDashboard,
+} = require("../controllers/admin.controller");
+
+const {
+    protect,
+} = require("../middleware/auth.middleware");
+const authorize = require("../middleware/role.middleware");
+
 /**
- * @swagger
- * /api/admin/login:
- *   post:
- *     summary: Admin Login
- *     description: Login for Admin and Super Admin users.
- *     tags:
- *       - Admin Authentication
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - emailOrPhone
- *               - password
- *             properties:
- *               emailOrPhone:
- *                 type: string
- *                 example: admin@gmail.com
- *               password:
- *                 type: string
- *                 example: Admin@123
- *     responses:
- *       200:
- *         description: Admin login successful.
- *       400:
- *         description: Email/Phone and Password are required.
- *       401:
- *         description: Invalid credentials.
- *       403:
- *         description: Access denied. Admin only.
+ * ===========================================
+ * ADMIN DASHBOARD
+ * ===========================================
  */
 
-router.post(
-  "/login",
-  loginLimiter,
-  adminLogin
+/**
+ * @swagger
+ * /api/admin/dashboard:
+ *   get:
+ *     summary: Get Admin Dashboard
+ *     description: Returns dashboard statistics for admin.
+ *     tags:
+ *       - Admin Dashboard
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Dashboard fetched successfully.
+ *       401:
+ *         description: Unauthorized.
+ *       403:
+ *         description: Forbidden.
+ */
+
+router.get(
+  "/dashboard",
+  protect,
+  authorize("admin"),
+  getDashboard
 );
 
 module.exports = router;

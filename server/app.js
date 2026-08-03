@@ -17,7 +17,7 @@ const app = express();
 const swaggerUi = require("swagger-ui-express");
 const swaggerSpec = require("./config/swagger");
 const authRoutes = require("./routes/auth.routes");
-const adminRoutes = require("./routes/admin.routes");
+
 const profileRoutes = require("./routes/profile.routes");
 const questionRoutes = require("./routes/question.routes");
 const testRoutes = require("./routes/test.routes");
@@ -31,6 +31,8 @@ const adminReportRoutes=require("./routes/adminReport.routes");
 const adminStudentRoutes = require("./routes/adminStudent.routes");
 const examRoutes = require("./routes/exam.routes");
 const studentDashboardRoutes = require("./routes/studentDashboard.routes");
+const adminRoutes = require("./routes/admin.routes");
+
 // =========================
 // Global Middleware
 // =========================
@@ -65,7 +67,11 @@ app.get("/api/health", (req, res) => {
 app.use("/api/auth", authRoutes);
 
 // Admin
-app.use("/api/admin", adminRoutes);
+app.use(
+    "/api/admin",
+    adminRoutes
+);
+
 app.use("/api/admin/exams", adminExamRoutes);
 app.use(
     "/api/admin/analytics",

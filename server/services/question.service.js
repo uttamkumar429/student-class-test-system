@@ -15,6 +15,7 @@ const getAllQuestions = async (
   limit = 10,
   search = "",
   subject = "",
+  chapter = "",
   difficulty = "",
   sortBy = "createdAt",
   order = "desc"
@@ -52,6 +53,9 @@ const getAllQuestions = async (
   // Filters
   if (subject) {
     filter.subject = subject;
+  }
+  if (chapter) {
+    filter.chapter = chapter;
   }
 
   if (difficulty) {

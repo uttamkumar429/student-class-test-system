@@ -43,6 +43,8 @@ exports.getAllQuestions = asyncHandler(async (req, res) => {
   const search = req.query.search || "";
 
   const subject = req.query.subject || "";
+  const chapter =
+  req.query.chapter || "";
 
   const difficulty = req.query.difficulty || "";
 
@@ -55,6 +57,7 @@ exports.getAllQuestions = asyncHandler(async (req, res) => {
     limit,
     search,
     subject,
+    chapter,
     difficulty,
     sortBy,
     order

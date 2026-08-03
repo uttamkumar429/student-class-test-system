@@ -1,166 +1,148 @@
-import { Pencil, Trash2 } from "lucide-react";
+import PropTypes from "prop-types";
+import QuestionRow from "./QuestionRow";
+import EmptyQuestions from "./EmptyQuestions";
+import QuestionSkeleton from "./QuestionSkeleton";
 
-const QuestionTable = ({
+function QuestionTable({
   questions,
   loading,
   error,
+  onPreview,
   onEdit,
   onDelete,
-}) => {
-  // Loading State
+}) {
+  // Loading
   if (loading) {
-    return (
-      <div className="rounded-xl border bg-white p-8 text-center">
-        <p className="text-slate-500">Loading questions...</p>
-      </div>
-    );
+    return <QuestionSkeleton />;
   }
 
-  // Error State
+  // Error
   if (error) {
     return (
-      <div className="rounded-xl border bg-white p-8 text-center">
-        <p className="text-red-500">{error}</p>
-      </div>
-    );
-  }
+      <div className="rounded-2xl border border-red-200 bg-red-50 p-8 text-center shadow-sm">
+        <h3 className="text-lg font-semibold text-red-700">
+          Failed to Load Questions
+        </h3>
 
-  // Empty State
-  if (questions.length === 0) {
-    return (
-      <div className="rounded-xl border bg-white p-8 text-center">
-        <p className="text-slate-500">
-          No questions found.
+        <p className="mt-2 text-sm text-red-600">
+          {error}
         </p>
       </div>
     );
   }
 
+  // Empty
+  if (!questions.length) {
+    return <EmptyQuestions />;
+  }
+
   return (
-    <div className="overflow-x-auto rounded-xl border bg-white shadow-sm">
+    <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
 
-      <table className="min-w-full">
+      <div className="overflow-x-auto">
 
-        <thead className="bg-slate-100">
+        <table className="min-w-full">
 
-          <tr>
+          <thead className="bg-slate-100">
 
-            <th className="px-4 py-3 text-left">
-              Subject
-            </th>
+            <tr className="border-b border-slate-200">
 
-            <th className="px-4 py-3 text-left">
-              Chapter
-            </th>
+              <th className="w-16 px-5 py-4 text-center text-sm font-semibold text-slate-700">
+                #
+              </th>
 
-            <th className="px-4 py-3 text-left">
-              Question
-            </th>
+              <th className="px-5 py-4 text-left text-sm font-semibold text-slate-700">
+                Subject
+              </th>
 
-            <th className="px-4 py-3 text-center">
-              Difficulty
-            </th>
+              <th className="px-5 py-4 text-left text-sm font-semibold text-slate-700">
+                Chapter
+              </th>
 
-            <th className="px-4 py-3 text-center">
-              Marks
-            </th>
+              <th className="min-w-[350px] px-5 py-4 text-left text-sm font-semibold text-slate-700">
+                Question
+              </th>
 
-            <th className="px-4 py-3 text-center">
-              Actions
-            </th>
+              <th className="px-5 py-4 text-center text-sm font-semibold text-slate-700">
+                Difficulty
+              </th>
 
-          </tr>
+              <th className="px-5 py-4 text-center text-sm font-semibold text-slate-700">
+                Marks
+              </th>
 
-        </thead>
-
-        <tbody>
-
-          {questions.map((question) => (
-
-            <tr
-              key={question._id}
-              className="border-t hover:bg-slate-50"
-            >
-
-              <td className="px-4 py-3">
-                {question.subject}
-              </td>
-
-              <td className="px-4 py-3">
-                {question.chapter}
-              </td>
-
-              <td className="max-w-sm px-4 py-3">
-
-                <p className="line-clamp-2">
-
-                  {question.question}
-
-                </p>
-
-              </td>
-
-              <td className="px-4 py-3 text-center">
-
-                <span
-                  className={`rounded-full px-3 py-1 text-xs font-medium
-                  ${
-                    question.difficulty === "Easy"
-                      ? "bg-green-100 text-green-700"
-                      : question.difficulty === "Medium"
-                      ? "bg-yellow-100 text-yellow-700"
-                      : "bg-red-100 text-red-700"
-                  }`}
-                >
-
-                  {question.difficulty}
-
-                </span>
-
-              </td>
-
-              <td className="px-4 py-3 text-center">
-
-                {question.marks}
-
-              </td>
-
-              <td className="px-4 py-3">
-
-                <div className="flex items-center justify-center gap-3">
-
-                  <button
-                    onClick={() => onEdit(question)}
-                    className="text-blue-600 hover:text-blue-800"
-                  >
-
-                    <Pencil size={18} />
-
-                  </button>
-
-                  <button
-                    onClick={() => onDelete(question._id)}
-                    className="text-red-600 hover:text-red-800"
-                  >
-
-                    <Trash2 size={18} />
-
-                  </button>
-
-                </div>
-
-              </td>
+              <th className="w-44 px-5 py-4 text-center text-sm font-semibold text-slate-700">
+                Actions
+              </th>
 
             </tr>
 
-          ))}
+          </thead>
 
-        </tbody>
+          <tbody>
 
-      </table>
+            {questions.map((question, index) => (
 
-    </div>
+              <QuestionRow
+                key={question._id}
+                index={index}
+                question={question}
+                onPreview={onPreview}
+                onEdit={onEdit}
+                onDelete={onDelete}
+              />
+
+            ))}
+
+          </tbody>
+
+        </table>
+
+      </div>
+
+      {/* Footer */}
+
+      <div className="flex items-center justify-between border-t border-slate-200 bg-slate-50 px-6 py-4">
+
+        <p className="text-sm text-slate-500">
+          Showing{" "}
+          <span className="font-semibold">
+            {questions.length}
+          </span>{" "}
+          questions
+        </p>
+
+        <p className="text-sm text-slate-400">
+          Question Bank
+        </p>
+
+      </div>
+
+    </section>
   );
+}
+
+QuestionTable.propTypes = {
+  questions: PropTypes.arrayOf(
+    PropTypes.shape({
+      _id: PropTypes.string.isRequired,
+    })
+  ).isRequired,
+
+  loading: PropTypes.bool,
+
+  error: PropTypes.string,
+
+  onPreview: PropTypes.func.isRequired,
+
+  onEdit: PropTypes.func.isRequired,
+
+  onDelete: PropTypes.func.isRequired,
+};
+
+QuestionTable.defaultProps = {
+  loading: false,
+  error: null,
 };
 
 export default QuestionTable;

@@ -10,11 +10,14 @@ import examReducer from "./studentExam/examSlice";
 
 import resultReducer from "./studentResult/resultSlice";
 import reviewReducer from "./studentReview/reviewSlice";
+import adminDashboardReducer from "./adminDashboard/dashboardSlice";
+import adminQuestionReducer from "./adminQuestion/questionSlice";
 export const store = configureStore({
   reducer: {
 
     auth: authReducer,
-
+    adminDashboard: adminDashboardReducer,
+    adminQuestion: adminQuestionReducer,
     studentProfile: studentProfileReducer,
 
     studentDashboard: dashboardReducer,
@@ -24,6 +27,7 @@ export const store = configureStore({
     studentResult: resultReducer,
 
     studentReview: reviewReducer,
+   
 
   },
 });

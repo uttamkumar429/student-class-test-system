@@ -1,6 +1,6 @@
 import { useState } from "react";
 import DashboardLayout from "../../layouts/DashboardLayout";
-import QuestionSelector from "../../components/tests/QuestionSelector";
+import QuestionSelector from "../../components/questions/QuestionSelector";
 import { createTest } from "../../services/testService";
 import { useNavigate } from "react-router-dom";
 function CreateTest() {
