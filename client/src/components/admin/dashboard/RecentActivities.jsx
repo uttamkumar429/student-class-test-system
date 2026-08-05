@@ -1,17 +1,13 @@
 import PropTypes from "prop-types";
 import {
-  User,
-  FileText,
+  Clock3,
   BookOpen,
   ClipboardCheck,
-  Clock3,
 } from "lucide-react";
 
 const ICONS = {
-  student: User,
   question: BookOpen,
   test: ClipboardCheck,
-  report: FileText,
 };
 
 function RecentActivities({
@@ -22,19 +18,15 @@ function RecentActivities({
 
       {/* Header */}
 
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6">
 
-        <div>
+        <h2 className="text-xl font-bold text-slate-900">
+          Recent Activities
+        </h2>
 
-          <h2 className="text-xl font-bold text-slate-900">
-            Recent Activities
-          </h2>
-
-          <p className="mt-1 text-sm text-slate-500">
-            Latest actions performed in the system.
-          </p>
-
-        </div>
+        <p className="mt-1 text-sm text-slate-500">
+          Latest questions and tests added by administrators.
+        </p>
 
       </div>
 
@@ -54,8 +46,7 @@ function RecentActivities({
           </h3>
 
           <p className="mt-2 text-center text-sm text-slate-500">
-            Activities performed by administrators
-            will appear here.
+            Activities will appear here automatically.
           </p>
 
         </div>
@@ -67,13 +58,14 @@ function RecentActivities({
           {activities.map((activity) => {
 
             const Icon =
-              ICONS[activity.type] || Clock3;
+              ICONS[activity.type] ||
+              Clock3;
 
             return (
 
               <div
                 key={activity.id}
-                className="flex items-start gap-4 rounded-xl border border-slate-100 p-4 transition-all duration-300 hover:border-blue-300 hover:bg-slate-50"
+                className="flex items-start gap-4 rounded-xl border border-slate-200 p-4 transition hover:border-blue-300 hover:bg-slate-50"
               >
 
                 <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-100 text-blue-600">
@@ -84,25 +76,23 @@ function RecentActivities({
 
                 <div className="flex-1">
 
-                  <h4 className="font-semibold text-slate-900">
-
+                  <h3 className="font-semibold text-slate-900">
                     {activity.title}
-
-                  </h4>
+                  </h3>
 
                   <p className="mt-1 text-sm text-slate-500">
-
                     {activity.description}
-
                   </p>
 
                 </div>
 
-                <span className="whitespace-nowrap text-xs text-slate-400">
+                <div className="text-right">
 
-                  {activity.time}
+                  <span className="text-xs text-slate-400">
+                    {activity.time}
+                  </span>
 
-                </span>
+                </div>
 
               </div>
 
@@ -119,18 +109,7 @@ function RecentActivities({
 }
 
 RecentActivities.propTypes = {
-  activities: PropTypes.arrayOf(
-    PropTypes.shape({
-      id: PropTypes.oneOfType([
-        PropTypes.string,
-        PropTypes.number,
-      ]).isRequired,
-      type: PropTypes.string.isRequired,
-      title: PropTypes.string.isRequired,
-      description: PropTypes.string.isRequired,
-      time: PropTypes.string.isRequired,
-    })
-  ),
+  activities: PropTypes.array,
 };
 
 export default RecentActivities;

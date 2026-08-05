@@ -1,58 +1,215 @@
 const User = require("../models/User");
 const Question = require("../models/Question");
 const Test = require("../models/Test");
+const TestSnapshot = require("../models/TestSnapshot");
+const ExamAttempt = require("../models/ExamAttempt");
+
+// ==========================================
+// ADMIN DASHBOARD SERVICE
+// ==========================================
 
 const getDashboardStats = async () => {
 
+  const today = new Date();
+
+  today.setHours(0, 0, 0, 0);
+
   const [
-    totalUsers,
+
+    // ==================================
+    // USERS
+    // ==================================
+
+    totalStudents,
+
+    activeStudents,
+
+    blockedStudents,
+
+    totalTeachers,
+
+    // ==================================
+    // QUESTIONS
+    // ==================================
+
     totalQuestions,
+
+    // ==================================
+    // TESTS
+    // ==================================
+
     totalTests,
+
     publishedTests,
+
     draftTests,
+
+    archivedTests,
+
+    completedTests,
+
+    // ==================================
+    // EXAMS
+    // ==================================
+
+    totalPublishedExams,
+
+    totalAttempts,
+
+    todayAttempts,
+
+    // ==================================
+    // RECENT DATA
+    // ==================================
+
     recentTests,
+
     recentQuestions,
-    subjectAnalytics,
-    monthlyAnalytics,
-    difficultyAnalytics,
-    questionSubjectAnalytics,
-    testStatusAnalytics,
+
   ] = await Promise.all([
 
-    // Total Users
-    User.countDocuments(),
+    // ==========================
+    // STUDENTS
+    // ==========================
 
-    // Total Questions
+    User.countDocuments({
+      role: "student",
+    }),
+
+    User.countDocuments({
+      role: "student",
+      isBlocked: false,
+    }),
+
+    User.countDocuments({
+      role: "student",
+      isBlocked: true,
+    }),
+
+    User.countDocuments({
+      role: {
+        $in: [
+          "teacher",
+          "admin",
+          "superAdmin",
+        ],
+      },
+    }),
+
+    // ==========================
+    // QUESTION BANK
+    // ==========================
+
     Question.countDocuments(),
 
-    // Total Tests
+    // ==========================
+    // TESTS
+    // ==========================
+
     Test.countDocuments(),
 
-    // Published Tests
     Test.countDocuments({
       status: "published",
     }),
 
-    // Draft Tests
     Test.countDocuments({
       status: "draft",
     }),
 
-    // Recent Tests
+    Test.countDocuments({
+      status: "archived",
+    }),
+
+    Test.countDocuments({
+      status: "completed",
+    }),
+
+    // ==========================
+    // SNAPSHOTS
+    // ==========================
+
+    TestSnapshot.countDocuments(),
+
+    // ==========================
+    // ATTEMPTS
+    // ==========================
+
+    ExamAttempt.countDocuments(),
+
+    ExamAttempt.countDocuments({
+      createdAt: {
+        $gte: today,
+      },
+    }),
+
+    // ==========================
+    // RECENT TESTS
+    // ==========================
+
     Test.find()
-      .select("title subject duration status createdAt")
-      .sort({ createdAt: -1 })
+
+      .select(
+        "title subject duration status createdAt createdBy startTime"
+      )
+
+      .populate(
+        "createdBy",
+        "fullName"
+      )
+
+      .sort({
+        createdAt: -1,
+      })
+
       .limit(5)
+
       .lean(),
 
-    // Recent Questions
+    // ==========================
+    // RECENT QUESTIONS
+    // ==========================
+
     Question.find()
-      .select("question subject chapter difficulty marks createdAt")
-      .sort({ createdAt: -1 })
+
+      .select(
+        "question subject chapter difficulty marks createdAt"
+      )
+
+      .sort({
+        createdAt: -1,
+      })
+
       .limit(5)
+
       .lean(),
 
-    // Test Subject Analytics
+  ]);
+    // ==========================================
+  // ANALYTICS
+  // ==========================================
+
+  const [
+
+    subjectAnalytics,
+
+    monthlyAnalytics,
+
+    difficultyAnalytics,
+
+    questionSubjectAnalytics,
+
+    testStatusAnalytics,
+
+    upcomingTests,
+
+    recentActivities,
+
+  ] = await Promise.all([
+
+    // ===============================
+    // TEST SUBJECT ANALYTICS
+    // ===============================
+
     Test.aggregate([
       {
         $group: {
@@ -76,7 +233,10 @@ const getDashboardStats = async () => {
       },
     ]),
 
-    // Monthly Analytics
+    // ===============================
+    // MONTHLY TEST ANALYTICS
+    // ===============================
+
     Test.aggregate([
       {
         $group: {
@@ -104,7 +264,10 @@ const getDashboardStats = async () => {
       },
     ]),
 
-    // Difficulty Analytics
+    // ===============================
+    // QUESTION DIFFICULTY
+    // ===============================
+
     Question.aggregate([
       {
         $group: {
@@ -128,7 +291,10 @@ const getDashboardStats = async () => {
       },
     ]),
 
-    // Question Subject Analytics
+    // ===============================
+    // QUESTION SUBJECTS
+    // ===============================
+
     Question.aggregate([
       {
         $group: {
@@ -152,7 +318,10 @@ const getDashboardStats = async () => {
       },
     ]),
 
-    // Test Status Analytics
+    // ===============================
+    // TEST STATUS
+    // ===============================
+
     Test.aggregate([
       {
         $group: {
@@ -176,31 +345,142 @@ const getDashboardStats = async () => {
       },
     ]),
 
+    // ===============================
+    // UPCOMING TESTS
+    // ===============================
+
+    TestSnapshot.find({
+      startTime: {
+        $gte: new Date(),
+      },
+    })
+
+      .select(
+        "title subject duration startTime"
+      )
+
+      .sort({
+        startTime: 1,
+      })
+
+      .limit(5)
+
+      .lean(),
+
+    // ===============================
+    // RECENT ACTIVITIES
+    // ===============================
+
+    ExamAttempt.find()
+
+      .populate(
+        "student",
+        "fullName"
+      )
+
+      .populate(
+        "testSnapshot",
+        "title"
+      )
+
+      .sort({
+        updatedAt: -1,
+      })
+
+      .limit(10)
+
+      .lean()
+
   ]);
+    // ==========================================
+  // FORMAT UPCOMING TESTS
+  // ==========================================
+
+  const formattedUpcomingTests = upcomingTests.map(
+    (test) => ({
+      id: test._id,
+      title: test.title,
+      subject: test.subject,
+      duration: test.duration,
+      startTime: test.startTime,
+    })
+  );
+
+  // ==========================================
+  // FORMAT RECENT ACTIVITIES
+  // ==========================================
+
+  const formattedActivities = recentActivities.map(
+    (attempt) => ({
+      id: attempt._id,
+
+      type: "test",
+
+      title:
+        attempt.student?.fullName ||
+        "Unknown Student",
+
+      description: `${
+        attempt.status === "SUBMITTED"
+          ? "Submitted"
+          : "Started"
+      } ${
+        attempt.testSnapshot?.title || "Exam"
+      }`,
+
+      time: attempt.updatedAt,
+    })
+  );
+console.log("==== Dashboard Response ====");
+
+console.log({
+  totalStudents,
+  totalTests,
+  archivedTests,
+  publishedTests,
+  draftTests,
+});
+  // ==========================================
+  // FINAL RESPONSE
+  // ==========================================
 
   return {
 
-    overview: {
+    totalStudents,
 
-      totalUsers,
+    activeStudents,
 
-      totalQuestions,
+    blockedStudents,
 
-      totalTests,
+    totalTeachers,
 
-      publishedTests,
+    totalQuestions,
 
-      draftTests,
+    totalTests,
 
-    },
+    publishedTests,
 
-    recent: {
+    draftTests,
 
-      recentTests,
+    archivedTests,
 
-      recentQuestions,
+    completedTests,
 
-    },
+    totalPublishedExams,
+
+    totalAttempts,
+
+    todayAttempts,
+
+    recentTests,
+
+    recentQuestions,
+
+    upcomingTests:
+      formattedUpcomingTests,
+
+    recentActivities:
+      formattedActivities,
 
     analytics: {
 
@@ -217,8 +497,15 @@ const getDashboardStats = async () => {
     },
 
   };
+
 };
 
+// ==========================================
+// EXPORT
+// ==========================================
+
 module.exports = {
+
   getDashboardStats,
+
 };

@@ -23,7 +23,9 @@ function AdminDashboard() {
   const dashboard = useSelector(selectDashboard);
   const loading = useSelector(selectDashboardLoading);
   const error = useSelector(selectDashboardError);
-
+  console.log("Dashboard Data:", dashboard);
+  console.log("Total Tests =", dashboard?.totalTests);
+console.log("Archived =", dashboard?.archivedTests);
   useEffect(() => {
     dispatch(fetchDashboard());
   }, [dispatch]);
@@ -35,7 +37,7 @@ function AdminDashboard() {
   if (error) {
     return (
       <div className="flex min-h-[70vh] items-center justify-center">
-        <div className="rounded-2xl bg-white p-8 shadow-lg text-center">
+        <div className="rounded-2xl bg-white p-8 text-center shadow-lg">
           <h2 className="text-2xl font-bold text-red-600">
             Failed to Load Dashboard
           </h2>
@@ -53,24 +55,66 @@ function AdminDashboard() {
     );
   }
 
+  // ==========================
+  // Backend Data Mapping
+  // ==========================
+
+  const recentTests = dashboard?.recent?.tests || [];
+
+  const recentQuestions =
+    dashboard?.recent?.questions || [];
+
+  const upcomingTests = recentTests.filter(
+    (test) => test.status === "published"
+  );
+
+  const activities = [
+
+    ...recentTests.map((test) => ({
+      id: test._id,
+      type: "test",
+      title: test.title,
+      description: `Test created (${test.subject})`,
+      time: new Date(test.createdAt).toLocaleDateString(),
+    })),
+
+    ...recentQuestions.map((question) => ({
+      id: question._id,
+      type: "question",
+      title: question.subject,
+      description: question.question,
+      time: new Date(question.createdAt).toLocaleDateString(),
+    })),
+
+  ]
+
   return (
     <div className="space-y-8">
+
       <DashboardHeader adminName="Super Admin" />
 
       <DashboardStats dashboard={dashboard} />
 
       <div className="grid gap-8 xl:grid-cols-3">
+
         <div className="space-y-8 xl:col-span-2">
+
           <QuickActions navigate={navigate} />
 
-          <RecentActivities activities={[]} />
+        <RecentActivities
+            activities={activities}
+        />
+
         </div>
 
         <UpcomingTests
-          tests={[]}
-          onViewAll={() => navigate("/admin/exams")}
+            tests={upcomingTests}
+            onViewAll={() => navigate("/admin/exams")}
         />
+                
+
       </div>
+
     </div>
   );
 }

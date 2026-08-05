@@ -10,6 +10,18 @@ function UpcomingTests({
   tests = [],
   onViewAll,
 }) {
+  const formatDate = (date) => {
+    if (!date) return "--";
+
+    return new Date(date).toLocaleString([], {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
 
@@ -24,7 +36,7 @@ function UpcomingTests({
           </h2>
 
           <p className="mt-1 text-sm text-slate-500">
-            Scheduled examinations.
+            Published examinations available for students.
           </p>
 
         </div>
@@ -57,8 +69,7 @@ function UpcomingTests({
           </h3>
 
           <p className="mt-2 text-center text-sm text-slate-500">
-            Newly scheduled examinations
-            will appear here.
+            Published tests will appear here.
           </p>
 
         </div>
@@ -70,8 +81,8 @@ function UpcomingTests({
           {tests.map((test) => (
 
             <div
-              key={test.id}
-              className="rounded-xl border border-slate-200 p-5 transition-all duration-300 hover:border-blue-400 hover:shadow-md"
+              key={test._id}
+              className="rounded-xl border border-slate-200 p-5 transition hover:border-blue-400 hover:shadow-md"
             >
 
               <div className="flex items-start justify-between">
@@ -104,7 +115,7 @@ function UpcomingTests({
 
                       <CalendarDays size={16} />
 
-                      {test.startTime}
+                      {formatDate(test.startTime)}
 
                     </div>
 
@@ -112,8 +123,10 @@ function UpcomingTests({
 
                 </div>
 
-                <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700">
-                  Scheduled
+                <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700 capitalize">
+
+                  {test.status}
+
                 </span>
 
               </div>
@@ -131,18 +144,7 @@ function UpcomingTests({
 }
 
 UpcomingTests.propTypes = {
-  tests: PropTypes.arrayOf(
-    PropTypes.shape({
-      id: PropTypes.oneOfType([
-        PropTypes.string,
-        PropTypes.number,
-      ]).isRequired,
-      title: PropTypes.string.isRequired,
-      subject: PropTypes.string.isRequired,
-      duration: PropTypes.number.isRequired,
-      startTime: PropTypes.string.isRequired,
-    })
-  ),
+  tests: PropTypes.array,
 
   onViewAll: PropTypes.func,
 };
