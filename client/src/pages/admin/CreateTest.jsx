@@ -1,202 +1,76 @@
 import { useState } from "react";
-import DashboardLayout from "../../layouts/DashboardLayout";
-import QuestionSelector from "../../components/questions/QuestionSelector";
-import { createTest } from "../../services/testService";
 import { useNavigate } from "react-router-dom";
+
+import DashboardLayout from "../../layouts/DashboardLayout";
+import TestForm from "../../components/tests/TestForm";
+import { toastService } from "../../lib/toast";
+import { useDispatch } from "react-redux";
+
+import {
+  createTest,
+} from "../../redux/adminTest/testThunk";
+
 function CreateTest() {
-  const [formData, setFormData] = useState({
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const [saving, setSaving] = useState(false);
 
-    title: "",
-    subject: "",
-    description: "",
-    duration: "",
-    startTime: "",
-    endTime: "",
-  });
+  // ======================================
+  // Create Test
+  // ======================================
 
- const [selectedQuestions, setSelectedQuestions] = useState([]);
- const navigate = useNavigate();
- const [saving, setSaving] = useState(false);
-  const handleChange = (e) => {
-    setFormData((prev) => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }));
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    if (selectedQuestions.length === 0) {
-        alert("Please select at least one question.");
-        return;
-    }
-
+  const handleCreate = async (payload) => {
     try {
-        setSaving(true);
+      setSaving(true);
 
-        const payload = {
-        ...formData,
-        duration: Number(formData.duration),
-        questions: selectedQuestions,
-        };
+    await dispatch(
+      createTest(payload)
+    ).unwrap();
 
-        await createTest(payload);
+      toastService.success("Test created successfully.");
 
-        alert("Test created successfully.");
-
-        navigate("/admin/tests");
+      navigate("/admin/tests");
 
     } catch (error) {
 
-        alert(
-        error.response?.data?.message ||
-        "Failed to create test."
-        );
+      toastService.error(error);
 
     } finally {
 
-        setSaving(false);
+      setSaving(false);
 
     }
-    };
+  };
 
   return (
     <DashboardLayout>
-      <div className="max-w-4xl mx-auto bg-white rounded-xl shadow border p-8">
 
-        <h1 className="text-3xl font-bold mb-2">
-          Create New Test
-        </h1>
+      <div className="mx-auto max-w-5xl rounded-2xl border bg-white p-8 shadow-sm">
 
-        <p className="text-slate-500 mb-8">
-          Fill all required details.
-        </p>
+        <div className="mb-8">
 
-        <form
-          onSubmit={handleSubmit}
-          className="space-y-6"
-        >
+          <h1 className="text-3xl font-bold text-slate-800">
 
-          <div>
+            Create Test
 
-            <label className="block mb-2 font-medium">
-              Title
-            </label>
+          </h1>
 
-            <input
-              type="text"
-              name="title"
-              value={formData.title}
-              onChange={handleChange}
-              className="w-full border rounded-lg px-4 py-3"
-              placeholder="Physics Motion Test"
-            />
+          <p className="mt-2 text-slate-500">
 
-          </div>
+            Create a new examination by filling the details below.
 
-          <div>
+          </p>
 
-            <label className="block mb-2 font-medium">
-              Subject
-            </label>
+        </div>
 
-            <input
-              type="text"
-              name="subject"
-              value={formData.subject}
-              onChange={handleChange}
-              className="w-full border rounded-lg px-4 py-3"
-              placeholder="Physics"
-            />
-
-          </div>
-
-          <div>
-
-            <label className="block mb-2 font-medium">
-              Description
-            </label>
-
-            <textarea
-              rows="4"
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              className="w-full border rounded-lg px-4 py-3"
-              placeholder="Enter description..."
-            />
-
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-5">
-
-            <div>
-
-              <label className="block mb-2 font-medium">
-                Duration (Minutes)
-              </label>
-
-              <input
-                type="number"
-                name="duration"
-                value={formData.duration}
-                onChange={handleChange}
-                className="w-full border rounded-lg px-4 py-3"
-              />
-
-            </div>
-
-            <div>
-
-              <label className="block mb-2 font-medium">
-                Start Time
-              </label>
-
-              <input
-                type="datetime-local"
-                name="startTime"
-                value={formData.startTime}
-                onChange={handleChange}
-                className="w-full border rounded-lg px-4 py-3"
-              />
-
-            </div>
-
-            <div>
-
-              <label className="block mb-2 font-medium">
-                End Time
-              </label>
-
-              <input
-                type="datetime-local"
-                name="endTime"
-                value={formData.endTime}
-                onChange={handleChange}
-                className="w-full border rounded-lg px-4 py-3"
-              />
-
-            </div>
-
-          </div>
-
-            <QuestionSelector
-                selectedQuestions={selectedQuestions}
-                setSelectedQuestions={setSelectedQuestions}
-            />
-
-            <button
-                type="submit"
-                disabled={saving}
-                className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-8 py-3 rounded-lg"
-                >
-                {saving ? "Creating..." : "Create Test"}
-            </button>
-
-        </form>
+        <TestForm
+          submitText="Create Test"
+          loading={saving}
+          onSubmit={handleCreate}
+        />
 
       </div>
+
     </DashboardLayout>
   );
 }

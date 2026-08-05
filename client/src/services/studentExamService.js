@@ -36,14 +36,11 @@ class StudentExamService {
 
 async getExamQuestions(attemptId) {
 
-    const { data } = await api.get(
+  const { data } = await api.get(
+    `/student/attempt/${attemptId}/questions`
+  );
 
-        `/student/exam/${attemptId}`
-
-    );
-
-    return data;
-
+  return data;
 }
 }
 const studentExamService = new StudentExamService();

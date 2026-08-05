@@ -12,11 +12,14 @@ import StudentExams from "../pages/student/StudentExams";
 import ExamInstructions from "../pages/student/ExamInstructions";
 import CreateQuestion from "../pages/admin/CreateQuestion";
 import CreateTest from "../pages/admin/CreateTest";
+import TestDetails from "../pages/admin/TestDetails";
+import EditTest from "../pages/admin/EditTest";
 import ProfilePage from "../pages/student/ProfilePage";
 import ResultPage from "../pages/student/ResultPage";
 import ResultHistory from "../pages/student/ResultHistory";
 import ExamPage from "../pages/student/ExamPage";
 import ReviewAnswersPage from "../pages/student/ReviewAnswersPage";
+
 import ProtectedRoute from "./ProtectedRoute";
 
 function AppRoutes() {
@@ -55,6 +58,23 @@ function AppRoutes() {
               </ProtectedRoute>
             }
             
+        />
+        <Route
+            path="/admin/tests/:id"
+            element={
+                <ProtectedRoute>
+                <TestDetails />
+                </ProtectedRoute>
+            }
+        />
+
+        <Route
+            path="/admin/tests/:id/edit"
+            element={
+                <ProtectedRoute>
+                <EditTest />
+                </ProtectedRoute>
+            }
         />
         <Route
             path="/admin/students"

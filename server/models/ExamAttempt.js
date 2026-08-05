@@ -53,6 +53,41 @@ const examAttemptSchema = new mongoose.Schema(
         },
     ],
 
+    answers: [
+  {
+    questionId: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: true,
+    },
+
+    selectedAnswer: {
+      type: String,
+      enum: [
+        "A",
+        "B",
+        "C",
+        "D",
+        null,
+      ],
+      default: null,
+    },
+
+    isCorrect: {
+      type: Boolean,
+      default: false,
+    },
+
+    marksAwarded: {
+      type: Number,
+      default: 0,
+    },
+
+    answeredAt: {
+      type: Date,
+    },
+  },
+],
+
     totalQuestions:{
         type:Number,
         default:0

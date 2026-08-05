@@ -31,6 +31,7 @@ const adminReportRoutes=require("./routes/adminReport.routes");
 const adminStudentRoutes = require("./routes/adminStudent.routes");
 const examRoutes = require("./routes/exam.routes");
 const studentDashboardRoutes = require("./routes/studentDashboard.routes");
+const studentExamRoutes = require("./routes/studentExam.routes");
 const adminRoutes = require("./routes/admin.routes");
 
 // =========================
@@ -104,6 +105,10 @@ app.use("/api/student", studentRoutes);
 
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/student/dashboard", studentDashboardRoutes);
+app.use(
+  "/api/student",
+  studentExamRoutes
+);
 // app.use(errorHandler);
 // Swagger Documentation
 if(process.env.NODE_ENV!=="production"){
@@ -127,16 +132,6 @@ app.use((req, res) => {
   });
 });
 
-// =========================
-// Global Error Handler
-// =========================
-// app.use((err, req, res, next) => {
-//   console.error("Global Error:", err);
 
-//   return res.status(err.status || 500).json({
-//     success: false,
-//     message: err.message || "Internal Server Error",
-//   });
-// });
 
 module.exports = app;
