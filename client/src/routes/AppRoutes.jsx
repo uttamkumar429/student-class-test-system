@@ -25,7 +25,9 @@ function AppRoutes() {
         <Routes>
 
         {/* Public Route */}
-        <Route path="/" element={<LoginPage />} />
+       <Route path="/" element={<LoginPage />} />
+
+        <Route path="/login" element={<LoginPage />} />
 
         {/* Protected Route */}
         {/* console.log("AppRoutes Rendered"); */}

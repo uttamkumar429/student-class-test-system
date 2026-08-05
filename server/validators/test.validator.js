@@ -1,66 +1,146 @@
-const validateTest = (data) => {
+const mongoose = require("mongoose");
+
+// =====================================
+// CREATE TEST VALIDATION
+// =====================================
+
+const validateCreateTest = (data) => {
 
   const errors = [];
 
-  // Title Validation
-  if (!data.title || data.title.trim() === "") {
+  const {
+    title,
+    subject,
+    duration,
+    startTime,
+    endTime,
+    questions,
+  } = data;
+
+  // =========================
+  // Title
+  // =========================
+
+  if (!title || typeof title !== "string") {
     errors.push("Title is required.");
+  } else if (title.trim().length < 3) {
+    errors.push(
+      "Title must contain at least 3 characters."
+    );
+  } else if (title.trim().length > 150) {
+    errors.push(
+      "Title cannot exceed 150 characters."
+    );
   }
 
-  // Subject Validation
-  if (!data.subject || data.subject.trim() === "") {
+  // =========================
+  // Subject
+  // =========================
+
+  if (!subject || typeof subject !== "string") {
     errors.push("Subject is required.");
   }
 
-  // Duration Validation
+  // =========================
+  // Duration
+  // =========================
+
   if (
-    data.duration === undefined ||
-    isNaN(data.duration) ||
-    Number(data.duration) < 1
+    duration === undefined ||
+    duration === null ||
+    Number(duration) <= 0
   ) {
-    errors.push("Duration must be greater than 0.");
+    errors.push(
+      "Duration must be greater than 0."
+    );
   }
 
- // Questions Validation
-if (!Array.isArray(data.questions)) {
+  // =========================
+  // Start Time
+  // =========================
 
-  errors.push("Questions must be an array.");
-
-} else {
-
-  if (data.questions.length === 0) {
-    errors.push("At least one question is required.");
+  if (!startTime) {
+    errors.push("Start time is required.");
   }
 
-  const hasEmptyQuestion = data.questions.some(
-    (questionId) => !questionId
-  );
+  // =========================
+  // End Time
+  // =========================
 
-  if (hasEmptyQuestion) {
-    errors.push("Question ID cannot be empty.");
+  if (!endTime) {
+    errors.push("End time is required.");
   }
 
-}
+  // =========================
+  // Date Validation
+  // =========================
 
-  // Start Time Validation
-  if (!data.startTime) {
-    errors.push("Start Time is required.");
+  if (startTime && endTime) {
+
+    const start = new Date(startTime);
+
+    const end = new Date(endTime);
+
+    if (Number.isNaN(start.getTime())) {
+      errors.push("Invalid start time.");
+    }
+
+    if (Number.isNaN(end.getTime())) {
+      errors.push("Invalid end time.");
+    }
+
+    if (
+      !Number.isNaN(start.getTime()) &&
+      !Number.isNaN(end.getTime()) &&
+      start >= end
+    ) {
+      errors.push(
+        "End time must be greater than start time."
+      );
+    }
   }
 
-  // End Time Validation
-  if (!data.endTime) {
-    errors.push("End Time is required.");
-  }
+  // =========================
+  // Questions
+  // =========================
 
-  // Start Time < End Time
-  if (data.startTime && data.endTime) {
+  if (!Array.isArray(questions)) {
 
-    const start = new Date(data.startTime);
-    const end = new Date(data.endTime);
+    errors.push(
+      "Questions must be an array."
+    );
 
-  if (start >= end) {
-    errors.push("End time must be greater than start time.");
-  }
+  } else {
+
+    if (questions.length === 0) {
+      errors.push(
+        "Select at least one question."
+      );
+    }
+
+    const uniqueQuestions = [
+      ...new Set(questions),
+    ];
+
+    if (
+      uniqueQuestions.length !== questions.length
+    ) {
+      errors.push(
+        "Duplicate questions are not allowed."
+      );
+    }
+
+    for (const id of questions) {
+
+      if (
+        !mongoose.Types.ObjectId.isValid(id)
+      ) {
+        errors.push(
+          `Invalid question id : ${id}`
+        );
+      }
+
+    }
 
   }
 
@@ -68,4 +148,6 @@ if (!Array.isArray(data.questions)) {
 
 };
 
-module.exports = validateTest;
+module.exports = {
+  validateCreateTest,
+};

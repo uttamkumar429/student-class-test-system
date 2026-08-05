@@ -69,17 +69,14 @@ exports.getAllTests = asyncHandler(async (req, res) => {
 
 
 });
-// GET TEST BY ID
-exports.getTestById = asyncHandler(async (req, res) => {
 
-  const test = await getTestByIdService(req.params.id);
+exports.getTestById = asyncHandler(
+async (req, res) => {
 
-  if (!test) {
-    throw new ApiError(
-        404,
-        "Test not found."
+  const test =
+    await getTestByIdService(
+      req.params.id
     );
-}
 
   return successResponse(
     res,
@@ -117,19 +114,13 @@ exports.updateTest = asyncHandler(async (req, res) => {
 // DELETE TEST
 exports.deleteTest = asyncHandler(async (req, res) => {
 
-  const test = await deleteTestService(req.params.id);
+ await deleteTestService(req.params.id);
 
-  if (!test) {
-    throw new ApiError(
-        404,
-        "Test not found."
-    );
-}
-  return successResponse(
-    res,
-    200,
-    "Test deleted successfully."
-  );
+return successResponse(
+  res,
+  200,
+  "Test deleted successfully."
+);
 
 });
 // =====================================

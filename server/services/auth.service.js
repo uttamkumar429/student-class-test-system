@@ -3,12 +3,17 @@ const User = require("../models/User");
 
 const authenticateUser = async (emailOrPhone, password) => {
 
+  console.log("==================================");
+  console.log("LOGIN ID:", emailOrPhone);
+
   const user = await User.findOne({
     $or: [
       { email: emailOrPhone.trim().toLowerCase() },
       { phone: emailOrPhone }
     ]
   });
+
+  console.log("USER FOUND:", user);
 
   if (!user) {
     return {
@@ -22,6 +27,8 @@ const authenticateUser = async (emailOrPhone, password) => {
     user.password
   );
 
+  console.log("PASSWORD MATCH:", isPasswordMatched);
+
   if (!isPasswordMatched) {
     return {
       success: false,
@@ -33,8 +40,9 @@ const authenticateUser = async (emailOrPhone, password) => {
     success: true,
     user
   };
-
 };
+
+
 
 module.exports = {
   authenticateUser

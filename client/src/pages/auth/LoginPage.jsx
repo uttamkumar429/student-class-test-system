@@ -35,19 +35,31 @@ function LoginPage() {
         [name]: value,
     }));
     };
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    setLoading(true);
+  console.log("STEP 1 : Form Submitted");
+
+  setLoading(true);
 
   try {
+
+    console.log("STEP 2 : Dispatch Starting");
+
     await dispatch(loginThunk(formData, navigate));
-  } catch {
-    // Error already handled in loginThunk
+
+    console.log("STEP 3 : Dispatch Completed");
+
+  } catch (error) {
+
+    console.log("STEP 4 : Error", error);
+
   } finally {
+
     setLoading(false);
+
   }
-  };
+};
     
     return (
     <AuthLayout>
@@ -89,12 +101,10 @@ function LoginPage() {
         {/* Right Section */}
 
         <div className="flex items-center justify-center p-10">
-
-           <form
-                className="w-full max-w-md"
-                onSubmit={handleSubmit}
-            >
-
+        <form
+          className="w-full max-w-md"
+          onSubmit={handleSubmit}
+        >
             <h2 className="mb-2 text-3xl font-bold text-slate-800">
               Welcome Back 👋
             </h2>
@@ -152,13 +162,12 @@ function LoginPage() {
             </button>
 
             </div>
-          <Button
-            type="submit"
-            loading={loading}
-            disabled={loading}
-          >
-            Login
-          </Button>
+            <Button
+              type="submit"
+              loading={loading}
+            >
+              Login
+            </Button>
 
           </form>
 

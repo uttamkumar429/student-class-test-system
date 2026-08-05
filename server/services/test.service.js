@@ -1,10 +1,87 @@
 const Test = require("../models/Test");
+const mongoose = require("mongoose");
 const Question = require("../models/Question");
 const ApiError = require("../utils/ApiError");
 const TestSnapshot = require("../models/TestSnapshot");
+
 // =====================================
-// COMMON BUSINESS LOGIC
+// ESCAPE REGEX
 // =====================================
+
+const escapeRegex = (text) => {
+  return text.replace(
+    /[.*+?^${}()|[\]\\]/g,
+    "\\$&"
+  );
+};
+
+// =====================================
+// CHECK DUPLICATE TEST TITLE
+// =====================================
+
+const checkDuplicateTitle = async (
+  title,
+  excludeId = null
+) => {
+
+  const filter = {
+    title: {
+      $regex: `^${escapeRegex(title.trim())}$`,
+      $options: "i",
+    },
+  };
+
+  if (excludeId) {
+    filter._id = {
+      $ne: excludeId,
+    };
+  }
+
+  const existingTest = await Test.findOne(filter).lean();
+
+  if (existingTest) {
+    throw new ApiError(
+      409,
+      "Test with this title already exists."
+    );
+  }
+};
+
+// =====================================
+// VALIDATE TEST DATES
+// =====================================
+
+const validateTestDates = (
+  startTime,
+  endTime
+) => {
+
+  const now = new Date();
+
+  const start = new Date(startTime);
+
+  const end = new Date(endTime);
+
+  if (start < now) {
+    throw new ApiError(
+      400,
+      "Start time cannot be in the past."
+    );
+  }
+
+  if (end <= start) {
+    throw new ApiError(
+      400,
+      "End time must be greater than start time."
+    );
+  }
+
+};
+
+
+// // =====================================
+// // COMMON BUSINESS LOGIC
+// // =====================================
 const processQuestions = async (questionIds) => {
 
   // Duplicate Check
@@ -21,6 +98,13 @@ const processQuestions = async (questionIds) => {
   const questions = await Question.find({
     _id: { $in: questionIds },
   });
+
+  const orderedQuestions = questionIds.map((id) =>
+  questions.find(
+    (question) =>
+      question._id.toString() === id.toString()
+  )
+);
 
   // Invalid IDs
   if (questions.length !== questionIds.length) {
@@ -54,65 +138,80 @@ const processQuestions = async (questionIds) => {
     questions,
     totalMarks,
     totalQuestions: questions.length,
+    questions: orderedQuestions,
   };
 };
 
-// =====================================
 // CREATE TEST
-// =====================================
+
 const createTest = async (testData) => {
 
-  // Check Duplicate Title
-const title = testData.title.trim();
+// CHECK DUPLICATE TITLE
+   await checkDuplicateTitle(testData.title);
 
-  const existingTest = await Test.findOne({
-    title: {
-      $regex: `^${title}$`,
-      $options: "i",
-    },
-  });
+// =====================================
+// VALIDATE TEST DATES
+// =====================================
 
-  if (existingTest) {
-    throw new ApiError(
-        409,
-        "Test with this title already exists."
-    );
-  }
-  // Validate Start Time
-const now = new Date();
-
-if (new Date(testData.startTime) < now) {
-  throw new ApiError(
-      400,
-      "Start time cannot be in the past."
+  validateTestDates(
+    testData.startTime,
+    testData.endTime
   );
-}
-// Validate End Time
-if (new Date(testData.endTime) <= new Date(testData.startTime)) {
-  throw new ApiError(
-    400,
-    "End time must be greater than start time."
-  );
-}
 
-  // Process Questions
+// =====================================
+// PROCESS QUESTIONS
+// =====================================
+
   const result = await processQuestions(
     testData.questions
   );
 
-  // Create Test
+// =====================================
+// CREATE TEST
+// =====================================
+
   const test = await Test.create({
-    ...testData,
-    totalMarks: result.totalMarks,
+    title: testData.title.trim(),
+
+    subject: testData.subject.trim(),
+
+    description:
+      testData.description?.trim() || "",
+
+    duration: Number(testData.duration),
+
+    questions: result.questions.map(
+      (question) => question._id
+    ),
+
     totalQuestions: result.totalQuestions,
+
+    totalMarks: result.totalMarks,
+
+    startTime: testData.startTime,
+
+    endTime: testData.endTime,
+
+    createdBy: testData.createdBy,
+
+    status: "draft",
   });
 
-  return test;
-};
+// Populate response
+
+  return await Test.findById(test._id)
+    .populate(
+      "createdBy",
+      "fullName email"
+    )
+    .populate("questions")
+    .lean();
+}
 
 // =====================================
 // GET ALL TESTS
 // =====================================
+
 const getAllTests = async (
   page = 1,
   limit = 10,
@@ -122,7 +221,7 @@ const getAllTests = async (
   search = "",
   startDate = "",
   endDate = "",
-  duration=""
+  duration = ""
 ) => {
 
   page = Math.max(1, Number(page));
@@ -130,26 +229,9 @@ const getAllTests = async (
 
   const skip = (page - 1) * limit;
 
-  let sortOption = {};
-
-  switch (sort) {
-
-    case "oldest":
-      sortOption = { createdAt: 1 };
-      break;
-
-    case "title":
-      sortOption = { title: 1 };
-      break;
-
-    case "subject":
-      sortOption = { subject: 1 };
-      break;
-
-    default:
-      sortOption = { createdAt: -1 };
-
-  }
+  // =====================================
+  // FILTER
+  // =====================================
 
   const filter = {};
 
@@ -158,24 +240,31 @@ const getAllTests = async (
   }
 
   if (subject) {
-    filter.subject = subject;
+    filter.subject = subject.trim();
   }
+
   if (duration) {
     filter.duration = Number(duration);
   }
 
-  if (search) {
+  // =====================================
+  // SEARCH
+  // =====================================
+
+  if (search.trim()) {
+
+    const keyword = escapeRegex(search.trim());
 
     filter.$or = [
       {
         title: {
-          $regex: search,
+          $regex: keyword,
           $options: "i",
         },
       },
       {
         subject: {
-          $regex: search,
+          $regex: keyword,
           $options: "i",
         },
       },
@@ -183,7 +272,10 @@ const getAllTests = async (
 
   }
 
-  // Date Range Filter
+  // =====================================
+  // DATE FILTER
+  // =====================================
+
   if (startDate || endDate) {
 
     filter.createdAt = {};
@@ -198,24 +290,105 @@ const getAllTests = async (
 
   }
 
+  // =====================================
+  // SORTING
+  // =====================================
+
+  const sortOptions = {
+    newest: {
+      createdAt: -1,
+    },
+
+    oldest: {
+      createdAt: 1,
+    },
+
+    title: {
+      title: 1,
+    },
+
+    subject: {
+      subject: 1,
+    },
+  };
+
+  const sortBy =
+    sortOptions[sort] ||
+    sortOptions.newest;
+
+  // =====================================
+  // DATABASE QUERY
+  // =====================================
+
   const [total, tests] = await Promise.all([
+
     Test.countDocuments(filter),
 
     Test.find(filter)
-      .populate("createdBy", "fullName email")
-      .populate("questions")
-      .sort(sortOption)
+
+      .select(
+        `
+        title
+        subject
+        duration
+        totalMarks
+        totalQuestions
+        startTime
+        endTime
+        status
+        createdAt
+        createdBy
+        questions
+        `
+      )
+
+      .populate(
+        "createdBy",
+        "fullName email"
+      )
+
+      .populate({
+        path: "questions",
+
+        select:
+          "question subject chapter difficulty marks",
+      })
+
+      .sort(sortBy)
+
       .skip(skip)
+
       .limit(limit)
+
       .lean(),
+
   ]);
 
+  // =====================================
+  // PAGINATION
+  // =====================================
+
+  const totalPages =
+    Math.ceil(total / limit);
+
   return {
+
     total,
+
     page,
+
     limit,
-    totalPages: Math.ceil(total / limit),
+
+    totalPages,
+
+    hasNextPage:
+      page < totalPages,
+
+    hasPrevPage:
+      page > 1,
+
     tests,
+
   };
 
 };
@@ -223,17 +396,65 @@ const getAllTests = async (
 // =====================================
 // GET TEST BY ID
 // =====================================
+
 const getTestById = async (id) => {
 
-  return await Test.findById(id)
-    .populate("createdBy", "fullName email")
-    .populate("questions")
+  const test = await Test.findById(id)
+
+    .select(`
+      title
+      subject
+      description
+      duration
+      totalMarks
+      totalQuestions
+      status
+      startTime
+      endTime
+      createdAt
+      updatedAt
+      createdBy
+      questions
+    `)
+
+    .populate(
+      "createdBy",
+      "fullName email"
+    )
+
+    .populate({
+      path: "questions",
+
+      select: `
+        subject
+        chapter
+        difficulty
+        question
+        optionA
+        optionB
+        optionC
+        optionD
+        correctAnswer
+        explanation
+        marks
+      `,
+    })
+
     .lean();
 
+  if (!test) {
+    throw new ApiError(
+      404,
+      "Test not found."
+    );
+  }
+
+  return test;
+
 };
-// =====================================
-// UPDATE TEST
-// =====================================
+// // =====================================
+// // UPDATE TEST
+// // =====================================
 const updateTest = async (id, data) => {
 
   const test = await Test.findById(id);
@@ -253,53 +474,67 @@ const updateTest = async (id, data) => {
     );
   }
 
-  const questionIds = data.questions || test.questions;
+  // =====================================
+// CHECK DUPLICATE TITLE
+// =====================================
+
+if (data.title) {
+  await checkDuplicateTitle(
+    data.title,
+    id
+  );
+}
+
+// =====================================
+// VALIDATE TEST DATES
+// =====================================
+
+validateTestDates(
+  data.startTime ?? test.startTime,
+  data.endTime ?? test.endTime
+);
+
+const questionIds = Array.isArray(data.questions)
+  ? data.questions
+  : test.questions;
 
   const result = await processQuestions(questionIds);
 
-  const updateData = {
-    title: data.title ?? test.title,
-    subject: data.subject ?? test.subject,
-    description: data.description ?? test.description,
-    duration: data.duration ?? test.duration,
-    questions: questionIds,
-    startTime: data.startTime ?? test.startTime,
-    endTime: data.endTime ?? test.endTime,
-    totalMarks: result.totalMarks,
-    totalQuestions: result.totalQuestions,
-  };
-  if (data.title) {
-    const duplicate = await Test.findOne({
-      title: {
-        $regex: `^${data.title}$`,
-        $options: "i",
-      },
-      _id: { $ne: id },
-    });
+const updateData = {
+  title:
+    data.title?.trim() ??
+    test.title,
 
-  if (duplicate) {
-    throw new ApiError(
-        409,
-        "Test with this title already exists."
-    );
-  }
-}
-  const startTime = data.startTime ?? test.startTime;
-  const endTime = data.endTime ?? test.endTime;
+  subject:
+    data.subject?.trim() ??
+    test.subject,
 
-  if (new Date(startTime) < new Date()) {
-    throw new ApiError(
-        400,
-        "Start time cannot be in the past."
-    );
-  }
+  description:
+    data.description?.trim() ??
+    test.description,
 
-  if (new Date(endTime) <= new Date(startTime)) {
-    throw new ApiError(
-        400,
-        "End time must be greater than start time."
-    );
-  }
+  duration:
+      data.duration !== undefined
+          ? Number(data.duration)
+          : test.duration,
+
+  questions: questionIds,
+
+  totalMarks:
+    result.totalMarks,
+
+  totalQuestions:
+    result.totalQuestions,
+
+  startTime:
+    data.startTime ??
+    test.startTime,
+
+  endTime:
+    data.endTime ??
+    test.endTime,
+};
+
   return await Test.findByIdAndUpdate(
     id,
     updateData,
@@ -312,41 +547,19 @@ const updateTest = async (id, data) => {
   .populate("createdBy", "fullName email")
   .lean();
     
-
-};
-// =====================================
+ };// =====================================
 // DELETE TEST
 // =====================================
+
 const deleteTest = async (id) => {
 
-  const test = await Test.findById(id);
-
-  if (!test) {
-    throw new ApiError(
-        404,
-        "Test not found."
-    );
-  }
-
-  // Prevent deleting published test
-  if (test.status === "published") {
-    throw new ApiError(
-        409,
-        "Published test cannot be deleted."
-    );
-  }
-
-  return await Test.findByIdAndDelete(id);
-
-};
-// =====================================
-// PUBLISH TEST
-// =====================================
-
-const publishTest = async (id) => {
+  // =====================================
+  // FIND TEST
+  // =====================================
 
   const test = await Test.findById(id)
-    .populate("questions");
+    .select("status")
+    .lean();
 
   if (!test) {
     throw new ApiError(
@@ -355,66 +568,141 @@ const publishTest = async (id) => {
     );
   }
 
+  // =====================================
+  // BUSINESS RULE
+  // =====================================
+
   if (test.status === "published") {
     throw new ApiError(
       409,
-      "Test is already published."
+      "Published test cannot be deleted."
     );
   }
 
-  // Create Snapshot
+  // =====================================
+  // DELETE
+  // =====================================
 
-  const snapshot = await TestSnapshot.create({
+  await Test.findByIdAndDelete(id);
 
-    testId: test._id,
+  return true;
 
-    title: test.title,
-
-    subject: test.subject,
-
-    duration: test.duration,
-
-    totalMarks: test.totalMarks,
-
-    totalQuestions: test.totalQuestions,
-
-    startTime: test.startTime,
-
-    endTime: test.endTime,
-
-    questions: test.questions.map((question) => ({
-      questionId: question._id,
-
-      subject: question.subject,
-
-      chapter: question.chapter,
-
-      difficulty: question.difficulty,
-
-      question: question.question,
-
-      optionA: question.optionA,
-
-      optionB: question.optionB,
-
-      optionC: question.optionC,
-
-      optionD: question.optionD,
-
-      correctAnswer: question.correctAnswer,
-
-      explanation: question.explanation,
-
-      marks: question.marks,
-    })),
-  });
-
-  test.status = "published";
-
-  await test.save();
-
-  return snapshot;
 };
+
+// Publish Test
+const publishTest = async (id) => {
+
+  const session = await mongoose.startSession();
+
+  try {
+
+    session.startTransaction();
+
+    // =====================================
+    // FIND TEST
+    // =====================================
+
+    const test = await Test.findById(id)
+      .populate({
+        path: "questions",
+        select: `
+          subject
+          chapter
+          difficulty
+          question
+          optionA
+          optionB
+          optionC
+          optionD
+          correctAnswer
+          explanation
+          marks
+        `,
+      })
+      .session(session);
+
+    if (!test) {
+      throw new ApiError(404, "Test not found.");
+    }
+
+    if (test.status === "published") {
+      throw new ApiError(
+        409,
+        "Test is already published."
+      );
+    }
+
+    if (test.questions.length === 0) {
+      throw new ApiError(
+        400,
+        "Cannot publish a test without questions."
+      );
+    }
+
+    // =====================================
+    // CREATE SNAPSHOT
+    // =====================================
+
+    const snapshot = await TestSnapshot.create(
+      [
+        {
+          testId: test._id,
+          title: test.title,
+          subject: test.subject,
+          duration: test.duration,
+          totalMarks: test.totalMarks,
+          totalQuestions: test.totalQuestions,
+          startTime: test.startTime,
+          endTime: test.endTime,
+          questions: test.questions.map((question) => ({
+            questionId: question._id,
+            subject: question.subject,
+            chapter: question.chapter,
+            difficulty: question.difficulty,
+            question: question.question,
+            optionA: question.optionA,
+            optionB: question.optionB,
+            optionC: question.optionC,
+            optionD: question.optionD,
+            correctAnswer: question.correctAnswer,
+            explanation: question.explanation,
+            marks: question.marks,
+          })),
+        },
+      ],
+      { session }
+    );
+
+    // =====================================
+    // UPDATE STATUS
+    // =====================================
+
+    test.status = "published";
+
+    await test.save({ session });
+
+    // =====================================
+    // COMMIT
+    // =====================================
+
+    await session.commitTransaction();
+
+    return snapshot[0];
+
+  } catch (error) {
+
+    await session.abortTransaction();
+
+    throw error;
+
+  } finally {
+
+    session.endSession();
+
+  }
+
+};
+
 
 module.exports = {
   createTest,
