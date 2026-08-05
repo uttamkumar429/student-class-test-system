@@ -14,6 +14,7 @@ import DashboardStats from "../../components/admin/dashboard/DashboardStats";
 import QuickActions from "../../components/admin/dashboard/QuickActions";
 import RecentActivities from "../../components/admin/dashboard/RecentActivities";
 import UpcomingTests from "../../components/admin/dashboard/UpcomingTests";
+import AnalyticsCharts from "../../components/admin/analytics/AnalyticsCharts";
 import DashboardSkeleton from "../../components/admin/dashboard/DashboardSkeleton";
 
 function AdminDashboard() {
@@ -26,6 +27,7 @@ function AdminDashboard() {
   console.log("Dashboard Data:", dashboard);
   console.log("Total Tests =", dashboard?.totalTests);
 console.log("Archived =", dashboard?.archivedTests);
+
   useEffect(() => {
     dispatch(fetchDashboard());
   }, [dispatch]);
@@ -114,6 +116,10 @@ console.log("Archived =", dashboard?.archivedTests);
                 
 
       </div>
+      <AnalyticsCharts
+        analytics={dashboard?.analytics}
+        loading={loading}
+      />
 
     </div>
   );
