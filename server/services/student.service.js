@@ -1,216 +1,798 @@
+const mongoose = require("mongoose");
 const ExamAttempt = require("../models/ExamAttempt");
 const TestSnapshot = require("../models/TestSnapshot");
 const StudentAnswer = require("../models/StudentAnswer");
 const ApiError = require("../utils/ApiError");
 const { PASS_PERCENTAGE } = require("../config/constants");
+const {
+  getExamDeadline,
+  getRemainingTimeSeconds,
+} = require("../utils/examTime");
 // ==========================================
 // STUDENT DASHBOARD
 // ==========================================
-const getDashboard = async () => {
-
+const getDashboard = async (studentId) => {
   const now = new Date();
 
-  const upcoming = await TestSnapshot.find({
-    startTime: { $gt: now }
+  // ------------------------------------------
+  // FIND SUBMITTED ATTEMPTS
+  // ------------------------------------------
+
+  const submittedAttempts = await ExamAttempt.find({
+    student: studentId,
+    status: "SUBMITTED",
   })
     .select(
-      "title subject duration totalMarks totalQuestions startTime endTime"
+      "_id testSnapshot obtainedMarks totalMarks percentage submittedAt"
     )
-    .sort({ startTime: 1 })
+    .populate({
+      path: "testSnapshot",
+      select: "title subject",
+    })
+    .sort({ submittedAt: -1 })
+    .limit(10)
     .lean();
 
-  const active = await TestSnapshot.find({
-    startTime: { $lte: now },
-    endTime: { $gte: now }
-  })
-    .select(
-      "title subject duration totalMarks totalQuestions startTime endTime"
-    )
-    .sort({ startTime: 1 })
-    .lean();
+  const submittedSnapshotIds = submittedAttempts
+    .map((attempt) => attempt.testSnapshot?._id)
+    .filter(Boolean);
 
-  const completed = await TestSnapshot.find({
-    endTime: { $lt: now }
-  })
-    .select(
-      "title subject duration totalMarks totalQuestions startTime endTime"
-    )
-    .sort({ endTime: -1 })
-    .lean();
+  // ------------------------------------------
+  // UPCOMING EXAMS
+  // ------------------------------------------
 
-  return {
-    upcoming,
-    active,
-    completed,
+  const upcomingQuery = {
+    startTime: { $gt: now },
   };
 
+  if (submittedSnapshotIds.length > 0) {
+    upcomingQuery._id = {
+      $nin: submittedSnapshotIds,
+    };
+  }
+
+  // ------------------------------------------
+  // ACTIVE EXAMS
+  // ------------------------------------------
+
+  const activeQuery = {
+    startTime: { $lte: now },
+    endTime: { $gte: now },
+  };
+
+  if (submittedSnapshotIds.length > 0) {
+    activeQuery._id = {
+      $nin: submittedSnapshotIds,
+    };
+  }
+
+  // ------------------------------------------
+  // DASHBOARD DATA
+  // ------------------------------------------
+
+  const [
+    upcoming,
+    active,
+    upcomingCount,
+    activeCount,
+    completedCount,
+    averageScoreData,
+  ] = await Promise.all([
+    TestSnapshot.find(upcomingQuery)
+      .select(
+        "_id title subject duration totalMarks totalQuestions startTime endTime"
+      )
+      .sort({ startTime: 1 })
+      .limit(5)
+      .lean(),
+
+    TestSnapshot.find(activeQuery)
+      .select(
+        "_id title subject duration totalMarks totalQuestions startTime endTime"
+      )
+      .sort({ startTime: 1 })
+      .limit(5)
+      .lean(),
+
+    TestSnapshot.countDocuments(upcomingQuery),
+
+    TestSnapshot.countDocuments(activeQuery),
+
+    ExamAttempt.countDocuments({
+      student: studentId,
+      status: "SUBMITTED",
+    }),
+
+    ExamAttempt.aggregate([
+      {
+        $match: {
+          student: new mongoose.Types.ObjectId(studentId),
+          status: "SUBMITTED",
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          averageScore: {
+            $avg: "$percentage",
+          },
+        },
+      },
+    ]),
+  ]);
+
+  // ------------------------------------------
+  // RECENT RESULTS
+  // ------------------------------------------
+
+  const recentResults = submittedAttempts
+    .slice(0, 5)
+    .map((attempt) => ({
+      attemptId: attempt._id,
+
+      examTitle:
+        attempt.testSnapshot?.title ||
+        "Unknown Exam",
+
+      subject:
+        attempt.testSnapshot?.subject ||
+        "Unknown Subject",
+
+      obtainedMarks:
+        attempt.obtainedMarks || 0,
+
+      totalMarks:
+        attempt.totalMarks || 0,
+
+      percentage:
+        attempt.percentage || 0,
+
+      submittedAt:
+        attempt.submittedAt,
+    }));
+
+  // ------------------------------------------
+  // PERFORMANCE
+  // ------------------------------------------
+
+  const performance = submittedAttempts
+    .slice(0, 6)
+    .reverse()
+    .map((attempt) => ({
+      exam:
+        attempt.testSnapshot?.subject ||
+        attempt.testSnapshot?.title ||
+        "Exam",
+
+      score:
+        Number(attempt.percentage || 0),
+    }));
+
+  // ------------------------------------------
+  // AVERAGE SCORE
+  // ------------------------------------------
+
+  const averageScore =
+    averageScoreData.length > 0
+      ? Number(
+          Number(
+            averageScoreData[0].averageScore || 0
+          ).toFixed(2)
+        )
+      : 0;
+
+  // ------------------------------------------
+  // FINAL RESPONSE
+  // ------------------------------------------
+
+  return {
+    stats: {
+      availableExams:
+        upcomingCount + activeCount,
+
+      activeExams:
+        activeCount,
+
+      completedExams:
+        completedCount,
+
+      averageScore,
+    },
+
+    upcoming,
+
+    active,
+
+    recentResults,
+
+    performance,
+  };
 };
-// ==========================================
+/// ==========================================
 // AVAILABLE EXAMS
 // ==========================================
-const getAvailableExams = async () => {
 
-  const now = new Date();
+const getAvailableExams = async (studentId) => {
+  // ----------------------------------------
+  // 1. Validate Student ID
+  // ----------------------------------------
 
-  const exams = await TestSnapshot.find({
-    endTime: { $gte: now },
-  })
-    .sort({ startTime: 1 })
-    .select(
-      "title subject duration totalMarks totalQuestions startTime endTime"
-    )
-    .lean();
-
-  return exams.map((exam) => ({
-    ...exam,
-    status: exam.startTime <= now ? "ACTIVE" : "UPCOMING",
-  }));
-};
-
-// START EXAM
-// =====================================
-const startExam = async (studentId, snapshotId) => {
-
-  // Find Snapshot
-  const snapshot = await TestSnapshot.findById(snapshotId)
-  .select(
-  "_id startTime endTime totalQuestions totalMarks"
-  )
-  .lean();
-
-  if (!snapshot) {
-  throw new ApiError(
-      404,
-      "Test not found."
-  )
+  if (!mongoose.isValidObjectId(studentId)) {
+    throw new ApiError(
+      400,
+      "Invalid student ID."
+    );
   }
 
   const now = new Date();
 
-  // Check Exam Time
-  if (now < snapshot.startTime) {
+  // ----------------------------------------
+  // 2. Find Already Submitted Exams
+  // ----------------------------------------
+
+  const submittedAttempts =
+    await ExamAttempt.find({
+      student: studentId,
+      status: "SUBMITTED",
+    })
+      .select("testSnapshot")
+      .lean();
+
+  const submittedSnapshotIds =
+    submittedAttempts
+      .map(
+        (attempt) => attempt.testSnapshot
+      )
+      .filter(Boolean);
+
+  // ----------------------------------------
+  // 3. Build Available Exam Query
+  // ----------------------------------------
+
+  const query = {
+    endTime: {
+      $gte: now,
+    },
+  };
+
+  if (submittedSnapshotIds.length > 0) {
+    query._id = {
+      $nin: submittedSnapshotIds,
+    };
+  }
+
+  // ----------------------------------------
+  // 4. Fetch Available Exams
+  // ----------------------------------------
+
+  const exams =
+    await TestSnapshot.find(query)
+      .select(
+        "_id title subject duration totalMarks totalQuestions startTime endTime"
+      )
+      .sort({
+        startTime: 1,
+      })
+      .lean();
+
+  // ----------------------------------------
+  // 5. Add Exam Status
+  // ----------------------------------------
+
+  return exams.map((exam) => ({
+    ...exam,
+
+    status:
+      exam.startTime <= now
+        ? "ACTIVE"
+        : "UPCOMING",
+  }));
+};
+// ======================================
+// START EXAM
+// ======================================
+
+const startExam = async (studentId, snapshotId) => {
+  // --------------------------------------
+  // 1. Validate IDs
+  // --------------------------------------
+
+  if (!mongoose.isValidObjectId(studentId)) {
+    throw new ApiError(
+      400,
+      "Invalid student ID."
+    );
+  }
+
+  if (!mongoose.isValidObjectId(snapshotId)) {
+    throw new ApiError(
+      400,
+      "Invalid exam ID."
+    );
+  }
+
+  // --------------------------------------
+  // 2. Find Test Snapshot
+  // --------------------------------------
+
+  const snapshot =
+    await TestSnapshot.findById(snapshotId)
+      .select(
+        "_id title subject startTime endTime duration totalQuestions totalMarks questions"
+      )
+      .lean();
+
+  if (!snapshot) {
+    throw new ApiError(
+      404,
+      "Test not found."
+    );
+  }
+
+  // --------------------------------------
+  // 3. Validate Exam Configuration
+  // --------------------------------------
+
+  if (
+    !snapshot.startTime ||
+    !snapshot.endTime ||
+    !snapshot.duration
+  ) {
+    throw new ApiError(
+      500,
+      "Exam schedule is not configured correctly."
+    );
+  }
+
+  if (
+    !Array.isArray(snapshot.questions) ||
+    snapshot.questions.length === 0
+  ) {
+    throw new ApiError(
+      400,
+      "This exam has no questions."
+    );
+  }
+
+  // --------------------------------------
+  // 4. Validate Snapshot Time Configuration
+  // --------------------------------------
+
+  const startTime =
+    new Date(snapshot.startTime);
+
+  const endTime =
+    new Date(snapshot.endTime);
+
+  const durationMinutes =
+    Number(snapshot.duration);
+
+  if (
+    !Number.isFinite(
+      startTime.getTime()
+    ) ||
+    !Number.isFinite(
+      endTime.getTime()
+    ) ||
+    !Number.isFinite(durationMinutes) ||
+    durationMinutes <= 0
+  ) {
+    throw new ApiError(
+      500,
+      "Exam schedule is invalid."
+    );
+  }
+
+  if (endTime <= startTime) {
+    throw new ApiError(
+      500,
+      "Exam end time must be after start time."
+    );
+  }
+
+  // --------------------------------------
+  // 5. Find Existing Attempt
+  // --------------------------------------
+
+  const existingAttempt =
+    await ExamAttempt.findOne({
+      student: studentId,
+      testSnapshot: snapshotId,
+    });
+
+  // --------------------------------------
+  // 6. Handle Existing Attempt
+  // --------------------------------------
+
+  if (existingAttempt) {
+    // ------------------------------------
+    // Existing Running Attempt
+    // ------------------------------------
+
+    if (
+      existingAttempt.status ===
+      "IN-PROGRESS"
+    ) {
+      // ----------------------------------
+      // Calculate Server-Side Deadline
+      // ----------------------------------
+
+      const deadline =
+        getExamDeadline({
+          startedAt:
+            existingAttempt.startedAt,
+          endTime:
+            snapshot.endTime,
+          durationMinutes:
+            snapshot.duration,
+        });
+
+      if (!deadline) {
+        throw new ApiError(
+          500,
+          "Unable to determine exam deadline."
+        );
+      }
+
+      // ----------------------------------
+      // Check Expiry
+      // ----------------------------------
+
+      const now = new Date();
+
+      if (now >= deadline) {
+        await submitExam(
+          studentId,
+          existingAttempt._id
+        );
+
+        throw new ApiError(
+          409,
+          "Exam time is over. Your exam has been submitted automatically."
+        );
+      }
+
+      // ----------------------------------
+      // Calculate Remaining Time
+      // ----------------------------------
+
+      const remainingTime =
+        getRemainingTimeSeconds(
+          deadline,
+          now
+        );
+
+      // ----------------------------------
+      // Resume Existing Attempt
+      // ----------------------------------
+
+      return {
+        attemptId:
+          existingAttempt._id,
+
+        testSnapshotId:
+          existingAttempt.testSnapshot,
+
+        title:
+          snapshot.title,
+
+        subject:
+          snapshot.subject,
+
+        totalQuestions:
+          existingAttempt.totalQuestions,
+
+        totalMarks:
+          existingAttempt.totalMarks,
+
+        status:
+          existingAttempt.status,
+
+        startedAt:
+          existingAttempt.startedAt,
+
+        currentQuestionIndex:
+          existingAttempt.currentQuestionIndex,
+
+        remainingTime,
+      };
+    }
+
+    // ------------------------------------
+    // Existing Submitted Attempt
+    // ------------------------------------
+
+    if (
+      existingAttempt.status ===
+      "SUBMITTED"
+    ) {
+      throw new ApiError(
+        409,
+        "Exam already submitted."
+      );
+    }
+
+    // ------------------------------------
+    // Unexpected Attempt Status
+    // ------------------------------------
+
+    throw new ApiError(
+      500,
+      "Invalid exam attempt status."
+    );
+  }
+
+  // --------------------------------------
+  // 7. Validate Exam Window
+  //    Only for a NEW attempt
+  // --------------------------------------
+
+  const now = new Date();
+
+  // Exam has not started
+  if (now < startTime) {
     throw new ApiError(
       400,
       "Exam has not started yet."
     );
   }
 
-  if (now > snapshot.endTime) {
-  throw new ApiError(
+  // Scheduled exam window ended
+  if (now >= endTime) {
+    throw new ApiError(
       409,
       "Exam has already ended."
-  );
+    );
   }
 
-  // Check Existing Attempt
-  const existingAttempt = await ExamAttempt.findOne({
-    student: studentId,
-    testSnapshot: snapshotId,
-  });
+  // --------------------------------------
+  // 8. Calculate New Attempt Deadline
+  // --------------------------------------
 
-  if (existingAttempt) {
+  const startedAt = new Date();
 
-    if (existingAttempt.status === "IN-PROGRESS") {
-      return existingAttempt;
+  const deadline =
+    getExamDeadline({
+      startedAt,
+      endTime:
+        snapshot.endTime,
+      durationMinutes:
+        snapshot.duration,
+    });
+
+  if (!deadline) {
+    throw new ApiError(
+      500,
+      "Unable to determine exam deadline."
+    );
+  }
+
+  // --------------------------------------
+  // 9. Calculate Initial Remaining Time
+  // --------------------------------------
+
+  const remainingTime =
+    getRemainingTimeSeconds(
+      deadline,
+      startedAt
+    );
+
+  if (remainingTime <= 0) {
+    throw new ApiError(
+      409,
+      "Exam time is over."
+    );
+  }
+
+  // --------------------------------------
+  // 10. Create New Exam Attempt
+  // --------------------------------------
+
+  let attempt;
+
+  try {
+    attempt =
+      await ExamAttempt.create({
+        student: studentId,
+
+        testSnapshot:
+          snapshotId,
+
+        startedAt,
+
+        status:
+          "IN-PROGRESS",
+
+        currentQuestionIndex: 0,
+
+        visitedQuestions: [],
+
+        reviewQuestions: [],
+
+        totalQuestions:
+          snapshot.totalQuestions ??
+          snapshot.questions.length,
+
+        totalMarks:
+          snapshot.totalMarks ?? 0,
+      });
+  } catch (error) {
+    // ------------------------------------
+    // Duplicate Attempt Protection
+    // ------------------------------------
+
+    if (error?.code === 11000) {
+      throw new ApiError(
+        409,
+        "An exam attempt already exists for this test."
+      );
     }
 
-    throw new ApiError(
-      400,
-      "Exam already submitted."
-    );
+    throw error;
   }
 
-  // Create Attempt
-  const attempt = await ExamAttempt.create({
+  // --------------------------------------
+  // 11. Return Safe Attempt Data
+  // --------------------------------------
 
-    student: studentId,
+  return {
+    attemptId:
+      attempt._id,
 
-    testSnapshot: snapshotId,
+    testSnapshotId:
+      attempt.testSnapshot,
 
-    totalQuestions: snapshot.totalQuestions,
+    title:
+      snapshot.title,
 
-    totalMarks: snapshot.totalMarks,
+    subject:
+      snapshot.subject,
 
-  });
+    totalQuestions:
+      attempt.totalQuestions,
 
-  return attempt;
+    totalMarks:
+      attempt.totalMarks,
 
-};
-// ======================================
-// CHECK EXAM EXPIRY
-// ======================================
+    status:
+      attempt.status,
 
-const checkExamExpiry = async (
-  studentId,
-  attempt,
-  snapshot
-) => {
+    startedAt:
+      attempt.startedAt,
 
-  const now = new Date();
+    currentQuestionIndex:
+      attempt.currentQuestionIndex,
 
-  if (now > snapshot.endTime) {
-
-    await submitExam(
-      studentId,
-      attempt._id
-    );
-
-    throw new ApiError(409,
-      "Exam time is over. Your exam has been submitted automatically."
-    );
-
-  }
-
+    remainingTime,
+  };
 };
 // =====================================
 // GET EXAM QUESTIONS
 // =====================================
-const getExamQuestions = async (studentId, attemptId) => {
 
-  // Find Attempt
-  const attempt = await ExamAttempt.findById(attemptId)
-  .select(
-  "student status testSnapshot"
+const getExamQuestions = async (
+  studentId,
+  attemptId
+) => {
+  // -------------------------------------
+  // 1. Find Exam Attempt
+  // -------------------------------------
+
+  const attempt = await ExamAttempt.findById(
+    attemptId
+  ).select(
+    "student status testSnapshot startedAt currentQuestionIndex visitedQuestions reviewQuestions"
   );
 
   if (!attempt) {
-    throw new ApiError(404,"Exam attempt not found.");
+    throw new ApiError(
+      404,
+      "Exam attempt not found."
+    );
   }
 
-  // Security Check
-  if (attempt.student.toString() !== studentId.toString()) {
-    throw new ApiError(401,"Unauthorized access.");
+  // -------------------------------------
+  // 2. Verify Student Ownership
+  // -------------------------------------
+
+  if (
+    attempt.student.toString() !==
+    studentId.toString()
+  ) {
+    throw new ApiError(
+      403,
+      "You are not allowed to access this exam."
+    );
   }
 
-  // Already Submitted?
+  // -------------------------------------
+  // 3. Verify Attempt Status
+  // -------------------------------------
+
   if (attempt.status === "SUBMITTED") {
-    throw new ApiError(409,"Exam already submitted.");
+    throw new ApiError(
+      409,
+      "Exam already submitted."
+    );
   }
 
-  // Load Snapshot
+  if (attempt.status !== "IN-PROGRESS") {
+    throw new ApiError(
+      409,
+      "Exam is not currently active."
+    );
+  }
+
+  // -------------------------------------
+  // 4. Load Test Snapshot
+  // -------------------------------------
+
   const snapshot = await TestSnapshot.findById(
-  attempt.testSnapshot
+    attempt.testSnapshot
   )
-  .select(
-  "title questions endTime"
-  )
-  .lean();
+    .select(
+      "_id title subject duration totalQuestions totalMarks startTime endTime questions"
+    )
+    .lean();
 
   if (!snapshot) {
-    throw new ApiError(404,"Test snapshot not found.");
+    throw new ApiError(
+      404,
+      "Test snapshot not found."
+    );
   }
-  // =====================================
-  // AUTO SUBMIT IF EXAM TIME IS OVER
-  // =====================================
 
-  await checkExamExpiry(
+  // -------------------------------------
+  // 5. Check Exam Expiry
+  // -------------------------------------
+
+  const deadline = await checkExamExpiry(
     studentId,
     attempt,
     snapshot
   );
-  // Secure Questions
-  const questions = snapshot.questions.map((question) => ({
 
+  // -------------------------------------
+  // 6. Calculate Remaining Time
+  // -------------------------------------
+
+  const remainingTime =
+    getRemainingTimeSeconds(deadline);
+
+  // -------------------------------------
+  // 7. Load Saved Answers
+  // -------------------------------------
+
+  const savedAnswers =
+    await StudentAnswer.find({
+      attempt: attempt._id,
+    })
+      .select(
+        "questionId selectedAnswer"
+      )
+      .lean();
+
+  // -------------------------------------
+  // 8. Build Selected Answers Map
+  // -------------------------------------
+
+  const selectedAnswers = {};
+
+  for (const answer of savedAnswers) {
+    selectedAnswers[
+      answer.questionId.toString()
+    ] = answer.selectedAnswer;
+  }
+
+  // -------------------------------------
+  // 9. Prepare Secure Questions
+  // -------------------------------------
+  // IMPORTANT:
+  // Never return correctAnswer/isCorrect
+  // to the student during the exam.
+
+  const questions = snapshot.questions.map(
+  (question) => ({
     questionId: question.questionId,
 
     subject: question.subject,
@@ -219,25 +801,68 @@ const getExamQuestions = async (studentId, attemptId) => {
 
     difficulty: question.difficulty,
 
-    question: question.question,
+    questionText: question.question,
 
-    optionA: question.optionA,
+    questionImage:
+      question.questionImage || null,
 
-    optionB: question.optionB,
+    options: [
+      {
+        value: "A",
+        text: question.optionA,
+      },
+      {
+        value: "B",
+        text: question.optionB,
+      },
+      {
+        value: "C",
+        text: question.optionC,
+      },
+      {
+        value: "D",
+        text: question.optionD,
+      },
+    ],
 
-    optionC: question.optionC,
+    marks: question.marks,
+  })
+);
 
-    optionD: question.optionD,
-
-    marks: question.marks
-
-  }));
+  // -------------------------------------
+  // 10. Return Exam Data
+  // -------------------------------------
 
   return {
     attemptId: attempt._id,
-    questions,
-  };
 
+    testSnapshotId: snapshot._id,
+
+    title: snapshot.title,
+
+    subject: snapshot.subject,
+
+    questions,
+
+    selectedAnswers,
+
+    currentQuestionIndex:
+      attempt.currentQuestionIndex,
+
+    visitedQuestions:
+      attempt.visitedQuestions,
+
+    reviewQuestions:
+      attempt.reviewQuestions,
+
+    remainingTime,
+
+    totalQuestions:
+      snapshot.totalQuestions,
+
+    totalMarks:
+      snapshot.totalMarks,
+  };
 };
 
 
@@ -246,368 +871,747 @@ const getExamQuestions = async (studentId, attemptId) => {
 // ======================================
 
 const saveAnswer = async (
-
   studentId,
-
   attemptId,
-  
   questionId,
   selectedAnswer,
   currentQuestionIndex
 ) => {
+  // --------------------------------------
+  // 1. Find Exam Attempt
+  // --------------------------------------
 
-  // Check Attempt
-
-  const attempt = await ExamAttempt.findById(attemptId);
+  const attempt = await ExamAttempt.findById(
+    attemptId
+  );
 
   if (!attempt) {
-
-    throw new ApiError(404,"Exam attempt not found.");
-
+    throw new ApiError(
+      404,
+      "Exam attempt not found."
+    );
   }
 
-  // Ownership Check
+  // --------------------------------------
+  // 2. Verify Student Ownership
+  // --------------------------------------
 
-  if (attempt.student.toString() !== studentId.toString()) {
-
-    throw new ApiError(401,"Unauthorized access.");
-
+  if (
+    attempt.student.toString() !==
+    studentId.toString()
+  ) {
+    throw new ApiError(
+      403,
+      "You are not allowed to access this exam."
+    );
   }
 
-  // Already Submitted?
+  // --------------------------------------
+  // 3. Check Submission Status
+  // --------------------------------------
 
-  if (attempt.status ==="SUBMITTED") {
-
-    throw new ApiError(409,"Exam already submitted.");
-
+  if (attempt.status === "SUBMITTED") {
+    throw new ApiError(
+      409,
+      "Exam already submitted."
+    );
   }
 
-  // Load Snapshot
+  // --------------------------------------
+  // 4. Load Test Snapshot
+  // --------------------------------------
 
   const snapshot = await TestSnapshot.findById(
     attempt.testSnapshot
-  );
+  ).lean();
 
   if (!snapshot) {
-
-    throw new ApiError(404,"Snapshot not found.");
-
-  }
-    // ======================================
-  // AUTO SUBMIT IF TIME IS OVER
-  // ======================================
-
-  await checkExamExpiry(
-    studentId,
-    attempt,
-    snapshot
-  );
-
-  // Find Question
-
- const question = snapshot.questions.find(
-
-    (q) => q.questionId.toString() === questionId
-
-);
-
-
-  if (!question) {
-
-    throw new ApiError(404,"Question not found.");
-
+    throw new ApiError(
+      404,
+      "Test snapshot not found."
+    );
   }
 
-  // Correct?
+  // --------------------------------------
+  // 5. Check Exam Expiry
+  // --------------------------------------
 
-  const isCorrect =
-    question.correctAnswer === selectedAnswer;
-
-  // Already Saved?
-
-  const existingAnswer = await StudentAnswer.findOne({
-
-    attempt: attemptId,
-
-    questionId,
-
+  const deadline = getExamDeadline({
+    startedAt: attempt.startedAt,
+    endTime: snapshot.endTime,
+    durationMinutes: snapshot.duration,
   });
 
+  if (!deadline) {
+    throw new ApiError(
+      500,
+      "Unable to determine exam deadline."
+    );
+  }
 
-let savedAnswer;
+  if (new Date() >= deadline) {
+    await submitExam(
+      studentId,
+      attempt._id
+    );
 
-if (existingAnswer) {
+    throw new ApiError(
+      409,
+      "Exam time is over. Your exam has been submitted automatically."
+    );
+  }
 
-    existingAnswer.selectedAnswer = selectedAnswer;
-    existingAnswer.correctAnswer = question.correctAnswer;
-    existingAnswer.isCorrect = isCorrect;
-    existingAnswer.marksAwarded = isCorrect ? question.marks : 0;
+  // --------------------------------------
+  // 6. Validate Question Index
+  // --------------------------------------
 
-    await existingAnswer.save();
+  if (
+    !Number.isInteger(currentQuestionIndex) ||
+    currentQuestionIndex < 0 ||
+    currentQuestionIndex >=
+      snapshot.questions.length
+  ) {
+    throw new ApiError(
+      400,
+      "Invalid question index."
+    );
+  }
 
-    savedAnswer = existingAnswer;
+  // --------------------------------------
+  // 7. Validate Question ID
+  // --------------------------------------
 
-} else {
+  if (
+    !mongoose.isValidObjectId(questionId)
+  ) {
+    throw new ApiError(
+      400,
+      "Invalid question ID."
+    );
+  }
 
-    savedAnswer = await StudentAnswer.create({
-        attempt: attemptId,
+  // --------------------------------------
+  // 8. Validate Selected Answer
+  // --------------------------------------
+
+  if (
+    !["A", "B", "C", "D"].includes(
+      selectedAnswer
+    )
+  ) {
+    throw new ApiError(
+      400,
+      "Invalid selected answer."
+    );
+  }
+
+  // --------------------------------------
+  // 9. Find Question in Snapshot
+  // --------------------------------------
+
+  const question = snapshot.questions.find(
+    (item) =>
+      item.questionId.toString() ===
+      questionId.toString()
+  );
+
+  if (!question) {
+    throw new ApiError(
+      404,
+      "Question not found in this exam."
+    );
+  }
+
+  // --------------------------------------
+  // 10. Calculate Answer Result
+  // --------------------------------------
+
+  const isCorrect =
+    question.correctAnswer ===
+    selectedAnswer;
+
+  const marksAwarded = isCorrect
+    ? Number(question.marks || 0)
+    : 0;
+
+  // --------------------------------------
+  // 11. Create / Update Student Answer
+  // --------------------------------------
+
+  const savedAnswer =
+    await StudentAnswer.findOneAndUpdate(
+      {
+        attempt: attempt._id,
         questionId,
-        selectedAnswer,
-        correctAnswer: question.correctAnswer,
-        isCorrect,
-        marksAwarded: isCorrect ? question.marks : 0,
-    });
+      },
+      {
+        $set: {
+          selectedAnswer,
+          correctAnswer:
+            question.correctAnswer,
+          isCorrect,
+          marksAwarded,
+          answeredAt: new Date(),
+        },
+      },
+      {
+        new: true,
+        upsert: true,
+        runValidators: true,
+        setDefaultsOnInsert: true,
+      }
+    );
 
-}
-if (
-  currentQuestionIndex < 0 ||
-  currentQuestionIndex >= snapshot.questions.length
-) {
-  throw new ApiError(400,"Invalid question index.");
-}
+  // --------------------------------------
+  // 12. Update Exam Progress
+  // --------------------------------------
 
+  attempt.currentQuestionIndex =
+    currentQuestionIndex;
 
-attempt.currentQuestionIndex = currentQuestionIndex;
+  const alreadyVisited =
+    attempt.visitedQuestions.some(
+      (id) =>
+        id.toString() ===
+        questionId.toString()
+    );
 
-const alreadyVisited = attempt.visitedQuestions.some(
-  (id) => id.toString() === questionId.toString()
-);
+  if (!alreadyVisited) {
+    attempt.visitedQuestions.push(
+      questionId
+    );
+  }
 
-if (!alreadyVisited) {
-  attempt.visitedQuestions.push(questionId);
-}
+  await attempt.save();
 
-await attempt.save();
+  // --------------------------------------
+  // 13. Return Saved Answer
+  // --------------------------------------
 
-return savedAnswer;
-
-
-
+  return savedAnswer;
 };
+
 // ======================================
 // RESUME EXAM
 // ======================================
 
 const resumeExam = async (studentId) => {
+  // --------------------------------------
+  // 1. Find Running Attempt
+  // --------------------------------------
 
-  // Find Running Attempt
   const attempt = await ExamAttempt.findOne({
-  student: studentId,
-  status:"IN-PROGRESS"
-  })
-  .select(
-    "_id totalQuestions status testSnapshot currentQuestionIndex visitedQuestions reviewQuestions"
+    student: studentId,
+    status: "IN-PROGRESS",
+  }).select(
+    "_id totalQuestions totalMarks status testSnapshot startedAt currentQuestionIndex visitedQuestions reviewQuestions"
   );
+
   if (!attempt) {
-    throw new ApiError(404,"No running exam found.");
+    throw new ApiError(
+      404,
+      "No running exam found."
+    );
   }
 
-  // Load Snapshot
+  // --------------------------------------
+  // 2. Load Test Snapshot
+  // --------------------------------------
+
   const snapshot = await TestSnapshot.findById(
-  attempt.testSnapshot
+    attempt.testSnapshot
   )
-  .select(
-  "_id title subject endTime"
-  )
-  .lean();
+    .select(
+      "_id title subject duration totalQuestions totalMarks endTime"
+    )
+    .lean();
 
   if (!snapshot) {
-    throw new ApiError(404,"Test snapshot not found.");
+    throw new ApiError(
+      404,
+      "Test snapshot not found."
+    );
   }
 
-  // Remaining Time
-  const now = new Date();
+  // --------------------------------------
+  // 3. Check Exam Expiry
+  // --------------------------------------
 
-  const remainingTime = Math.max(
-    0,
-    Math.floor((snapshot.endTime - now) / 1000)
-  );
-  await checkExamExpiry(
+  const deadline = await checkExamExpiry(
     studentId,
     attempt,
     snapshot
   );
-  // Count Saved Answers
-  const answeredQuestions =
-    await StudentAnswer.countDocuments({
+
+  // --------------------------------------
+  // 4. Calculate Remaining Time
+  // --------------------------------------
+
+  const remainingTime =
+    getRemainingTimeSeconds(deadline);
+
+  // --------------------------------------
+  // 5. Load Saved Answers
+  // --------------------------------------
+
+  const savedAnswers =
+    await StudentAnswer.find({
       attempt: attempt._id,
-    });
+    })
+      .select(
+        "questionId selectedAnswer"
+      )
+      .lean();
 
-    return {
-      attemptId: attempt._id,
-      snapshotId: snapshot._id,
-      title: snapshot.title,
-      subject: snapshot.subject,
+  // --------------------------------------
+  // 6. Build Selected Answers Map
+  // --------------------------------------
 
-      totalQuestions: attempt.totalQuestions,
-      answeredQuestions: answeredQuestions,
+  const selectedAnswers = {};
 
-      currentQuestionIndex: attempt.currentQuestionIndex,
-      visitedQuestions: attempt.visitedQuestions,
-      reviewQuestions: attempt.reviewQuestions,
+  for (const answer of savedAnswers) {
+    selectedAnswers[
+      answer.questionId.toString()
+    ] = answer.selectedAnswer;
+  }
 
-      remainingTime: remainingTime,
-      status: attempt.status,
-    };
+  // --------------------------------------
+  // 7. Count Answered Questions
+  // --------------------------------------
 
+  const answeredQuestions =
+    savedAnswers.length;
+
+  // --------------------------------------
+  // 8. Return Resume State
+  // --------------------------------------
+
+  return {
+    attemptId: attempt._id,
+
+    testSnapshotId: snapshot._id,
+
+    title: snapshot.title,
+
+    subject: snapshot.subject,
+
+    totalQuestions:
+      attempt.totalQuestions,
+
+    totalMarks:
+      attempt.totalMarks,
+    answeredQuestions,
+
+    selectedAnswers,
+
+    currentQuestionIndex:
+      attempt.currentQuestionIndex,
+
+    visitedQuestions:
+      attempt.visitedQuestions,
+
+    reviewQuestions:
+      attempt.reviewQuestions,
+
+    remainingTime,
+
+    status: attempt.status,
   };
+};
 
+// ======================================
 // SUBMIT EXAM
 // ======================================
-const submitExam = async (studentId, attemptId) => {
 
-  // Find Attempt
+const submitExam = async (studentId, attemptId) => {
+  // --------------------------------------
+  // 1. Find Exam Attempt
+  // --------------------------------------
+
   const attempt = await ExamAttempt.findById(attemptId);
 
   if (!attempt) {
-    throw new ApiError(404,"Exam attempt not found.");
+    throw new ApiError(
+      404,
+      "Exam attempt not found."
+    );
   }
 
-  // Security Check
-  if (attempt.student.toString() !== studentId.toString()) {
-    throw new ApiError(401,"Unauthorized access.");
+  // --------------------------------------
+  // 2. Verify Student Ownership
+  // --------------------------------------
+
+  if (
+    attempt.student.toString() !==
+    studentId.toString()
+  ) {
+    throw new ApiError(
+      403,
+      "You are not allowed to submit this exam."
+    );
   }
 
-  // Already Submitted?
-  if (attempt.status === "SUBMITTED") {
-    throw new ApiError(409,"Exam already submitted.");
+// --------------------------------------
+// 3. Check Submission Status
+// --------------------------------------
+
+if (attempt.status === "SUBMITTED") {
+  throw new ApiError(
+    409,
+    "Exam already submitted."
+  );
+}
+
+if (attempt.status !== "IN-PROGRESS") {
+  throw new ApiError(
+    409,
+    "Exam is not currently active."
+  );
+}
+
+  // --------------------------------------
+  // 4. Load Test Snapshot
+  // --------------------------------------
+
+  const snapshot = await TestSnapshot.findById(
+    attempt.testSnapshot
+  )
+    .select(
+      "_id duration endTime totalQuestions totalMarks"
+    )
+    .lean();
+
+  if (!snapshot) {
+    throw new ApiError(
+      404,
+      "Test snapshot not found."
+    );
   }
 
-  // Load Answers
+  // --------------------------------------
+  // 5. Calculate Exam Deadline
+  // --------------------------------------
+
+  const deadline = getExamDeadline({
+    startedAt: attempt.startedAt,
+    endTime: snapshot.endTime,
+    durationMinutes: snapshot.duration,
+  });
+
+  if (!deadline) {
+    throw new ApiError(
+      500,
+      "Unable to determine exam deadline."
+    );
+  }
+
+  // --------------------------------------
+  // 6. Load Student Answers
+  // --------------------------------------
+
   const answers = await StudentAnswer.find({
-  attempt:attemptId
+    attempt: attempt._id,
   })
-  .select("marksAwarded");
+    .select(
+      "selectedAnswer isCorrect marksAwarded"
+    )
+    .lean();
 
-  // Calculate Score
-  const obtainedMarks = answers.reduce(
-    (total, answer) => total + answer.marksAwarded,
+  // --------------------------------------
+  // 7. Calculate Exam Result
+  // --------------------------------------
+
+  let obtainedMarks = 0;
+  let correctAnswers = 0;
+  let wrongAnswers = 0;
+
+  for (const answer of answers) {
+    obtainedMarks += Number(
+      answer.marksAwarded || 0
+    );
+
+    if (answer.isCorrect === true) {
+      correctAnswers++;
+    } else if (
+      answer.selectedAnswer !== null &&
+      answer.selectedAnswer !== undefined
+    ) {
+      wrongAnswers++;
+    }
+  }
+
+  // --------------------------------------
+  // 8. Calculate Question Statistics
+  // --------------------------------------
+
+  const totalQuestions =
+    Number(snapshot.totalQuestions || 0);
+
+  const totalMarks =
+    Number(snapshot.totalMarks || 0);
+
+  const answeredQuestions = answers.filter(
+    (answer) =>
+      answer.selectedAnswer !== null &&
+      answer.selectedAnswer !== undefined
+  ).length;
+
+  const unansweredQuestions = Math.max(
+    totalQuestions - answeredQuestions,
     0
   );
 
-  // Percentage
+  // --------------------------------------
+  // 9. Calculate Percentage
+  // --------------------------------------
+
   const percentage =
-    attempt.totalMarks > 0
+    totalMarks > 0
       ? Number(
-          ((obtainedMarks / attempt.totalMarks) * 100).toFixed(2)
+          (
+            (obtainedMarks / totalMarks) *
+            100
+          ).toFixed(2)
         )
       : 0;
 
-  // Time Taken (Minutes)
+  // --------------------------------------
+  // 10. Calculate Pass / Fail
+  // --------------------------------------
+
+  const isPassed =
+    percentage >= PASS_PERCENTAGE;
+
+  // --------------------------------------
+  // 11. Calculate Time Taken
+  // --------------------------------------
+
   const submittedAt = new Date();
 
-  const timeTaken = Math.floor(
-      (submittedAt - attempt.startedAt) / 1000
+  const elapsedSeconds = Math.max(
+    0,
+    Math.floor(
+      (
+        submittedAt.getTime() -
+        attempt.startedAt.getTime()
+      ) / 1000
+    )
   );
-  // Update Attempt
-  attempt.obtainedMarks = obtainedMarks;
-  attempt.percentage = percentage;
-  attempt.timeTaken = timeTaken;
-  attempt.submittedAt = submittedAt;
-  attempt.status = "SUBMITTED";
 
-await attempt.save();
+  const allowedDurationSeconds = Math.max(
+    0,
+    Math.floor(
+      (
+        deadline.getTime() -
+        attempt.startedAt.getTime()
+      ) / 1000
+    )
+  );
 
-console.log("===== AFTER SAVE =====");
-console.log("Attempt ID :", attempt._id.toString());
-console.log("Status     :", attempt.status);
+  const timeTaken = Math.min(
+    elapsedSeconds,
+    allowedDurationSeconds
+  );
+// --------------------------------------
+// 12. Atomically Submit Exam
+// --------------------------------------
 
-return {
-    attemptId: attempt._id,
-    status: attempt.status,
+const submittedAttempt =
+  await ExamAttempt.findOneAndUpdate(
+    {
+      _id: attempt._id,
+      status: "IN-PROGRESS",
+    },
+    {
+      $set: {
+        totalQuestions,
+        totalMarks,
+        correctAnswers,
+        wrongAnswers,
+        unansweredQuestions,
+        obtainedMarks,
+        percentage,
+        isPassed,
+        timeTaken,
+        submittedAt,
+        status: "SUBMITTED",
+      },
+    },
+    {
+      new: true,
+      runValidators: true,
+    }
+  );
+
+// --------------------------------------
+// 13. Verify Submission
+// --------------------------------------
+
+if (!submittedAttempt) {
+  throw new ApiError(
+    409,
+    "Exam has already been submitted."
+  );
+}
+  // --------------------------------------
+  // 14. Return Result
+  // --------------------------------------
+
+  return {
+
+    attemptId: submittedAttempt._id,
+    status: submittedAttempt.status,
+
+    totalQuestions,
+    answeredQuestions,
+
+    correctAnswers,
+    wrongAnswers,
+    unansweredQuestions,
+
     obtainedMarks,
-    totalMarks: attempt.totalMarks,
+    totalMarks,
+
     percentage,
+    isPassed,
+
     timeTaken,
     submittedAt,
   };
-
 };
 // ======================================
 // GET RESULT
 // ======================================
-const getResult = async (studentId, attemptId) => {
 
-  // Find Attempt
-  const attempt = await ExamAttempt.findById(attemptId);
+const getResult = async (
+  studentId,
+  attemptId
+) => {
+  // --------------------------------------
+  // 1. Find Exam Attempt
+  // --------------------------------------
+
+  const attempt =
+    await ExamAttempt.findById(attemptId)
+      .select(
+        [
+          "student",
+          "testSnapshot",
+          "status",
+          "totalQuestions",
+          "totalMarks",
+          "correctAnswers",
+          "wrongAnswers",
+          "unansweredQuestions",
+          "obtainedMarks",
+          "percentage",
+          "isPassed",
+          "timeTaken",
+          "submittedAt",
+        ].join(" ")
+      )
+      .lean();
 
   if (!attempt) {
-    throw new ApiError(404,"Exam attempt not found.");
+    throw new ApiError(
+      404,
+      "Exam attempt not found."
+    );
   }
 
-  // Security Check
-  if (attempt.student.toString() !== studentId.toString()) {
-    throw new ApiError(401,"Unauthorized access.");
+  // --------------------------------------
+  // 2. Ownership / Security Check
+  // --------------------------------------
+
+  if (
+    attempt.student.toString() !==
+    studentId.toString()
+  ) {
+    throw new ApiError(
+      403,
+      "You are not allowed to view this result."
+    );
   }
 
-  // Result only after submission
+  // --------------------------------------
+  // 3. Result Must Be Submitted
+  // --------------------------------------
+
   if (attempt.status !== "SUBMITTED") {
-    throw new ApiError(400,"Exam is not submitted yet.");
+    throw new ApiError(
+      400,
+      "Exam is not submitted yet."
+    );
   }
 
-  // Load Snapshot
-  const snapshot = await TestSnapshot.findById(
-  attempt.testSnapshot
-  )
-  .select(
-  "title subject"
-  )
-  .lean();
+  // --------------------------------------
+  // 4. Load Test Snapshot
+  // --------------------------------------
+
+  const snapshot =
+    await TestSnapshot.findById(
+      attempt.testSnapshot
+    )
+      .select("_id title subject")
+      .lean();
 
   if (!snapshot) {
-    throw new ApiError(404,"Test snapshot not found.");
+    throw new ApiError(
+      404,
+      "Test snapshot not found."
+    );
   }
 
-  // Load Answers
-  const answers = await StudentAnswer.find({
-  attempt:attemptId
-  })
-  .select("isCorrect");
+  // --------------------------------------
+  // 5. Return Finalized Result
+  // --------------------------------------
 
-  const correctAnswers = answers.filter(
-    (answer) => answer.isCorrect
-  ).length;
-
-  const wrongAnswers = answers.filter(
-    (answer) => answer.isCorrect === false
-  ).length;
-
-  const skippedAnswers =
-    attempt.totalQuestions - answers.length;
-  const status =
-      attempt.percentage >= PASS_PERCENTAGE
-        ? "Pass"
-        : "Fail"
   return {
-      attemptId: attempt._id,
+    attemptId: attempt._id,
 
-      examTitle: snapshot.title,
+    examTitle: snapshot.title,
 
-      subject: snapshot.subject,
+    subject: snapshot.subject,
 
-      totalQuestions: attempt.totalQuestions,
+    totalQuestions:
+      attempt.totalQuestions,
 
-      answeredQuestions: answers.length,
+    answeredQuestions: Math.max(
+      0,
+      attempt.totalQuestions -
+        attempt.unansweredQuestions
+    ),
 
-      correctAnswers,
+    correctAnswers:
+      attempt.correctAnswers,
 
-      wrongAnswers,
+    wrongAnswers:
+      attempt.wrongAnswers,
 
-      skippedAnswers,
+    skippedAnswers:
+      attempt.unansweredQuestions,
 
-      obtainedMarks: attempt.obtainedMarks,
+    obtainedMarks:
+      attempt.obtainedMarks,
 
-      totalMarks: attempt.totalMarks,
+    totalMarks:
+      attempt.totalMarks,
 
-      percentage: attempt.percentage,
+    percentage:
+      attempt.percentage,
 
-      status,
+    status:
+      attempt.isPassed
+        ? "Pass"
+        : "Fail",
 
-      timeTaken: attempt.timeTaken,
+    timeTaken:
+      attempt.timeTaken,
 
-      submittedAt: attempt.submittedAt,
-    };
+    submittedAt:
+      attempt.submittedAt,
   };
+};
 // ======================================
 // GET RESULT HISTORY
 // ======================================
@@ -651,17 +1655,26 @@ const getReviewAnswers = async (
   studentId,
   attemptId
 ) => {
-
   // ----------------------------------
-  // Validate Attempt
+  // 1. Find Attempt
   // ----------------------------------
 
-  const attempt = await ExamAttempt.findById(
-    attemptId
-  ).lean();
-  console.log("===== REVIEW =====");
-  console.log("Attempt ID :", attempt?._id.toString());
-  console.log("Status     :", attempt?.status);
+  const attempt =
+    await ExamAttempt.findById(attemptId)
+      .select(
+        [
+          "student",
+          "testSnapshot",
+          "status",
+          "obtainedMarks",
+          "totalMarks",
+          "percentage",
+          "totalQuestions",
+          "submittedAt",
+        ].join(" ")
+      )
+      .lean();
+
   if (!attempt) {
     throw new ApiError(
       404,
@@ -670,11 +1683,9 @@ const getReviewAnswers = async (
   }
 
   // ----------------------------------
-  // Verify Student Ownership
+  // 2. Verify Student Ownership
   // ----------------------------------
-    console.log("Attempt Student :", attempt.student.toString());
-    console.log("Logged User     :", studentId.toString());
-    console.log("Attempt ID      :", attemptId);
+
   if (
     attempt.student.toString() !==
     studentId.toString()
@@ -686,7 +1697,7 @@ const getReviewAnswers = async (
   }
 
   // ----------------------------------
-  // Review Available Only After Submission
+  // 3. Review Available Only After Submission
   // ----------------------------------
 
   if (attempt.status !== "SUBMITTED") {
@@ -697,13 +1708,17 @@ const getReviewAnswers = async (
   }
 
   // ----------------------------------
-  // Load Snapshot
+  // 4. Load Required Snapshot Data
   // ----------------------------------
 
   const snapshot =
     await TestSnapshot.findById(
       attempt.testSnapshot
-    ).lean();
+    )
+      .select(
+        "title subject questions"
+      )
+      .lean();
 
   if (!snapshot) {
     throw new ApiError(
@@ -713,45 +1728,45 @@ const getReviewAnswers = async (
   }
 
   // ----------------------------------
-  // Load Student Answers
+  // 5. Load Student Answers
   // ----------------------------------
 
   const answers =
     await StudentAnswer.find({
       attempt: attemptId,
-    }).lean();
+    })
+      .select(
+        "questionId selectedAnswer isCorrect marksAwarded"
+      )
+      .lean();
 
   // ----------------------------------
-  // Convert Answers Into Map
-  // O(1) Lookup
+  // 6. Create O(1) Answer Lookup
   // ----------------------------------
 
   const answerMap = new Map();
 
-  answers.forEach((answer) => {
-
+  for (const answer of answers) {
     answerMap.set(
       answer.questionId.toString(),
       answer
     );
-
-  });
+  }
 
   // ----------------------------------
-  // Merge Snapshot + Student Answers
+  // 7. Build Review Questions
   // ----------------------------------
 
   const reviewQuestions =
     snapshot.questions.map(
       (question, index) => {
+        const questionId =
+          question.questionId.toString();
 
         const studentAnswer =
-          answerMap.get(
-            question.questionId.toString()
-          );
+          answerMap.get(questionId);
 
         return {
-
           questionId:
             question.questionId,
 
@@ -774,84 +1789,77 @@ const getReviewAnswers = async (
             question.marks,
 
           options: [
-
             {
               value: "A",
               text: question.optionA,
             },
-
             {
               value: "B",
               text: question.optionB,
             },
-
             {
               value: "C",
               text: question.optionC,
             },
-
             {
               value: "D",
               text: question.optionD,
             },
-
           ],
 
           selectedAnswer:
-            studentAnswer
-              ?.selectedAnswer ?? null,
+            studentAnswer?.selectedAnswer ??
+            null,
 
           correctAnswer:
             question.correctAnswer,
 
           isCorrect:
-            studentAnswer
-              ?.isCorrect ?? false,
+            studentAnswer?.isCorrect ??
+            false,
 
           marksAwarded:
-            studentAnswer
-              ?.marksAwarded ?? 0,
+            studentAnswer?.marksAwarded ??
+            0,
 
           explanation:
             question.explanation || "",
-
         };
-
       }
     );
+    const status =
+    attempt.percentage >= PASS_PERCENTAGE
+    ? "Pass"
+    : "Fail";
+
 
   // ----------------------------------
-  // Final Response
+  // 8. Final Response
   // ----------------------------------
 
   return {
+    attemptId: attempt._id,
 
-    examTitle:
-      snapshot.title,
+    examTitle: snapshot.title,
 
-    subject:
-      snapshot.subject,
+    subject: snapshot.subject,
 
-    obtainedMarks:
-      attempt.obtainedMarks,
+    obtainedMarks: attempt.obtainedMarks,
 
-    totalMarks:
-      attempt.totalMarks,
+    totalMarks: attempt.totalMarks,
 
-    percentage:
-      attempt.percentage,
+    percentage: attempt.percentage,
 
-    totalQuestions:
-      attempt.totalQuestions,
+    status,
 
-    submittedAt:
-      attempt.submittedAt,
+    totalQuestions: attempt.totalQuestions,
 
-    questions:
-      reviewQuestions,
+    timeTaken: attempt.timeTaken,
 
+    submittedAt: attempt.submittedAt,
+
+    questions: reviewQuestions,
   };
-
 };
 module.exports = {
   getDashboard,

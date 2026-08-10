@@ -6,33 +6,34 @@ const OptionList = ({
 }) => {
   if (!options.length) {
     return (
-      <div className="rounded-xl border border-dashed border-slate-300 p-6 text-center">
-        <p className="text-slate-500">
-          No options available.
-        </p>
+      <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-600">
+        No options available.
       </div>
     );
   }
 
   return (
-    <fieldset className="space-y-4">
-
+    <fieldset
+      disabled={disabled}
+      aria-label="Question Options"
+      className="space-y-4"
+    >
       <legend className="sr-only">
         Question Options
       </legend>
 
       {options.map((option, index) => {
+        const optionValue =
+          option.key ?? option.value;
 
         const isSelected =
-          selectedAnswer === option.value;
+          selectedAnswer === optionValue;
 
         return (
-
           <label
-            key={option.value}
+            key={optionValue}
             className={`
               flex
-              cursor-pointer
               items-start
               gap-4
               rounded-xl
@@ -50,32 +51,33 @@ const OptionList = ({
               ${
                 disabled
                   ? "cursor-not-allowed opacity-70"
-                  : ""
+                  : "cursor-pointer"
               }
             `}
           >
-
             <input
               type="radio"
               name="question-option"
-              value={option.value}
+              value={optionValue}
               checked={isSelected}
               disabled={disabled}
               onChange={() =>
-                onOptionSelect(option.value)
+                onOptionSelect?.(
+                  optionValue
+                )
               }
               className="mt-1 h-4 w-4"
             />
 
-            {/* Option Label */}
+            {/* Option Content */}
 
             <div className="flex flex-1 gap-3">
-
               <span
                 className={`
                   flex
                   h-7
                   w-7
+                  shrink-0
                   items-center
                   justify-center
                   rounded-full
@@ -89,36 +91,33 @@ const OptionList = ({
                   }
                 `}
               >
-                {String.fromCharCode(65 + index)}
+                {optionValue}
               </span>
 
               <div className="flex-1">
-
                 <p className="whitespace-pre-wrap text-slate-700">
                   {option.text}
                 </p>
 
-                {/* Future Image Support */}
+                {/* Optional Option Image */}
 
                 {option.image && (
                   <img
                     src={option.image}
-                    alt={`Option ${index + 1}`}
+                    alt={`Option ${optionValue}`}
                     loading="lazy"
-                    className="mt-3 max-h-48 rounded-lg border border-slate-200"
+                    onError={(event) => {
+                      event.currentTarget.style.display =
+                        "none";
+                    }}
+                    className="mt-3 max-h-48 rounded-lg border border-slate-200 object-contain"
                   />
                 )}
-
               </div>
-
             </div>
-
           </label>
-
         );
-
       })}
-
     </fieldset>
   );
 };

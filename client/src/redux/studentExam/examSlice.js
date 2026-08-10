@@ -1,12 +1,18 @@
 import { createSlice } from "@reduxjs/toolkit";
+
 import {
-    fetchAvailableExams,
-    fetchExamQuestions,
-    startExam,
-    resumeExam,
-    saveAnswer,
-    submitExam,
+  fetchAvailableExams,
+  fetchExamQuestions,
+  startExam,
+  resumeExam,
+  saveAnswer,
+  submitExam,
 } from "./examThunk";
+
+// ======================================
+// INITIAL STATE
+// ======================================
+
 const initialState = {
   // Exam Details
   attemptId: null,
@@ -30,179 +36,552 @@ const initialState = {
 
   // Exam Status
   submitted: false,
+
+  // Exam Lists
   availableExams: [],
   activeExams: [],
   completedExams: [],
+
   // UI State
   loading: false,
   error: null,
 };
+
+// ======================================
+// RESET STATE HELPER
+// ======================================
+
+const getInitialState = () => ({
+  ...initialState,
+
+  selectedAnswers: {},
+  visitedQuestions: {},
+  reviewQuestions: {},
+
+  availableExams: [],
+  activeExams: [],
+  completedExams: [],
+});
+
+// ======================================
+// HYDRATE EXAM STATE
+// ======================================
+const normalizeQuestionMap = (value) => {
+  if (!Array.isArray(value)) {
+    return value || {};
+  }
+
+  return value.reduce((map, questionId) => {
+    if (questionId) {
+      map[questionId.toString()] = true;
+    }
+
+    return map;
+  }, {});
+};
+
 const hydrateExamState = (state, exam) => {
   state.attemptId = exam.attemptId;
-  state.testSnapshotId = exam.testSnapshotId;
-  state.title = exam.title;
-  state.subject = exam.subject;
-  state.questions = exam?.questions ?? [];
 
-  state.selectedAnswers = exam.selectedAnswers || {};
-  state.visitedQuestions = exam.visitedQuestions || {};
-  state.reviewQuestions = exam.reviewQuestions || {};
+  state.testSnapshotId =
+    exam.testSnapshotId;
 
-  state.currentQuestionIndex = exam.currentQuestionIndex || 0;
-  state.remainingTime = exam.remainingTime || 0;
+  state.title =
+    exam.title || "";
+
+  state.subject =
+    exam.subject || "";
+
+  state.questions =
+    Array.isArray(exam.questions)
+      ? exam.questions
+      : [];
+
+  state.selectedAnswers =
+    exam.selectedAnswers &&
+    typeof exam.selectedAnswers === "object"
+      ? exam.selectedAnswers
+      : {};
+
+  state.visitedQuestions =
+    normalizeQuestionMap(
+      exam.visitedQuestions
+    );
+
+  state.reviewQuestions =
+    normalizeQuestionMap(
+      exam.reviewQuestions
+    );
+
+  state.currentQuestionIndex =
+    Number.isInteger(
+      exam.currentQuestionIndex
+    )
+      ? exam.currentQuestionIndex
+      : 0;
+
+  state.remainingTime =
+    Number(exam.remainingTime) || 0;
 };
+
+// ======================================
+// SLICE
+// ======================================
+
 const examSlice = createSlice({
   name: "studentExam",
+
   initialState,
 
   reducers: {
-    setCurrentQuestion: (state, action) => {
-      state.currentQuestionIndex = action.payload;
+    // ==================================
+    // CURRENT QUESTION
+    // ==================================
+
+    setCurrentQuestion: (
+      state,
+      action
+    ) => {
+      const index = action.payload;
+
+      if (
+        !Number.isInteger(index) ||
+        index < 0 ||
+        index >= state.questions.length
+      ) {
+        return;
+      }
+
+      state.currentQuestionIndex =
+        index;
     },
 
-    saveSelectedAnswer: (state, action) => {
-      const { questionId, answer } = action.payload;
+    // ==================================
+    // SAVE SELECTED ANSWER - UI STATE
+    // ==================================
 
-      state.selectedAnswers[questionId] = answer;
+    saveSelectedAnswer: (
+      state,
+      action
+    ) => {
+      const {
+        questionId,
+        answer,
+      } = action.payload;
+
+      if (
+        !questionId ||
+        !["A", "B", "C", "D"].includes(
+          answer
+        )
+      ) {
+        return;
+      }
+
+      state.selectedAnswers[
+        questionId
+      ] = answer;
     },
 
-    markVisited: (state, action) => {
-      const questionId = action.payload;
+    // ==================================
+    // MARK VISITED
+    // ==================================
 
-      state.visitedQuestions[questionId] = true;
+    markVisited: (
+      state,
+      action
+    ) => {
+      const questionId =
+        action.payload;
+
+      if (!questionId) {
+        return;
+      }
+
+      state.visitedQuestions[
+        questionId
+      ] = true;
     },
 
-    toggleReviewQuestion: (state, action) => {
-      const questionId = action.payload;
+    // ==================================
+    // TOGGLE REVIEW
+    // ==================================
 
-      if (state.reviewQuestions[questionId]) {
-        delete state.reviewQuestions[questionId];
+    toggleReviewQuestion: (
+      state,
+      action
+    ) => {
+      const questionId =
+        action.payload;
+
+      if (!questionId) {
+        return;
+      }
+
+      if (
+        state.reviewQuestions[
+          questionId
+        ]
+      ) {
+        delete state.reviewQuestions[
+          questionId
+        ];
       } else {
-        state.reviewQuestions[questionId] = true;
+        state.reviewQuestions[
+          questionId
+        ] = true;
       }
     },
 
-    updateRemainingTime: (state, action) => {
-      state.remainingTime = action.payload;
+    // ==================================
+    // UPDATE TIMER
+    // ==================================
+
+    updateRemainingTime: (
+      state,
+      action
+    ) => {
+      const remainingTime =
+        Number(action.payload);
+
+      if (
+        !Number.isFinite(
+          remainingTime
+        )
+      ) {
+        return;
+      }
+
+      state.remainingTime =
+        Math.max(
+          Math.floor(
+            remainingTime
+          ),
+          0
+        );
     },
-    markSubmitted: (state) => {
+
+    // ==================================
+    // MARK SUBMITTED
+    // ==================================
+
+    markSubmitted: (
+      state
+    ) => {
       state.submitted = true;
     },
 
-    resetExam: () => initialState,
+    // ==================================
+    // RESET EXAM
+    // ==================================
+
+    resetExam: () =>
+      getInitialState(),
   },
-  extraReducers: (builder) => {
-  builder
-  .addCase(fetchAvailableExams.pending, (state) => {
 
-    state.loading = true;
-    state.error = null;
+  // ====================================
+  // ASYNC THUNKS
+  // ====================================
 
-})
+  extraReducers: (
+    builder
+  ) => {
+    builder
 
-.addCase(fetchAvailableExams.fulfilled, (state, action) => {
+      // ==================================
+      // FETCH AVAILABLE EXAMS
+      // ==================================
 
-    state.loading = false;
+      .addCase(
+        fetchAvailableExams.pending,
+        (state) => {
+          state.loading = true;
+          state.error = null;
+        }
+      )
 
-    state.availableExams =
-    action.payload.data.exams || [];
+      .addCase(
+        fetchAvailableExams.fulfilled,
+        (
+          state,
+          action
+        ) => {
+          state.loading = false;
 
-})
+          state.availableExams =
+            action.payload?.data
+              ?.exams ?? [];
+        }
+      )
 
-.addCase(fetchAvailableExams.rejected, (state, action) => {
+      .addCase(
+        fetchAvailableExams.rejected,
+        (
+          state,
+          action
+        ) => {
+          state.loading = false;
 
-    state.loading = false;
+          state.error =
+            action.payload ||
+            "Failed to fetch exams.";
+        }
+      )
 
-    state.error = action.payload;
+      // ==================================
+      // FETCH EXAM QUESTIONS
+      // ==================================
 
-})
-.addCase(fetchExamQuestions.pending, (state) => {
+      .addCase(
+        fetchExamQuestions.pending,
+        (state) => {
+          state.loading = true;
+          state.error = null;
+        }
+      )
 
-    state.loading = true;
+      .addCase(
+        fetchExamQuestions.fulfilled,
+        (
+          state,
+          action
+        ) => {
+          state.loading = false;
 
-    state.error = null;
+          const exam =
+            action.payload?.data;
 
-})
+          hydrateExamState(
+            state,
+            exam
+          );
+        }
+      )
 
-.addCase(fetchExamQuestions.fulfilled, (state, action) => {
+      .addCase(
+        fetchExamQuestions.rejected,
+        (
+          state,
+          action
+        ) => {
+          state.loading = false;
 
-    state.loading = false;
+          state.error =
+            action.payload ||
+            "Failed to fetch exam.";
+        }
+      )
 
-    hydrateExamState(
+      // ==================================
+      // START EXAM
+      // ==================================
 
-        state,
+      .addCase(
+        startExam.pending,
+        (state) => {
+          state.loading = true;
+          state.error = null;
+        }
+      )
 
-        action.payload.data
-
-    );
-
-})
-
-.addCase(fetchExamQuestions.rejected, (state, action) => {
-
-    state.loading = false;
-
-    state.error = action.payload;
-
-})
-    .addCase(startExam.pending, (state) => {
-      state.loading = true;
-      state.error = null;
-    })
-
-    .addCase(startExam.fulfilled, (state, action) => {
+    .addCase(
+      startExam.fulfilled,
+      (state, action) => {
         state.loading = false;
-        hydrateExamState(state, action.payload.data);
-    })
 
-    .addCase(startExam.rejected, (state, action) => {
-      state.loading = false;
-      state.error = action.payload;
-    })
-   .addCase(resumeExam.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-        })
+        const exam =
+          action.payload?.data;
 
-    .addCase(resumeExam.fulfilled, (state, action) => {
-        state.loading = false;
-        hydrateExamState(state, action.payload.data);
-    })
+        if (!exam) {
+          return;
+        }
 
-    .addCase(resumeExam.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
-    })
-    .addCase(saveAnswer.rejected, (state, action) => {
-    state.error = action.payload;
-    })
-    .addCase(submitExam.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-    })
+        state.attemptId =
+          exam.attemptId ??
+          exam._id ??
+          null;
 
-    .addCase(submitExam.fulfilled, (state) => {
-        state.loading = false;
-        state.submitted = true;
-    })
+        state.testSnapshotId =
+          exam.testSnapshotId ??
+          exam.testSnapshot ??
+          null;
 
-    .addCase(submitExam.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
-    })
-}
+        state.title =
+          exam.title ??
+          "";
+
+        state.subject =
+          exam.subject ??
+          "";
+
+        state.currentQuestionIndex =
+          Number.isInteger(
+            exam.currentQuestionIndex
+          )
+            ? exam.currentQuestionIndex
+            : 0;
+
+        state.remainingTime =
+          Number(exam.remainingTime) || 0;
+
+        state.submitted = false;
+      }
+    )
+
+      .addCase(
+        startExam.rejected,
+        (
+          state,
+          action
+        ) => {
+          state.loading = false;
+
+          state.error =
+            action.payload ||
+            "Failed to start exam.";
+        }
+      )
+
+      // ==================================
+      // RESUME EXAM
+      // ==================================
+
+      .addCase(
+        resumeExam.pending,
+        (state) => {
+          state.loading = true;
+          state.error = null;
+        }
+      )
+
+      .addCase(
+        resumeExam.fulfilled,
+        (
+          state,
+          action
+        ) => {
+          state.loading = false;
+
+          const exam =
+            action.payload?.data;
+
+          hydrateExamState(
+            state,
+            exam
+          );
+        }
+      )
+
+      .addCase(
+        resumeExam.rejected,
+        (
+          state,
+          action
+        ) => {
+          state.loading = false;
+
+          state.error =
+            action.payload ||
+            "Failed to resume exam.";
+        }
+      )
+
+      // ==================================
+      // SAVE ANSWER
+      // ==================================
+
+      .addCase(
+        saveAnswer.pending,
+        (state) => {
+          /*
+           * Do not set global loading=true
+           * here.
+           *
+           * Saving an answer is a background
+           * operation and should not replace
+           * the entire exam UI with a loader.
+           */
+
+          state.error = null;
+        }
+      )
+
+      .addCase(
+        saveAnswer.fulfilled,
+        (state) => {
+          /*
+           * UI answer is already updated
+           * optimistically by
+           * saveSelectedAnswer().
+           */
+        }
+      )
+
+      .addCase(
+        saveAnswer.rejected,
+        (
+          state,
+          action
+        ) => {
+          state.error =
+            action.payload ||
+            "Failed to save answer.";
+        }
+      )
+
+      // ==================================
+      // SUBMIT EXAM
+      // ==================================
+
+      .addCase(
+        submitExam.pending,
+        (state) => {
+          state.error = null;
+        }
+      )
+
+      .addCase(
+        submitExam.fulfilled,
+        (
+          state
+        ) => {
+          state.loading = false;
+          state.submitted = true;
+        }
+      )
+
+      .addCase(
+        submitExam.rejected,
+        (
+          state,
+          action
+        ) => {
+          state.loading = false;
+
+          state.error =
+            action.payload ||
+            "Failed to submit exam.";
+        }
+      );
+  },
 });
 
-export const {
+// ======================================
+// ACTIONS
+// ======================================
 
+export const {
   setCurrentQuestion,
   saveSelectedAnswer,
   markVisited,
   toggleReviewQuestion,
   updateRemainingTime,
-  
   markSubmitted,
   resetExam,
 } = examSlice.actions;
+
+// ======================================
+// REDUCER
+// ======================================
 
 export default examSlice.reducer;

@@ -1,33 +1,62 @@
 function StatisticsCards({
-  correctAnswers,
-  wrongAnswers,
-  skippedAnswers,
-  timeTaken,
+  correctAnswers = 0,
+  wrongAnswers = 0,
+  skippedAnswers = 0,
+  timeTaken = 0,
   submittedAt,
 }) {
+  // ======================================
+  // FORMAT TIME
+  // ======================================
+
   const formatTime = (seconds) => {
-    const min = Math.floor(seconds / 60);
-    const sec = seconds % 60;
+    const safeSeconds = Math.max(
+      0,
+      Number(seconds) || 0
+    );
+
+    const min = Math.floor(
+      safeSeconds / 60
+    );
+
+    const sec = safeSeconds % 60;
 
     return `${min} min ${sec} sec`;
   };
 
+  // ======================================
+  // FORMAT SUBMITTED DATE
+  // ======================================
+
   const formattedDate = submittedAt
-    ? new Date(submittedAt).toLocaleString()
+    ? new Date(submittedAt).toLocaleString(
+        "en-IN",
+        {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        }
+      )
     : "-";
+
+  // ======================================
+  // STATISTICS
+  // ======================================
 
   const cards = [
     {
       title: "Correct Answers",
-      value: correctAnswers,
+      value: Number(correctAnswers) || 0,
     },
     {
       title: "Wrong Answers",
-      value: wrongAnswers,
+      value: Number(wrongAnswers) || 0,
     },
     {
       title: "Skipped",
-      value: skippedAnswers,
+      value: Number(skippedAnswers) || 0,
     },
     {
       title: "Time Taken",
@@ -40,18 +69,18 @@ function StatisticsCards({
   ];
 
   return (
-    <section className="rounded-xl bg-white p-8 shadow">
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+    <section className="mt-8">
+      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         {cards.map((card) => (
           <div
             key={card.title}
-            className="rounded-lg border border-gray-200 bg-gray-50 p-5 text-center shadow-sm transition duration-200 hover:shadow-md"
+            className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
           >
-            <p className="text-sm font-medium text-gray-500">
+            <p className="text-sm font-medium text-slate-500">
               {card.title}
             </p>
 
-            <h3 className="mt-3 text-2xl font-bold text-gray-900 break-words">
+            <h3 className="mt-3 break-words text-2xl font-bold text-gray-900">
               {card.value}
             </h3>
           </div>

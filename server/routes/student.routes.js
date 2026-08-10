@@ -261,6 +261,7 @@ router.get(
 router.get(
   "/result/:attemptId/review",
   protect,
+  authorize("student"),
   studentController.getReviewAnswers
 );
 module.exports = router;

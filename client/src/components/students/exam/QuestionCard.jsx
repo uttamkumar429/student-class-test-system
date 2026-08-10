@@ -9,7 +9,7 @@ const QuestionCard = ({
 }) => {
   if (!question) {
     return (
-      <div className="rounded-xl border border-slate-200 bg-white p-10 shadow-sm">
+      <div className="flex min-h-[300px] items-center justify-center rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
         <div className="text-center">
           <h2 className="text-xl font-semibold text-slate-700">
             No Question Available
@@ -23,6 +23,33 @@ const QuestionCard = ({
     );
   }
 
+  // ======================================
+  // BUILD OPTIONS FROM BACKEND RESPONSE
+  // ======================================
+
+  const options = [
+    {
+      key: "A",
+      text: question.optionA,
+    },
+    {
+      key: "B",
+      text: question.optionB,
+    },
+    {
+      key: "C",
+      text: question.optionC,
+    },
+    {
+      key: "D",
+      text: question.optionD,
+    },
+  ].filter(
+    (option) =>
+      typeof option.text === "string" &&
+      option.text.trim() !== ""
+  );
+
   return (
     <article
       aria-label={`Question ${questionNumber}`}
@@ -31,61 +58,58 @@ const QuestionCard = ({
       {/* Header */}
 
       <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-
         <div>
-
           <span className="rounded-md bg-blue-50 px-3 py-1 text-sm font-semibold text-blue-700">
-            Question {questionNumber} of {totalQuestions}
+            Question {questionNumber} of{" "}
+            {totalQuestions}
           </span>
-
         </div>
 
         <div className="flex items-center gap-3">
-
           <span className="rounded-lg bg-green-100 px-3 py-1 text-sm font-semibold text-green-700">
             {question.marks} Marks
           </span>
-
         </div>
-
       </div>
 
       {/* Question */}
 
       <div className="mb-6">
-
         <p className="whitespace-pre-wrap text-lg leading-8 text-slate-800">
-          {question.questionText}
+          {question.question}
         </p>
-
       </div>
 
       {/* Question Image */}
 
       {question.questionImage && (
         <div className="mb-6">
-
           <img
             src={question.questionImage}
             alt={`Question ${questionNumber}`}
             loading="lazy"
-            onError={(e) => {
-              e.currentTarget.style.display = "none";
+            onError={(event) => {
+              event.currentTarget.style.display =
+                "none";
             }}
             className="max-h-96 w-full rounded-lg border border-slate-200 object-contain"
           />
-
         </div>
       )}
 
       {/* Options */}
 
-      <OptionList
-        options={question.options || []}
-        selectedAnswer={selectedAnswer}
-        onOptionSelect={onOptionSelect}
-      />
-
+      {options.length > 0 ? (
+        <OptionList
+          options={options}
+          selectedAnswer={selectedAnswer}
+          onOptionSelect={onOptionSelect}
+        />
+      ) : (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-600">
+          No options available for this question.
+        </div>
+      )}
     </article>
   );
 };

@@ -30,10 +30,16 @@ function ReviewAnswersPage() {
   const error = useSelector(selectError);
 
   useEffect(() => {
+    if (!attemptId) {
+      navigate("/student/results/history", {
+        replace: true,
+      });
+
+      return;
+    }
 
     dispatch(fetchReview(attemptId));
-
-  }, [dispatch, attemptId]);
+  }, [dispatch, attemptId, navigate]);
 
   // Loading
   if (loading) {
@@ -143,9 +149,11 @@ function ReviewAnswersPage() {
 
         <div className="mt-6">
 
-          <ReviewNavigation
-            onBack={() => navigate("/student/result-history")}
-          />
+        <ReviewNavigation
+          onBack={() =>
+            navigate("/student/results/history")
+          }
+        />
 
         </div>
 

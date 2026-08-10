@@ -1,7 +1,22 @@
 const TestSnapshot = require("../models/TestSnapshot");
 const ExamAttempt = require("../models/ExamAttempt");
-
 const calculateExamStatus = require("../utils/examStatus");
+const mongoose = require("mongoose");
+const User = require("../models/User");
+const ApiError = require("../utils/ApiError");
+const StudentAnswer = require("../models/StudentAnswer");
+const {
+  getExamDeadline,
+  getRemainingTimeSeconds,
+} = require("../utils/examTime");
+const {
+  validateSnapshot,
+  validateExamWindow,
+  validateStudent,
+  validateAttempt,
+  canResumeAttempt,
+  initializeAnswers,
+} = require("../utils/examValidation");
 // =====================================
 // GET AVAILABLE EXAMS
 // =====================================
@@ -310,5 +325,383 @@ const startExam = async (
     snapshot,
 
   };
+
+};
+// ======================================
+// CHECK EXAM EXPIRY
+// ======================================
+
+const checkExamExpiry = async (
+  studentId,
+  attempt,
+  snapshot
+) => {
+  // --------------------------------------
+  // 1. Validate Attempt
+  // --------------------------------------
+
+  if (!attempt) {
+    throw new ApiError(
+      404,
+      "Exam attempt not found."
+    );
+  }
+
+  // --------------------------------------
+  // 2. Validate Snapshot
+  // --------------------------------------
+
+  if (!snapshot) {
+    throw new ApiError(
+      404,
+      "Test snapshot not found."
+    );
+  }
+
+  // --------------------------------------
+  // 3. Verify Ownership
+  // --------------------------------------
+
+  if (
+    attempt.student.toString() !==
+    studentId.toString()
+  ) {
+    throw new ApiError(
+      403,
+      "You are not allowed to access this exam."
+    );
+  }
+
+  // --------------------------------------
+  // 4. Already Submitted
+  // --------------------------------------
+
+  if (
+    attempt.status === "SUBMITTED"
+  ) {
+    throw new ApiError(
+      409,
+      "Exam already submitted."
+    );
+  }
+
+  // --------------------------------------
+  // 5. Calculate Server-Side Deadline
+  // --------------------------------------
+
+  const deadline =
+    getExamDeadline({
+      startedAt: attempt.startedAt,
+      endTime: snapshot.endTime,
+      durationMinutes:
+        snapshot.duration,
+    });
+
+  if (!deadline) {
+    throw new ApiError(
+      500,
+      "Unable to determine exam deadline."
+    );
+  }
+
+  // --------------------------------------
+  // 6. Check Server Time
+  // --------------------------------------
+
+  if (new Date() < deadline) {
+    return deadline;
+  }
+
+  // --------------------------------------
+  // 7. Auto Submit
+  // --------------------------------------
+
+  await submitExam(
+    studentId,
+    attempt._id
+  );
+
+  // --------------------------------------
+  // 8. Inform Caller
+  // --------------------------------------
+
+  throw new ApiError(
+    409,
+    "Exam time is over. Your exam has been submitted automatically."
+  );
+};
+// ======================================
+// SAVE ANSWER
+// ======================================
+
+const saveAnswer = async (
+  studentId,
+  attemptId,
+  questionId,
+  selectedAnswer,
+  currentQuestionIndex
+) => {
+  // --------------------------------------
+  // 1. Validate IDs
+  // --------------------------------------
+
+  if (
+    !mongoose.Types.ObjectId.isValid(attemptId) ||
+    !mongoose.Types.ObjectId.isValid(questionId)
+  ) {
+    throw new ApiError(
+      400,
+      "Invalid attempt or question ID."
+    );
+  }
+
+  // --------------------------------------
+  // 2. Validate Student ID
+  // --------------------------------------
+
+  if (!studentId) {
+    throw new ApiError(
+      401,
+      "Authentication required."
+    );
+  }
+
+  // --------------------------------------
+  // 3. Validate Question Index
+  // --------------------------------------
+
+  if (
+    !Number.isInteger(currentQuestionIndex) ||
+    currentQuestionIndex < 0
+  ) {
+    throw new ApiError(
+      400,
+      "Invalid question index."
+    );
+  }
+
+  // --------------------------------------
+  // 4. Validate Selected Answer
+  // --------------------------------------
+
+  const validAnswers = ["A", "B", "C", "D"];
+
+  if (!validAnswers.includes(selectedAnswer)) {
+    throw new ApiError(
+      400,
+      "Invalid selected answer."
+    );
+  }
+
+  // --------------------------------------
+  // 5. Find Attempt
+  // --------------------------------------
+
+  const attempt = await ExamAttempt.findById(
+    attemptId
+  );
+
+  if (!attempt) {
+    throw new ApiError(
+      404,
+      "Exam attempt not found."
+    );
+  }
+
+  // --------------------------------------
+  // 6. Ownership Check
+  // --------------------------------------
+
+  if (
+    attempt.student.toString() !==
+    studentId.toString()
+  ) {
+    throw new ApiError(
+      403,
+      "You are not allowed to modify this exam."
+    );
+  }
+
+// --------------------------------------
+// 7. Verify Attempt Status
+// --------------------------------------
+
+if (attempt.status === "SUBMITTED") {
+  throw new ApiError(
+    409,
+    "Exam already submitted."
+  );
+}
+
+if (attempt.status !== "IN-PROGRESS") {
+  throw new ApiError(
+    409,
+    "Exam is not currently active."
+  );
+}
+  // --------------------------------------
+  // 8. Load Snapshot
+  // --------------------------------------
+
+  const snapshot =
+    await TestSnapshot.findById(
+      attempt.testSnapshot
+    ).lean();
+
+  if (!snapshot) {
+    throw new ApiError(
+      404,
+      "Test snapshot not found."
+    );
+  }
+
+  // --------------------------------------
+  // 9. Check Exam Expiry
+  const deadline =
+    await checkExamExpiry(
+      studentId,
+      attempt,
+      snapshot
+    );
+
+  // 10. Validate Question Index
+  // --------------------------------------
+
+  if (
+    currentQuestionIndex >=
+    snapshot.questions.length
+  ) {
+    throw new ApiError(
+      400,
+      "Invalid question index."
+    );
+  }
+
+  // 11. Find Question From Snapshot
+  
+  const question =
+    snapshot.questions.find(
+      (item) =>
+        item.questionId.toString() ===
+        questionId.toString()
+    );
+
+  if (!question) {
+    throw new ApiError(
+      404,
+      "Question does not belong to this exam."
+    );
+  }
+
+  // 12. Verify Question Index Matches
+  
+  const questionAtIndex =
+    snapshot.questions[
+      currentQuestionIndex
+    ];
+
+  if (
+    !questionAtIndex ||
+    questionAtIndex.questionId.toString() !==
+      questionId.toString()
+  ) {
+    throw new ApiError(
+      400,
+      "Question index does not match question."
+    );
+  }
+  // 13. Calculate Answer
+  const isCorrect =
+    question.correctAnswer ===
+    selectedAnswer;
+
+  const marksAwarded = isCorrect
+    ? Number(question.marks || 0)
+    : 0;
+
+
+  // 14. Upsert Student Answer
+
+  const savedAnswer =
+    await StudentAnswer.findOneAndUpdate(
+      {
+        attempt: attempt._id,
+        questionId:
+          question.questionId,
+      },
+      {
+        $set: {
+          selectedAnswer,
+          correctAnswer:
+            question.correctAnswer,
+          isCorrect,
+          marksAwarded,
+          answeredAt: new Date(),
+        },
+        $setOnInsert: {
+          attempt: attempt._id,
+          questionId:
+            question.questionId,
+        },
+      },
+      {
+        new: true,
+        upsert: true,
+        runValidators: true,
+      }
+    );
+
+
+  // 15. Update Current Question
+  
+  attempt.currentQuestionIndex =
+    currentQuestionIndex;
+
+
+  // 16. Mark Question As Visited
+  
+  const alreadyVisited =
+    Array.isArray(
+      attempt.visitedQuestions
+    ) &&
+    attempt.visitedQuestions.some(
+      (id) =>
+        id.toString() ===
+        question.questionId.toString()
+    );
+
+  if (!alreadyVisited) {
+    attempt.visitedQuestions.push(
+      question.questionId
+    );
+  }
+
+  // 17. Save Attempt Progress
+  await attempt.save();
+
+  // 18. Return Safe Response
+ 
+return {
+  questionId:
+    question.questionId,
+
+  selectedAnswer:
+    savedAnswer.selectedAnswer,
+
+  currentQuestionIndex:
+    attempt.currentQuestionIndex,
+
+  answeredAt:
+    savedAnswer.answeredAt,
+};
+};
+
+module.exports = {
+
+  getAvailableExams,
+
+  startExam,
+
+  saveAnswer,
 
 };

@@ -14,17 +14,17 @@ import AnnouncementCard from "../../components/students/dashboard/AnnouncementCa
 function StudentDashboard() {
   const dispatch = useDispatch();
 
-  const {
-    loading,
-    error,
-    student,
-    stats,
-    upcoming,
-    
-    completed,
-  } = useSelector(
-    (state) => state.studentDashboard
-  );
+const {
+  loading,
+  error,
+  student,
+  stats,
+  upcoming,
+  recentResults,
+  performance,
+} = useSelector(
+  (state) => state.studentDashboard
+);
 
   useEffect(() => {
     dispatch(fetchDashboardThunk());
@@ -66,12 +66,13 @@ function StudentDashboard() {
       />
 
       <div className="grid gap-8 xl:grid-cols-2">
+      <RecentResultTable
+        results={recentResults}
+      />
 
-        <RecentResultTable
-          results={completed}
+        <PerformanceChart
+          data={performance}
         />
-
-        <PerformanceChart />
 
       </div>
 

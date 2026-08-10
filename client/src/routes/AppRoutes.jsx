@@ -23,7 +23,7 @@ import ReviewAnswersPage from "../pages/student/ReviewAnswersPage";
 import ProtectedRoute from "./ProtectedRoute";
 
 function AppRoutes() {
-    console.log("AppRoutes Rendered");
+    
   return (
         <Routes>
 

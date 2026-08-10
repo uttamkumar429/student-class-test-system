@@ -21,15 +21,17 @@ const resultSlice = createSlice({
   initialState,
 
   reducers: {
-    resetResult: (state) => {
-      state.result = null;
-      state.error = null;
-    },
+  resetResult: (state) => {
+    state.result = null;
+    state.loading = false;
+    state.error = null;
+  },
 
-    resetResultHistory: (state) => {
-      state.resultHistory = [];
-      state.error = null;
-    },
+  resetResultHistory: (state) => {
+    state.resultHistory = [];
+    state.loading = false;
+    state.error = null;
+  },
   },
 
   extraReducers: (builder) => {

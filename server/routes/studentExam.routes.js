@@ -7,6 +7,8 @@ const authorize = require("../middleware/role.middleware");
 
 const {
   getAvailableExams,
+  startExam,
+  saveAnswer,
 } = require("../controllers/studentExam.controller");
 
 /**
@@ -61,6 +63,28 @@ router.get(
   protect,
   authorize("student"),
   getAvailableExams
+);
+
+// =====================================
+// START EXAM
+// =====================================
+
+router.post(
+  "/exams/:testId/start",
+  protect,
+  authorize("student"),
+  startExam
+);
+
+// =====================================
+// SAVE ANSWER
+// =====================================
+
+router.put(
+  "/exams/:attemptId/answer",
+  protect,
+  authorize("student"),
+  saveAnswer
 );
 
 module.exports = router;

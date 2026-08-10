@@ -1,48 +1,31 @@
 import { Eye } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import PropTypes from "prop-types";
 
-function RecentResults() {
+function RecentResults({ results = [] }) {
   const navigate = useNavigate();
 
-  // Temporary Data
-  // Later it will come from API
-  const results = [
-    {
-      id: 1,
-      subject: "Java Programming",
-      date: "20 Jul 2026",
-      marks: 88,
-      totalMarks: 100,
-      status: "Pass",
-    },
-    {
-      id: 2,
-      subject: "DBMS",
-      date: "18 Jul 2026",
-      marks: 92,
-      totalMarks: 100,
-      status: "Pass",
-    },
-    {
-      id: 3,
-      subject: "Computer Networks",
-      date: "12 Jul 2026",
-      marks: 39,
-      totalMarks: 100,
-      status: "Fail",
-    },
-  ];
+  const formatDate = (date) => {
+    if (!date) {
+      return "—";
+    }
 
-  const handleViewResult = (resultId) => {
-    navigate(`/student/result/${resultId}`);
+    return new Date(date).toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  };
+
+  const handleViewResult = (attemptId) => {
+    navigate(`/student/result/${attemptId}`);
   };
 
   return (
-    <section className="mt-10 rounded-2xl border border-slate-200 bg-white shadow-sm">
-
+    <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-slate-200 px-6 py-5">
 
+      <div className="flex items-center justify-between border-b border-slate-200 px-6 py-5">
         <div>
           <h2 className="text-xl font-bold text-slate-800">
             Recent Results
@@ -52,110 +35,125 @@ function RecentResults() {
             Your latest examination performance.
           </p>
         </div>
-
       </div>
 
-      {/* Table */}
+      {/* Empty State */}
 
-      <div className="overflow-x-auto">
+      {results.length === 0 ? (
+        <div className="px-6 py-12 text-center">
+          <h3 className="text-lg font-semibold text-slate-700">
+            No Results Yet
+          </h3>
 
-        <table className="min-w-full">
+          <p className="mt-2 text-sm text-slate-500">
+            Your completed examination results will appear here.
+          </p>
+        </div>
+      ) : (
+        /* Table */
 
-          <thead className="bg-slate-50">
+        <div className="overflow-x-auto">
+          <table className="min-w-full">
+            <thead className="bg-slate-50">
+              <tr>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-slate-600">
+                  Exam
+                </th>
 
-            <tr>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-slate-600">
+                  Subject
+                </th>
 
-              <th className="px-6 py-4 text-left text-sm font-semibold text-slate-600">
-                Subject
-              </th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-slate-600">
+                  Date
+                </th>
 
-              <th className="px-6 py-4 text-left text-sm font-semibold text-slate-600">
-                Date
-              </th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-slate-600">
+                  Marks
+                </th>
 
-              <th className="px-6 py-4 text-left text-sm font-semibold text-slate-600">
-                Marks
-              </th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-slate-600">
+                  Score
+                </th>
 
-              <th className="px-6 py-4 text-left text-sm font-semibold text-slate-600">
-                Status
-              </th>
-
-              <th className="px-6 py-4 text-center text-sm font-semibold text-slate-600">
-                Action
-              </th>
-
-            </tr>
-
-          </thead>
-
-          <tbody>
-
-            {results.map((result) => (
-
-              <tr
-                key={result.id}
-                className="border-t border-slate-100 hover:bg-slate-50"
-              >
-
-                <td className="px-6 py-4 font-medium text-slate-800">
-                  {result.subject}
-                </td>
-
-                <td className="px-6 py-4 text-slate-600">
-                  {result.date}
-                </td>
-
-                <td className="px-6 py-4">
-
-                  <span className="font-semibold">
-                    {result.marks}
-                  </span>
-
-                  <span className="text-slate-500">
-                    /{result.totalMarks}
-                  </span>
-
-                </td>
-
-                <td className="px-6 py-4">
-
-                  <span
-                    className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                      result.status === "Pass"
-                        ? "bg-green-100 text-green-700"
-                        : "bg-red-100 text-red-700"
-                    }`}
-                  >
-                    {result.status}
-                  </span>
-
-                </td>
-
-                <td className="px-6 py-4 text-center">
-
-                  <button
-                    onClick={() => handleViewResult(result.id)}
-                    className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700"
-                  >
-                    <Eye size={16} />
-                    View
-                  </button>
-
-                </td>
-
+                <th className="px-6 py-4 text-center text-sm font-semibold text-slate-600">
+                  Action
+                </th>
               </tr>
+            </thead>
 
-            ))}
+            <tbody>
+              {results.map((result) => (
+                <tr
+                  key={result.attemptId}
+                  className="border-t border-slate-100 hover:bg-slate-50"
+                >
+                  <td className="px-6 py-4 font-medium text-slate-800">
+                    {result.examTitle || "Unknown Exam"}
+                  </td>
 
-          </tbody>
+                  <td className="px-6 py-4 text-slate-600">
+                    {result.subject || "Unknown Subject"}
+                  </td>
 
-        </table>
+                  <td className="px-6 py-4 text-slate-600">
+                    {formatDate(result.submittedAt)}
+                  </td>
 
-      </div>
+                  <td className="px-6 py-4">
+                    <span className="font-semibold">
+                      {result.obtainedMarks ?? 0}
+                    </span>
 
+                    <span className="text-slate-500">
+                      /{result.totalMarks ?? 0}
+                    </span>
+                  </td>
+
+                  <td className="px-6 py-4">
+                    <span className="font-semibold text-slate-800">
+                      {Number(result.percentage ?? 0).toFixed(2)}%
+                    </span>
+                  </td>
+
+                  <td className="px-6 py-4 text-center">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleViewResult(result.attemptId)
+                      }
+                      className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700"
+                    >
+                      <Eye size={16} />
+                      View
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </section>
   );
 }
+
+RecentResults.propTypes = {
+  results: PropTypes.arrayOf(
+    PropTypes.shape({
+      attemptId: PropTypes.string.isRequired,
+      examTitle: PropTypes.string,
+      subject: PropTypes.string,
+      obtainedMarks: PropTypes.number,
+      totalMarks: PropTypes.number,
+      percentage: PropTypes.number,
+      submittedAt: PropTypes.string,
+    })
+  ),
+};
+
+RecentResults.defaultProps = {
+  results: [],
+};
 
 export default RecentResults;

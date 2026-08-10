@@ -7,6 +7,9 @@ const {
 
 const {
   getDashboard: getDashboardService,
+} = require("../services/studentDashboard.service");
+
+const {
   getAvailableExams: getAvailableExamsService,
   startExam: startExamService,
   getExamQuestions: getExamQuestionsService,
@@ -22,7 +25,9 @@ const {
 
 exports.getDashboard = asyncHandler(async (req, res) => {
 
-  const dashboard = await getDashboardService();
+  const dashboard = await getDashboardService(
+    req.user._id
+  );
 
   return successResponse(
     res,
@@ -33,19 +38,23 @@ exports.getDashboard = asyncHandler(async (req, res) => {
 
 });
 
-exports.getAvailableExams = asyncHandler(async (req, res) => {
+exports.getAvailableExams = asyncHandler(
+  async (req, res) => {
+    const exams =
+      await getAvailableExamsService(
+        req.user._id
+      );
 
-  const exams = await getAvailableExamsService();
-  return successResponse(
-    res,
-    200,
-    "Available exams fetched successfully.",
-    {
-      exams,
-    }
-  );
-
-});
+    return successResponse(
+      res,
+      200,
+      "Available exams fetched successfully.",
+      {
+        exams,
+      }
+    );
+  }
+);
 // =====================================
 // START EXAM
 // =====================================

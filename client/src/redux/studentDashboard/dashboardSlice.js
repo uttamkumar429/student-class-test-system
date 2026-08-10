@@ -12,7 +12,8 @@ const initialState = {
 
   upcoming: [],
   active: [],
-  completed: [],
+  recentResults: [],
+  performance: [],
 
   loading: false,
   error: null,
@@ -43,7 +44,10 @@ const dashboardSlice = createSlice({
 
       state.upcoming = action.payload.upcoming || [];
       state.active = action.payload.active || [];
-      state.completed = action.payload.completed || [];
+      state.recentResults =
+        action.payload.recentResults || [];
+      state.performance =
+        action.payload.performance || [];
     },
 
     fetchDashboardFailure(state, action) {

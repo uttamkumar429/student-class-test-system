@@ -1,4 +1,5 @@
 import PropTypes from "prop-types";
+
 import {
   BookOpen,
   CalendarDays,
@@ -16,31 +17,58 @@ function ReviewHeader({ review }) {
     obtainedMarks,
     totalMarks,
     percentage,
+    status,
     submittedAt,
     timeTaken,
     questions = [],
   } = review;
 
+  // ======================================
+  // QUESTION STATISTICS
+  // ======================================
+
   const totalQuestions = questions.length;
 
   const correctAnswers = questions.filter(
-    (q) => q.isCorrect
+    (question) => question.isCorrect === true
   ).length;
 
   const wrongAnswers = questions.filter(
-    (q) => q.selectedAnswer && !q.isCorrect
+    (question) =>
+      question.selectedAnswer &&
+      question.isCorrect === false
   ).length;
 
   const skippedAnswers = questions.filter(
-    (q) => !q.selectedAnswer
+    (question) => !question.selectedAnswer
   ).length;
 
-  const isPassed = percentage >= 33;
+  // ======================================
+  // RESULT STATUS
+  // ======================================
+
+  const isPassed =
+    status?.toLowerCase() === "pass";
+
+  // ======================================
+  // FORMAT TIME
+  // ======================================
 
   const formatTime = (seconds = 0) => {
-    const hrs = Math.floor(seconds / 3600);
-    const mins = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
+    const safeSeconds = Math.max(
+      0,
+      Number(seconds) || 0
+    );
+
+    const hrs = Math.floor(
+      safeSeconds / 3600
+    );
+
+    const mins = Math.floor(
+      (safeSeconds % 3600) / 60
+    );
+
+    const secs = safeSeconds % 60;
 
     if (hrs > 0) {
       return `${hrs}h ${mins}m ${secs}s`;
@@ -49,14 +77,35 @@ function ReviewHeader({ review }) {
     return `${mins}m ${secs}s`;
   };
 
-  return (
-    <section className="overflow-hidden rounded-3xl bg-white shadow-lg">
+  // ======================================
+  // FORMAT SUBMITTED DATE
+  // ======================================
 
-      {/* Hero */}
+  const formattedSubmittedAt = submittedAt
+    ? new Date(submittedAt).toLocaleString(
+        "en-IN",
+        {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        }
+      )
+    : "-";
+
+  return (
+    <section className="overflow-hidden rounded-2xl bg-white shadow-sm">
+
+      {/* ======================================
+          HERO
+      ====================================== */}
 
       <div className="bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-600 p-8 text-white">
 
         <div className="flex flex-col gap-6 xl:flex-row xl:items-center xl:justify-between">
+
+          {/* Exam Information */}
 
           <div>
 
@@ -72,24 +121,28 @@ function ReviewHeader({ review }) {
 
               <div className="flex items-center gap-2">
                 <BookOpen size={18} />
-                {subject}
+                <span>{subject}</span>
               </div>
 
               <div className="flex items-center gap-2">
                 <CalendarDays size={18} />
-                {submittedAt
-                  ? new Date(submittedAt).toLocaleString()
-                  : "-"}
+                <span>
+                  {formattedSubmittedAt}
+                </span>
               </div>
 
               <div className="flex items-center gap-2">
                 <Clock3 size={18} />
-                {formatTime(timeTaken)}
+                <span>
+                  {formatTime(timeTaken)}
+                </span>
               </div>
 
             </div>
 
           </div>
+
+          {/* Result Status */}
 
           <div
             className={`rounded-2xl px-8 py-6 text-center shadow-lg ${
@@ -98,6 +151,7 @@ function ReviewHeader({ review }) {
                 : "bg-red-500"
             }`}
           >
+
             <Trophy
               size={36}
               className="mx-auto"
@@ -108,7 +162,9 @@ function ReviewHeader({ review }) {
             </p>
 
             <h2 className="mt-2 text-3xl font-bold">
-              {isPassed ? "PASS" : "FAIL"}
+              {isPassed
+                ? "PASS"
+                : "FAIL"}
             </h2>
 
           </div>
@@ -117,7 +173,9 @@ function ReviewHeader({ review }) {
 
       </div>
 
-      {/* Statistics */}
+      {/* ======================================
+          STATISTICS
+      ====================================== */}
 
       <div className="grid gap-6 p-8 md:grid-cols-2 xl:grid-cols-5">
 
@@ -128,7 +186,9 @@ function ReviewHeader({ review }) {
 
         <StatCard
           title="Percentage"
-          value={`${percentage}%`}
+          value={`${Number(
+            percentage ?? 0
+          ).toFixed(2)}%`}
         />
 
         <StatCard
@@ -166,13 +226,15 @@ function ReviewHeader({ review }) {
 
       </div>
 
-      {/* Footer */}
+      {/* ======================================
+          FOOTER
+      ====================================== */}
 
       <div className="border-t bg-slate-50 px-8 py-4">
 
         <p className="text-sm text-slate-600">
 
-          Total Questions :
+          Total Questions:
 
           <span className="ml-2 font-semibold text-slate-900">
             {totalQuestions}
@@ -186,13 +248,17 @@ function ReviewHeader({ review }) {
   );
 }
 
+// ======================================
+// STAT CARD
+// ======================================
+
 function StatCard({
   title,
   value,
   icon,
 }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-6 transition hover:-translate-y-1 hover:shadow-md">
+    <div className="rounded-xl border border-slate-200 bg-white p-5">
 
       <div className="flex items-center justify-between">
 
@@ -204,7 +270,7 @@ function StatCard({
 
       </div>
 
-      <h2 className="mt-4 text-3xl font-bold text-slate-900">
+      <h2 className="mt-4 break-words text-3xl font-bold text-slate-900">
         {value}
       </h2>
 
@@ -212,25 +278,47 @@ function StatCard({
   );
 }
 
+// ======================================
+// PROP TYPES
+// ======================================
+
 StatCard.propTypes = {
   title: PropTypes.string.isRequired,
+
   value: PropTypes.oneOfType([
     PropTypes.string,
     PropTypes.number,
   ]).isRequired,
+
   icon: PropTypes.node,
 };
 
 ReviewHeader.propTypes = {
   review: PropTypes.shape({
     examTitle: PropTypes.string.isRequired,
+
     subject: PropTypes.string.isRequired,
-    obtainedMarks: PropTypes.number.isRequired,
-    totalMarks: PropTypes.number.isRequired,
-    percentage: PropTypes.number.isRequired,
-    submittedAt: PropTypes.string,
-    timeTaken: PropTypes.number,
-    questions: PropTypes.array.isRequired,
+
+    obtainedMarks:
+      PropTypes.number.isRequired,
+
+    totalMarks:
+      PropTypes.number.isRequired,
+
+    percentage:
+      PropTypes.number.isRequired,
+
+    status:
+      PropTypes.string.isRequired,
+
+    submittedAt:
+      PropTypes.string,
+
+    timeTaken:
+      PropTypes.number,
+
+    questions:
+      PropTypes.array.isRequired,
   }).isRequired,
 };
 

@@ -1,10 +1,13 @@
 import PropTypes from "prop-types";
+import { useEffect } from "react";
 import { useSelector } from "react-redux";
+
 import {
   CheckCircle2,
   XCircle,
   Award,
   Layers,
+  CircleDashed,
 } from "lucide-react";
 
 import {
@@ -15,57 +18,93 @@ import {
 
 import ExplanationCard from "./ExplanationCard";
 import ReviewOptionList from "./ReviewOptionList";
-import { useEffect } from "react";
+
 function ReviewQuestionCard() {
-  const question = useSelector(selectCurrentQuestion);
+  const question = useSelector(
+    selectCurrentQuestion
+  );
 
   const currentQuestionIndex = useSelector(
     selectCurrentQuestionIndex
   );
 
-  const questions = useSelector(selectQuestions);
+  const questions = useSelector(
+    selectQuestions
+  );
 
-   useEffect(() => {
+  // ======================================
+  // SCROLL TO TOP ON QUESTION CHANGE
+  // ======================================
 
-        window.scrollTo({
+  useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  }, [currentQuestionIndex]);
 
-            top: 0,
-
-            behavior: "smooth",
-
-        });
-
-    }, [currentQuestionIndex]);
+  // ======================================
+  // EMPTY STATE
+  // ======================================
 
   if (!question) {
     return (
-      <div className="rounded-2xl bg-white p-10 text-center shadow-md">
-        <h2 className="text-xl font-semibold text-slate-600">
+      <section className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+        <h2 className="text-xl font-semibold text-slate-800">
           No Question Found
         </h2>
-      </div>
+
+        <p className="mt-2 text-slate-500">
+          The selected review question could not be found.
+        </p>
+      </section>
     );
   }
 
-  return (
-    <section className="rounded-2xl bg-white p-8 shadow-md">
+  const isCorrect =
+    question.isCorrect === true;
 
-      {/* Header */}
+  const isAnswered =
+    Boolean(question.selectedAnswer);
+
+  const resultTitle = isCorrect
+    ? "Correct"
+    : isAnswered
+    ? "Wrong"
+    : "Skipped";
+
+  const resultColor = isCorrect
+    ? "bg-green-100 text-green-700"
+    : isAnswered
+    ? "bg-red-100 text-red-700"
+    : "bg-slate-200 text-slate-700";
+
+  const resultIcon = isCorrect ? (
+    <CheckCircle2 size={16} />
+  ) : isAnswered ? (
+    <XCircle size={16} />
+  ) : (
+    <CircleDashed size={16} />
+  );
+
+  return (
+    <section className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+
+      {/* ======================================
+          HEADER
+      ====================================== */}
 
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
 
         <div>
 
           <p className="text-sm font-semibold uppercase tracking-wider text-blue-600">
-
             Question
-
           </p>
 
           <h2 className="mt-2 text-2xl font-bold text-slate-900">
-
-            {currentQuestionIndex + 1} / {questions.length}
-
+            {currentQuestionIndex + 1} /{" "}
+            {questions.length}
           </h2>
 
         </div>
@@ -74,90 +113,92 @@ function ReviewQuestionCard() {
 
           <Badge
             icon={<Layers size={16} />}
-            title={question.difficulty}
+            title={
+              question.difficulty ||
+              "General"
+            }
             color="bg-blue-100 text-blue-700"
           />
 
           <Badge
             icon={<Award size={16} />}
-            title={`${question.marks} Marks`}
+            title={`${question.marks ?? 0} Marks`}
             color="bg-orange-100 text-orange-700"
           />
 
           <Badge
-            icon={
-              question.isCorrect ? (
-                <CheckCircle2 size={16} />
-              ) : (
-                <XCircle size={16} />
-              )
-            }
-            title={
-              question.isCorrect
-                ? "Correct"
-                : question.selectedAnswer
-                ? "Wrong"
-                : "Skipped"
-            }
-            color={
-              question.isCorrect
-                ? "bg-green-100 text-green-700"
-                : question.selectedAnswer
-                ? "bg-red-100 text-red-700"
-                : "bg-slate-200 text-slate-700"
-            }
+            icon={resultIcon}
+            title={resultTitle}
+            color={resultColor}
           />
 
         </div>
 
       </div>
 
-      {/* Question */}
+      {/* ======================================
+          QUESTION
+      ====================================== */}
 
       <div className="mt-8">
 
-        <p className="text-lg leading-8 text-slate-800">
-
+        <p className="whitespace-pre-wrap text-lg leading-8 text-slate-800">
           {question.question}
-
         </p>
 
       </div>
 
-      {/* Future Image Support */}
+      {/* ======================================
+          QUESTION IMAGE
+      ====================================== */}
 
       {question.questionImage && (
-
         <div className="mt-6">
 
           <img
             src={question.questionImage}
-            alt="Question"
-            className="max-h-96 rounded-xl border"
+            alt={`Question ${
+              currentQuestionIndex + 1
+            }`}
+            loading="lazy"
+            onError={(event) => {
+              event.currentTarget.style.display =
+                "none";
+            }}
+            className="max-h-96 rounded-xl border border-slate-200 object-contain"
           />
 
         </div>
-
       )}
 
-      {/* Options */}
+      {/* ======================================
+          OPTIONS
+      ====================================== */}
 
       <div className="mt-8">
 
         <ReviewOptionList
-          options={question.options}
-          selectedAnswer={question.selectedAnswer}
-          correctAnswer={question.correctAnswer}
+          options={question.options || []}
+          selectedAnswer={
+            question.selectedAnswer
+          }
+          correctAnswer={
+            question.correctAnswer
+          }
         />
 
       </div>
 
-      {/* Explanation */}
+      {/* ======================================
+          EXPLANATION
+      ====================================== */}
 
       <div className="mt-8">
 
         <ExplanationCard
-          explanation={question.explanation}
+          explanation={
+            question.explanation
+          }
         />
 
       </div>
@@ -165,6 +206,10 @@ function ReviewQuestionCard() {
     </section>
   );
 }
+
+// ======================================
+// BADGE
+// ======================================
 
 function Badge({
   icon,
@@ -177,7 +222,7 @@ function Badge({
     >
       {icon}
 
-      {title}
+      <span>{title}</span>
     </div>
   );
 }

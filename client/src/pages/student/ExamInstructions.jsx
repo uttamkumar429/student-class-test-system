@@ -16,41 +16,81 @@ const ExamInstructions = () => {
   const { state } = useLocation();
 
   const exam = state?.exam;
+
   const [accepted, setAccepted] = useState(false);
   const [loading, setLoading] = useState(false);
-const handleStartExam = async () => {
-  try {
-    setLoading(true);
 
-    const response = await studentExamService.startExam(exam._id);
-    console.log(response);
-    toast.success(response.message);
-    // Navigate to Exam Page using Attempt ID
-    navigate(`/student/exam/${response.data._id}`);
+  // ======================================
+  // START EXAM
+  // ======================================
 
-    // Next step:
-    // Navigate after attempt is created
+  const handleStartExam = async () => {
+    if (!exam?._id || loading) {
+      return;
+    }
 
-  } catch (error) {
-    toast.error(
-      error?.response?.data?.message ||
-      "Failed to start exam."
-    );
-  } finally {
-    setLoading(false);
-  }
-};
+    try {
+      setLoading(true);
+
+      const response =
+        await studentExamService.startExam(
+          exam._id
+        );
+
+      const attemptId =
+        response?.data?.attemptId;
+
+      if (!attemptId) {
+        throw new Error(
+          "Exam attempt ID was not returned."
+        );
+      }
+
+      toast.success(
+        response?.message ||
+          "Exam started successfully."
+      );
+
+      // Navigate using server-created Attempt ID
+      navigate(
+        `/student/exam/${attemptId}`,
+        {
+          replace: true,
+        }
+      );
+    } catch (error) {
+      toast.error(
+        error?.response?.data?.message ||
+          error?.message ||
+          "Failed to start exam."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ======================================
+  // EXAM NOT FOUND
+  // ======================================
+
   if (!exam) {
     return (
-      <div className="flex h-[70vh] items-center justify-center">
-        <div className="rounded-xl bg-white p-8 shadow">
-          <h2 className="text-2xl font-bold text-red-600">
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+          <h2 className="text-2xl font-bold text-slate-800">
             Exam Not Found
           </h2>
 
+          <p className="mt-2 text-slate-500">
+            The selected exam could not be found.
+          </p>
+
           <button
-            onClick={() => navigate("/student/exams")}
-            className="mt-5 rounded-lg bg-blue-600 px-5 py-2 text-white"
+            type="button"
+            onClick={() =>
+              navigate("/student/exams")
+            }
+            className="mt-5 rounded-lg bg-blue-600 px-5 py-2 text-white hover:bg-blue-700"
           >
             Back to Exams
           </button>
@@ -60,8 +100,7 @@ const handleStartExam = async () => {
   }
 
   return (
-    <div className="mx-auto max-w-5xl p-6">
-
+    <div>
       {/* Heading */}
 
       <div className="mb-8">
@@ -70,26 +109,27 @@ const handleStartExam = async () => {
         </h1>
 
         <p className="mt-2 text-slate-500">
-          Please read all instructions carefully before starting your exam.
+          Please read all instructions carefully
+          before starting your exam.
         </p>
       </div>
 
       {/* Exam Details */}
 
       <div className="rounded-xl border bg-white p-6 shadow-sm">
-
         <h2 className="mb-6 text-xl font-semibold">
           Exam Details
         </h2>
 
         <div className="grid gap-5 md:grid-cols-2">
-
           <div className="flex items-center gap-3">
             <BookOpen className="text-blue-600" />
+
             <div>
               <p className="text-sm text-slate-500">
                 Subject
               </p>
+
               <h3 className="font-semibold">
                 {exam.subject}
               </h3>
@@ -98,10 +138,12 @@ const handleStartExam = async () => {
 
           <div className="flex items-center gap-3">
             <Clock className="text-green-600" />
+
             <div>
               <p className="text-sm text-slate-500">
                 Duration
               </p>
+
               <h3 className="font-semibold">
                 {exam.duration} Minutes
               </h3>
@@ -110,10 +152,12 @@ const handleStartExam = async () => {
 
           <div className="flex items-center gap-3">
             <Award className="text-orange-600" />
+
             <div>
               <p className="text-sm text-slate-500">
                 Total Marks
               </p>
+
               <h3 className="font-semibold">
                 {exam.totalMarks}
               </h3>
@@ -122,24 +166,25 @@ const handleStartExam = async () => {
 
           <div className="flex items-center gap-3">
             <Calendar className="text-purple-600" />
+
             <div>
               <p className="text-sm text-slate-500">
                 Exam Date
               </p>
+
               <h3 className="font-semibold">
-                {new Date(exam.startTime).toLocaleString()}
+                {new Date(
+                  exam.startTime
+                ).toLocaleString("en-IN")}
               </h3>
             </div>
           </div>
-
         </div>
-
       </div>
 
       {/* Instructions */}
 
       <div className="mt-8 rounded-xl border bg-white p-6 shadow-sm">
-
         <div className="mb-5 flex items-center gap-3">
           <AlertTriangle className="text-amber-500" />
 
@@ -149,70 +194,87 @@ const handleStartExam = async () => {
         </div>
 
         <ul className="space-y-3 text-slate-600">
+          <li>
+            • Read every question carefully before
+            answering.
+          </li>
 
-          <li>• Read every question carefully before answering.</li>
+          <li>
+            • Timer starts immediately after
+            clicking <b>Start Exam</b>.
+          </li>
 
-          <li>• Timer starts immediately after clicking <b>Start Exam</b>.</li>
+          <li>
+            • Do not refresh or close the browser
+            during the exam.
+          </li>
 
-          <li>• Do not refresh or close the browser during the exam.</li>
+          <li>
+            • All answers are auto-saved during the
+            exam.
+          </li>
 
-          <li>• All answers are auto-saved during the exam.</li>
+          <li>
+            • When the timer ends, the exam will be
+            submitted automatically.
+          </li>
 
-          <li>• When the timer ends, the exam will be submitted automatically.</li>
-
-          <li>• Once submitted, you cannot modify your answers.</li>
-
+          <li>
+            • Once submitted, you cannot modify your
+            answers.
+          </li>
         </ul>
-
       </div>
 
       {/* Agreement */}
 
       <div className="mt-8 rounded-xl border bg-white p-6 shadow-sm">
-
         <label className="flex items-center gap-3">
-
           <input
             type="checkbox"
             checked={accepted}
-            onChange={(e) => setAccepted(e.target.checked)}
+            onChange={(event) =>
+              setAccepted(event.target.checked)
+            }
             className="h-5 w-5"
           />
 
           <span className="font-medium">
-            I have read and understood all the instructions.
+            I have read and understood all the
+            instructions.
           </span>
-
         </label>
-
       </div>
 
       {/* Buttons */}
 
       <div className="mt-8 flex justify-between">
-
         <button
-          onClick={() => navigate("/student/exams")}
-          className="rounded-lg border px-6 py-3 hover:bg-slate-100"
+          type="button"
+          disabled={loading}
+          onClick={() =>
+            navigate("/student/exams")
+          }
+          className="rounded-lg border px-6 py-3 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
         >
           Back
         </button>
 
         <button
+          type="button"
           disabled={!accepted || loading}
           onClick={handleStartExam}
-          
           className={`rounded-lg px-8 py-3 font-medium text-white transition ${
-            accepted
+            accepted && !loading
               ? "bg-blue-600 hover:bg-blue-700"
               : "cursor-not-allowed bg-slate-400"
           }`}
         >
-          {loading ? "Starting..." : "Start Exam"}
+          {loading
+            ? "Starting..."
+            : "Start Exam"}
         </button>
-
       </div>
-
     </div>
   );
 };

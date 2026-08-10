@@ -1,109 +1,205 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
+
 import studentExamService from "../../services/studentExamService";
 
-// ================================
-// Fetch Available Exams
-// ================================
-export const fetchAvailableExams = createAsyncThunk(
-  "studentExam/fetchAvailableExams",
-  async (_, { rejectWithValue }) => {
-    try {
-      return await studentExamService.getAvailableExams();
-    } catch (error) {
-      return rejectWithValue(
-        error.response?.data?.message ||
-        "Failed to fetch exams."
-      );
-    }
-  }
-);
+// ======================================
+// ERROR MESSAGE HELPER
+// ======================================
 
-// ================================
-// Start Exam
-// ================================
-export const startExam = createAsyncThunk(
-  "studentExam/startExam",
-  async (snapshotId, { rejectWithValue }) => {
-    try {
-      return await studentExamService.startExam(snapshotId);
-    } catch (error) {
-      return rejectWithValue(
-        error.response?.data?.message ||
-        "Failed to start exam."
-      );
-    }
-  }
-);
+const getErrorMessage = (
+  error,
+  fallbackMessage
+) => {
+  return (
+    error?.response?.data?.message ||
+    error?.message ||
+    fallbackMessage
+  );
+};
 
-// ================================
-// Resume Exam
-// ================================
-export const resumeExam = createAsyncThunk(
-  "studentExam/resumeExam",
-  async (_, { rejectWithValue }) => {
-    try {
-      return await studentExamService.resumeExam();
-    } catch (error) {
-      return rejectWithValue(
-        error.response?.data?.message ||
-        "Failed to resume exam."
-      );
-    }
-  }
-);
+// ======================================
+// FETCH AVAILABLE EXAMS
+// ======================================
 
-// ================================
-// Save Answer
-// ================================
-export const saveAnswer = createAsyncThunk(
-  "studentExam/saveAnswer",
-  async ({ attemptId, payload }, { rejectWithValue }) => {
-    try {
-      return await studentExamService.saveAnswer(
-        attemptId,
-        payload
-      );
-    } catch (error) {
-      return rejectWithValue(
-        error.response?.data?.message ||
-        "Failed to save answer."
-      );
-    }
-  }
-);
+export const fetchAvailableExams =
+  createAsyncThunk(
+    "studentExam/fetchAvailableExams",
 
-// ================================
-// Submit Exam
-// ================================
-export const submitExam = createAsyncThunk(
-  "studentExam/submitExam",
-  async (attemptId, { rejectWithValue }) => {
-    try {
-      return await studentExamService.submitExam(attemptId);
-    } catch (error) {
-      return rejectWithValue(
-        error.response?.data?.message ||
-        "Failed to submit exam."
-      );
+    async (_, { rejectWithValue }) => {
+      try {
+        return await studentExamService.getAvailableExams();
+      } catch (error) {
+        return rejectWithValue(
+          getErrorMessage(
+            error,
+            "Failed to fetch exams."
+          )
+        );
+      }
     }
-  }
-);
-export const fetchExamQuestions = createAsyncThunk(
-  "studentExam/fetchExamQuestions",
+  );
 
-  async (attemptId, { rejectWithValue }) => {
-    try {
-      const data =
-        await studentExamService.getExamQuestions(
+// ======================================
+// START EXAM
+// ======================================
+
+export const startExam =
+  createAsyncThunk(
+    "studentExam/startExam",
+
+    async (
+      snapshotId,
+      { rejectWithValue }
+    ) => {
+      if (!snapshotId) {
+        return rejectWithValue(
+          "Exam ID is required."
+        );
+      }
+
+      try {
+        return await studentExamService.startExam(
+          snapshotId
+        );
+      } catch (error) {
+        return rejectWithValue(
+          getErrorMessage(
+            error,
+            "Failed to start exam."
+          )
+        );
+      }
+    }
+  );
+
+// ======================================
+// RESUME EXAM
+// ======================================
+
+export const resumeExam =
+  createAsyncThunk(
+    "studentExam/resumeExam",
+
+    async (_, { rejectWithValue }) => {
+      try {
+        return await studentExamService.resumeExam();
+      } catch (error) {
+        return rejectWithValue(
+          getErrorMessage(
+            error,
+            "Failed to resume exam."
+          )
+        );
+      }
+    }
+  );
+
+// ======================================
+// SAVE ANSWER
+// ======================================
+
+export const saveAnswer =
+  createAsyncThunk(
+    "studentExam/saveAnswer",
+
+    async (
+      { attemptId, payload },
+      { rejectWithValue }
+    ) => {
+      if (!attemptId) {
+        return rejectWithValue(
+          "Exam attempt ID is required."
+        );
+      }
+
+      if (
+        !payload ||
+        !payload.questionId ||
+        !payload.selectedAnswer
+      ) {
+        return rejectWithValue(
+          "Question and selected answer are required."
+        );
+      }
+
+      try {
+        return await studentExamService.saveAnswer(
+          attemptId,
+          payload
+        );
+      } catch (error) {
+        return rejectWithValue(
+          getErrorMessage(
+            error,
+            "Failed to save answer."
+          )
+        );
+      }
+    }
+  );
+
+// ======================================
+// SUBMIT EXAM
+// ======================================
+
+export const submitExam =
+  createAsyncThunk(
+    "studentExam/submitExam",
+
+    async (
+      attemptId,
+      { rejectWithValue }
+    ) => {
+      if (!attemptId) {
+        return rejectWithValue(
+          "Exam attempt ID is required."
+        );
+      }
+
+      try {
+        return await studentExamService.submitExam(
           attemptId
         );
-
-      return data;
-    } catch (error) {
-      return rejectWithValue(
-        error.response?.data?.message ||
-          "Failed to fetch exam."
-      );
+      } catch (error) {
+        return rejectWithValue(
+          getErrorMessage(
+            error,
+            "Failed to submit exam."
+          )
+        );
+      }
     }
-  }
-);
+  );
+
+// ======================================
+// FETCH EXAM QUESTIONS
+// ======================================
+
+export const fetchExamQuestions =
+  createAsyncThunk(
+    "studentExam/fetchExamQuestions",
+
+    async (
+      attemptId,
+      { rejectWithValue }
+    ) => {
+      if (!attemptId) {
+        return rejectWithValue(
+          "Exam attempt ID is required."
+        );
+      }
+
+      try {
+        return await studentExamService.getExamQuestions(
+          attemptId
+        );
+      } catch (error) {
+        return rejectWithValue(
+          getErrorMessage(
+            error,
+            "Failed to fetch exam."
+          )
+        );
+      }
+    }
+  );

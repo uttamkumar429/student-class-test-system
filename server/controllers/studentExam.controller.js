@@ -6,6 +6,8 @@ const {
 
 const {
   getAvailableExams,
+  startExam: startExamService,
+  saveAnswer,
 } = require("../services/studentExam.service");
 
 // =====================================
@@ -57,6 +59,75 @@ exports.getAvailableExams = asyncHandler(
 
       result
 
+    );
+
+  }
+);
+// =====================================
+// START EXAM
+// =====================================
+
+exports.startExam = asyncHandler(
+  async (req, res) => {
+
+    const { testId } = req.params;
+
+    const result = await startExamService(
+      req.user._id,
+      testId
+    );
+
+    return successResponse(
+
+      res,
+
+      200,
+
+      result.isResume
+        ? "Exam resumed successfully."
+        : "Exam started successfully.",
+
+      result
+
+    );
+
+  }
+);
+
+// =====================================
+// SAVE ANSWER
+// =====================================
+
+exports.saveAnswer = asyncHandler(
+  async (req, res) => {
+
+    const { attemptId } = req.params;
+
+    const {
+      questionId,
+      selectedAnswer,
+      currentQuestionIndex,
+    } = req.body;
+
+    const result = await saveAnswer(
+
+      req.user._id,
+
+      attemptId,
+
+      questionId,
+
+      selectedAnswer,
+
+      currentQuestionIndex
+
+    );
+
+    return successResponse(
+      res,
+      200,
+      "Answer saved successfully.",
+      result
     );
 
   }

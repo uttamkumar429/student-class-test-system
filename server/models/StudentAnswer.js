@@ -15,8 +15,8 @@ const studentAnswerSchema = new mongoose.Schema(
 
     selectedAnswer: {
       type: String,
-      enum: ["A", "B", "C", "D"],
-      required: true,
+      enum: ["A", "B", "C", "D", null],
+      default: null,
     },
 
     correctAnswer: {
@@ -34,12 +34,23 @@ const studentAnswerSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    answeredAt: {
+      type: Date,
+    },
   },
   {
     timestamps: true,
   }
 );
-
+studentAnswerSchema.index(
+  {
+    attempt: 1,
+    questionId: 1,
+  },
+  {
+    unique: true,
+  }
+);
 module.exports = mongoose.model(
   "StudentAnswer",
   studentAnswerSchema

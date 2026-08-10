@@ -24,7 +24,7 @@ const testRoutes = require("./routes/test.routes");
 const publishRoutes = require("./routes/publish.routes");
 const studentRoutes = require("./routes/student.routes");
 const errorHandler = require("./middleware/error.middleware");
-const dashboardRoutes = require("./routes/dashboard.routes");
+
 const adminExamRoutes = require("./routes/adminExam.routes");
 const adminAnalyticsRoutes = require("./routes/adminAnalytics.routes");
 const adminReportRoutes=require("./routes/adminReport.routes");
@@ -103,7 +103,6 @@ app.use("/api/tests", publishRoutes);
 // Student APIs
 app.use("/api/student", studentRoutes);
 
-app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/student/dashboard", studentDashboardRoutes);
 app.use(
   "/api/student",

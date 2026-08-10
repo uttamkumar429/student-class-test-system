@@ -19,8 +19,16 @@ function ResultPage() {
   );
 
   useEffect(() => {
+    if (!attemptId) {
+      navigate("/student/dashboard", {
+        replace: true,
+      });
+
+      return;
+    }
+
     dispatch(fetchResult(attemptId));
-  }, [dispatch, attemptId]);
+  }, [dispatch, attemptId, navigate]);
 
   if (loading) {
     return (
@@ -81,19 +89,19 @@ function ResultPage() {
       </div>
     );
   }
-  const {
-    examTitle,
-    subject,
-    obtainedMarks,
-    totalMarks,
-    percentage,
-    correctAnswers,
-    wrongAnswers,
-    skippedAnswers,
-    timeTaken,
-    submittedAt,
-    status,
-  } = result;
+const {
+  examTitle,
+  subject,
+  obtainedMarks,
+  totalMarks,
+  percentage,
+  correctAnswers,
+  wrongAnswers,
+  unansweredQuestions,
+  timeTaken,
+  submittedAt,
+  status,
+} = result;
 
   return (
     <div className="min-h-screen bg-gray-100 p-8">
@@ -111,7 +119,7 @@ function ResultPage() {
         <StatisticsCards
           correctAnswers={correctAnswers}
           wrongAnswers={wrongAnswers}
-          skippedAnswers={skippedAnswers}
+          skippedAnswers={unansweredQuestions}
           timeTaken={timeTaken}
           submittedAt={submittedAt}
         />
