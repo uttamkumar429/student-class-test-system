@@ -1,15 +1,121 @@
 const Question = require("../models/Question");
 
+const ApiError = require("../utils/ApiError");
+
+// =====================================
+// CONSTANTS
+// =====================================
+
+const ALLOWED_SORT_FIELDS = [
+  "createdAt",
+  "subject",
+  "difficulty",
+  "marks",
+];
+
+const ALLOWED_UPDATE_FIELDS = [
+  "subject",
+  "chapter",
+  "difficulty",
+  "question",
+  "optionA",
+  "optionB",
+  "optionC",
+  "optionD",
+  "correctAnswer",
+  "explanation",
+  "marks",
+];
+
+// =====================================
+// ESCAPE REGEX
+// =====================================
+
+const escapeRegex = (text) => {
+  return text.replace(
+    /[.*+?^${}()|[\]\\]/g,
+    "\\$&"
+  );
+};
+
+// =====================================
+// SANITIZE UPDATE DATA
+// =====================================
+
+const buildQuestionUpdate = (data) => {
+  const updateData = {};
+
+  for (const field of ALLOWED_UPDATE_FIELDS) {
+    if (
+      Object.prototype.hasOwnProperty.call(
+        data,
+        field
+      )
+    ) {
+      updateData[field] = data[field];
+    }
+  }
+
+  // -----------------------------------
+  // Normalize string fields
+  // -----------------------------------
+
+  const stringFields = [
+    "subject",
+    "chapter",
+    "question",
+    "optionA",
+    "optionB",
+    "optionC",
+    "optionD",
+    "correctAnswer",
+    "difficulty",
+    "explanation",
+  ];
+
+  for (const field of stringFields) {
+    if (
+      typeof updateData[field] === "string"
+    ) {
+      updateData[field] =
+        updateData[field].trim();
+    }
+  }
+
+  // -----------------------------------
+  // Normalize marks
+  // -----------------------------------
+
+  if (
+    Object.prototype.hasOwnProperty.call(
+      updateData,
+      "marks"
+    )
+  ) {
+    updateData.marks = Number(
+      updateData.marks
+    );
+  }
+
+  return updateData;
+};
+
 // =====================================
 // CREATE QUESTION
 // =====================================
-const createQuestion = async (questionData) => {
-  return await Question.create(questionData);
+
+const createQuestion = async (
+  questionData
+) => {
+  return await Question.create(
+    questionData
+  );
 };
 
 // =====================================
 // GET ALL QUESTIONS
 // =====================================
+
 const getAllQuestions = async (
   page = 1,
   limit = 10,
@@ -20,135 +126,275 @@ const getAllQuestions = async (
   sortBy = "createdAt",
   order = "desc"
 ) => {
-  page = Math.max(1, Number(page));
-  limit = Math.min(100, Math.max(1, Number(limit)));
-  const skip = (page - 1) * limit;
+  // -----------------------------------
+  // Normalize pagination
+  // -----------------------------------
+
+  page = Math.max(
+    1,
+    Number(page)
+  );
+
+  limit = Math.min(
+    100,
+    Math.max(1, Number(limit))
+  );
+
+  const skip =
+    (page - 1) * limit;
+
+  // -----------------------------------
+  // Build filter
+  // -----------------------------------
 
   const filter = {};
 
+  // -----------------------------------
   // Search
-  if (search) {
+  // -----------------------------------
+
+  const normalizedSearch =
+    typeof search === "string"
+      ? search.trim()
+      : "";
+
+  if (normalizedSearch) {
+    const safeSearch =
+      escapeRegex(
+        normalizedSearch
+      );
+
     filter.$or = [
       {
         subject: {
-          $regex: search,
+          $regex: safeSearch,
           $options: "i",
         },
       },
       {
         chapter: {
-          $regex: search,
+          $regex: safeSearch,
           $options: "i",
         },
       },
       {
         question: {
-          $regex: search,
+          $regex: safeSearch,
           $options: "i",
         },
       },
     ];
   }
 
+  // -----------------------------------
   // Filters
-  if (subject) {
-    filter.subject = subject;
-  }
-  if (chapter) {
-    filter.chapter = chapter;
+  // -----------------------------------
+
+  const normalizedSubject =
+    typeof subject === "string"
+      ? subject.trim()
+      : "";
+
+  if (normalizedSubject) {
+    filter.subject =
+      normalizedSubject;
   }
 
-  if (difficulty) {
-    filter.difficulty = difficulty;
+  const normalizedChapter =
+    typeof chapter === "string"
+      ? chapter.trim()
+      : "";
+
+  if (normalizedChapter) {
+    filter.chapter =
+      normalizedChapter;
   }
 
+  const normalizedDifficulty =
+    typeof difficulty === "string"
+      ? difficulty.trim()
+      : "";
+
+  if (normalizedDifficulty) {
+    filter.difficulty =
+      normalizedDifficulty;
+  }
+
+  // -----------------------------------
   // Sorting
-  const allowedSortFields = [
-    "createdAt",
-    "subject",
-    "difficulty",
-    "marks",
-  ];
+  // -----------------------------------
 
-  const sort = {};
-
-  sort[
-    allowedSortFields.includes(sortBy)
+  const safeSortField =
+    ALLOWED_SORT_FIELDS.includes(
+      sortBy
+    )
       ? sortBy
-      : "createdAt"
-  ] = order === "asc" ? 1 : -1;
+      : "createdAt";
 
-  // Execute in Parallel
-  const [total, questions] = await Promise.all([
-    Question.countDocuments(filter),
+  const safeOrder =
+    order === "asc"
+      ? 1
+      : -1;
 
-    Question.find(filter)
-      .populate("createdBy", "fullName email")
-      .sort(sort)
-      .skip(skip)
-      .limit(limit)
-      .lean(),
-  ]);
+  const sort = {
+    [safeSortField]: safeOrder,
+  };
+
+  // -----------------------------------
+  // Database query
+  // -----------------------------------
+
+  const [total, questions] =
+    await Promise.all([
+      Question.countDocuments(
+        filter
+      ),
+
+      Question.find(filter)
+        .populate(
+          "createdBy",
+          "fullName email"
+        )
+        .sort(sort)
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+    ]);
 
   return {
     total,
     page,
     limit,
-    totalPages: Math.ceil(total / limit),
+    totalPages:
+      Math.ceil(
+        total / limit
+      ),
     questions,
+  };
+};
+// =====================================
+// GET QUESTION FILTER METADATA
+// =====================================
+
+const getQuestionMetadata = async () => {
+  const [subjects, chapterPairs] =
+    await Promise.all([
+      Question.distinct("subject"),
+
+      Question.find({})
+        .select("subject chapter")
+        .lean(),
+    ]);
+
+  const chaptersBySubject = {};
+
+  for (const item of chapterPairs) {
+    const subject = item.subject?.trim();
+    const chapter = item.chapter?.trim();
+
+    if (!subject || !chapter) {
+      continue;
+    }
+
+    if (!chaptersBySubject[subject]) {
+      chaptersBySubject[subject] = new Set();
+    }
+
+    chaptersBySubject[subject].add(chapter);
+  }
+
+  const normalizedChaptersBySubject = {};
+
+  for (const [subject, chapterSet] of Object.entries(
+    chaptersBySubject
+  )) {
+    normalizedChaptersBySubject[subject] = [
+      ...chapterSet,
+    ].sort((a, b) =>
+      a.localeCompare(b)
+    );
+  }
+
+  return {
+    subjects: [...subjects]
+      .filter(Boolean)
+      .sort((a, b) =>
+        a.localeCompare(b)
+      ),
+
+    chaptersBySubject:
+      normalizedChaptersBySubject,
   };
 };
 
 // =====================================
 // GET QUESTION BY ID
 // =====================================
-const getQuestionById = async (id) => {
+
+const getQuestionById = async (
+  id
+) => {
   return await Question.findById(id)
-    .populate("createdBy", "fullName email")
+    .populate(
+      "createdBy",
+      "fullName email"
+    )
     .lean();
 };
 
 // =====================================
 // UPDATE QUESTION
 // =====================================
-// const updateQuestion = async (id, data) => {
-//   return await Question.findByIdAndUpdate(
-//     id,
-//     data,
-//     {
-//       new: true,
-//       runValidators: true,
-//     }
-//   )
-//     .populate("createdBy", "fullName email")
-//     .lean();
-// };
-// =====================================
-// UPDATE QUESTION
-// =====================================
-const updateQuestion = async (id, data) => {
+
+const updateQuestion = async (
+  id,
+  data
+) => {
+  const updateData =
+    buildQuestionUpdate(
+      data
+    );
+
+  if (
+    Object.keys(updateData).length === 0
+  ) {
+    throw new ApiError(
+      400,
+      "No valid question fields were provided for update."
+    );
+  }
+
   return await Question.findByIdAndUpdate(
     id,
-    data,
+    updateData,
     {
       returnDocument: "after",
       runValidators: true,
     }
   )
-    .populate("createdBy", "fullName email")
+    .populate(
+      "createdBy",
+      "fullName email"
+    )
     .lean();
 };
 
 // =====================================
 // DELETE QUESTION
 // =====================================
-const deleteQuestion = async (id) => {
-  return await Question.findByIdAndDelete(id).lean();
+
+const deleteQuestion = async (
+  id
+) => {
+  return await Question.findByIdAndDelete(
+    id
+  ).lean();
 };
 
 module.exports = {
   createQuestion,
   getAllQuestions,
+  getQuestionMetadata,
   getQuestionById,
   updateQuestion,
   deleteQuestion,

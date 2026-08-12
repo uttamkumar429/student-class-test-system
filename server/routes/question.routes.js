@@ -99,6 +99,17 @@ router.get(
   authorize("admin", "superAdmin"),
   questionController.getAllQuestions
 );
+// ======================================
+// GET QUESTION FILTER METADATA
+// ======================================
+
+router.get(
+  "/metadata",
+  protect,
+  authorize("admin", "superAdmin"),
+  questionController.getQuestionMetadata
+);
+
 /**
  * @swagger
  * /api/questions/{id}:

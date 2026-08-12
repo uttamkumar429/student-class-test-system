@@ -1,6 +1,7 @@
 import { createSlice } from "@reduxjs/toolkit";
 
 import {
+  fetchQuestionMetadata,
   fetchQuestions,
   fetchQuestionById,
   createQuestion,
@@ -16,6 +17,11 @@ const initialState = {
   // Selected Question
   currentQuestion: null,
 
+  metadata: {
+  subjects: [],
+  chaptersBySubject: {},
+},
+
   // Pagination
   pagination: {
     page: 1,
@@ -25,12 +31,14 @@ const initialState = {
   },
 
   // Filters
-  filters: {
-    search: "",
-    subject: "",
-    chapter: "",
-    difficulty: "",
-  },
+filters: {
+  search: "",
+  subject: "",
+  chapter: "",
+  difficulty: "",
+  sortBy: "createdAt",
+  order: "desc",
+},
 
   // UI
   loading: false,
@@ -75,6 +83,37 @@ const questionSlice = createSlice({
 
   extraReducers: (builder) => {
     builder
+  // ============================
+  // FETCH QUESTION METADATA
+  // ============================
+
+      .addCase(
+        fetchQuestionMetadata.pending,
+        (state) => {
+          state.error = null;
+        }
+      )
+
+      .addCase(
+        fetchQuestionMetadata.fulfilled,
+        (state, action) => {
+          state.metadata = {
+            subjects:
+              action.payload.data?.subjects || [],
+
+            chaptersBySubject:
+              action.payload.data
+                ?.chaptersBySubject || {},
+          };
+        }
+      )
+
+      .addCase(
+        fetchQuestionMetadata.rejected,
+        (state, action) => {
+          state.error = action.payload;
+        }
+      )
 
       // ============================
       // FETCH QUESTIONS
@@ -140,6 +179,7 @@ const questionSlice = createSlice({
 
       .addCase(createQuestion.fulfilled, (state) => {
         state.loading = false;
+        state.success = true;
       })
 
       .addCase(createQuestion.rejected, (state, action) => {
@@ -158,6 +198,7 @@ const questionSlice = createSlice({
 
       .addCase(updateQuestion.fulfilled, (state) => {
         state.loading = false;
+        state.success = true;
       })
 
       .addCase(updateQuestion.rejected, (state, action) => {

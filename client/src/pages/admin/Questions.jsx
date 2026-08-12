@@ -14,6 +14,7 @@ import DeleteQuestionModal from "../../components/questions/DeleteQuestionModal"
 
 import {
   fetchQuestions,
+  fetchQuestionMetadata,
   deleteQuestion,
 } from "../../redux/adminQuestion/questionThunk";
 
@@ -29,12 +30,15 @@ import {
   selectQuestionError,
   selectQuestionPagination,
   selectQuestionFilters,
+  selectQuestionSubjects,
+  selectQuestionChaptersBySubject,
 } from "../../redux/adminQuestion/questionSelectors";
 
 function Questions() {
   const dispatch = useDispatch();
 
   const navigate = useNavigate();
+
 
   // ===========================
   // Redux State
@@ -59,6 +63,13 @@ function Questions() {
   const filters = useSelector(
     selectQuestionFilters
   );
+    const subjects = useSelector(
+    selectQuestionSubjects
+  );
+
+  const chaptersBySubject = useSelector(
+    selectQuestionChaptersBySubject
+  );
 
   // ===========================
   // Local State
@@ -76,13 +87,15 @@ function Questions() {
 
   useEffect(() => {
     dispatch(
-      fetchQuestions({
+fetchQuestions({
         page: pagination.page,
         limit: pagination.limit,
         search: filters.search,
         subject: filters.subject,
         chapter: filters.chapter,
         difficulty: filters.difficulty,
+        sortBy: filters.sortBy,
+        order: filters.order,
       })
     );
   }, [
@@ -93,7 +106,13 @@ function Questions() {
     filters.subject,
     filters.chapter,
     filters.difficulty,
+    filters.sortBy,
+    filters.order,
   ]);
+
+  useEffect(() => {
+    dispatch(fetchQuestionMetadata());
+  }, [dispatch]);
     // ==========================================
   // Add Question
   // ==========================================
@@ -162,6 +181,8 @@ function Questions() {
           subject: filters.subject,
           chapter: filters.chapter,
           difficulty: filters.difficulty,
+          sortBy: filters.sortBy,
+          order: filters.order,
         })
       );
 
@@ -218,12 +239,21 @@ function Questions() {
 
         <QuestionFilters
           filters={filters}
-          subjects={[
-            "Physics",
-            "Chemistry",
-            "Mathematics",
-          ]}
-          chapters={[]}
+          subjects={subjects}
+          chapters={
+            filters.subject
+              ? chaptersBySubject[
+                  filters.subject
+                ] || []
+              : Object.values(
+                  chaptersBySubject
+                )
+                  .flat()
+                  .filter(
+                    (chapter, index, array) =>
+                      array.indexOf(chapter) === index
+                  )
+          }
           onChange={handleFilterChange}
           onReset={handleResetFilters}
         />

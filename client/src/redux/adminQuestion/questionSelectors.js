@@ -6,6 +6,22 @@ export const selectQuestions = (state) =>
   state.adminQuestion.questions;
 
 // ==============================
+// QUESTION METADATA
+// ==============================
+
+export const selectQuestionMetadata =
+  (state) =>
+    state.adminQuestion.metadata;
+
+export const selectQuestionSubjects =
+  (state) =>
+    state.adminQuestion.metadata.subjects;
+
+export const selectQuestionChaptersBySubject =
+  (state) =>
+    state.adminQuestion.metadata
+      .chaptersBySubject;
+// ==============================
 // CURRENT QUESTION
 // ==============================
 

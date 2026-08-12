@@ -10,7 +10,10 @@ import StudentLayout from "../layouts/StudentLayout";
 import StudentDashboard from "../pages/student/StudentDashboard";
 import StudentExams from "../pages/student/StudentExams";
 import ExamInstructions from "../pages/student/ExamInstructions";
+import Questions from "../pages/admin/Questions";
 import CreateQuestion from "../pages/admin/CreateQuestion";
+import EditQuestion from "../pages/admin/EditQuestion";
+import QuestionDetails from "../pages/admin/QuestionDetails";
 import CreateTest from "../pages/admin/CreateTest";
 import TestDetails from "../pages/admin/TestDetails";
 import EditTest from "../pages/admin/EditTest";
@@ -43,10 +46,34 @@ function AppRoutes() {
             }
         />
         <Route
+            path="/admin/questions"
+            element={
+                <ProtectedRoute>
+                <Questions />
+                </ProtectedRoute>
+            }
+        />
+        <Route
             path="/admin/questions/create"
             element={
                 <ProtectedRoute>
                 <CreateQuestion />
+                </ProtectedRoute>
+            }
+        />
+        <Route
+            path="/admin/questions/edit/:id"
+            element={
+                <ProtectedRoute>
+                <EditQuestion />
+                </ProtectedRoute>
+            }
+        />
+        <Route
+            path="/admin/questions/:id"
+            element={
+                <ProtectedRoute>
+                <QuestionDetails />
                 </ProtectedRoute>
             }
         />

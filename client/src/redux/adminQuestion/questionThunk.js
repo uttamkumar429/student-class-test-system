@@ -3,6 +3,25 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 import adminQuestionService from "../../services/adminQuestionService";
 
 // ==============================================
+// FETCH QUESTION METADATA
+// ==============================================
+
+export const fetchQuestionMetadata =
+  createAsyncThunk(
+    "adminQuestion/fetchQuestionMetadata",
+    async (_, thunkAPI) => {
+      try {
+        return await adminQuestionService.getQuestionMetadata();
+      } catch (error) {
+        return thunkAPI.rejectWithValue(
+          error.response?.data?.message ||
+            "Failed to fetch question metadata."
+        );
+      }
+    }
+  );
+
+// ==============================================
 // FETCH ALL QUESTIONS
 // ==============================================
 

@@ -11,7 +11,13 @@ const adminQuestionService = {
 
     return response.data;
   },
+  getQuestionMetadata: async () => {
+    const response = await api.get(
+      "/questions/metadata"
+    );
 
+    return response.data;
+  },
   getQuestionById: async (id) => {
     const response = await api.get(
       `/questions/${id}`
