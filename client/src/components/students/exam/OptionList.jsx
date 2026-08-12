@@ -55,19 +55,20 @@ const OptionList = ({
               }
             `}
           >
-            <input
-              type="radio"
-              name="question-option"
-              value={optionValue}
-              checked={isSelected}
-              disabled={disabled}
-              onChange={() =>
-                onOptionSelect?.(
-                  optionValue
-                )
-              }
-              className="mt-1 h-4 w-4"
-            />
+        <input
+          type="radio"
+          name="question-option"
+          value={optionValue}
+          checked={isSelected}
+          disabled={disabled}
+          onClick={() => {
+            onOptionSelect?.(
+              isSelected ? null : optionValue
+            );
+          }}
+          readOnly
+          className="mt-1 h-4 w-4"
+        />
 
             {/* Option Content */}
 

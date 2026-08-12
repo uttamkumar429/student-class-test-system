@@ -19,13 +19,13 @@ class StudentExamService {
     return data;
   }
 
-  async saveAnswer(attemptId, payload) {
-    const { data } = await api.post(
-      `/student/attempt/${attemptId}/answer`,
-      payload
-    );
-    return data;
-  }
+async saveAnswer(attemptId, payload) {
+  const { data } = await api.post(
+    `/student/attempt/${attemptId}/answer`,
+    payload
+  );
+  return data;
+}
 
   async submitExam(attemptId) {
     const { data } = await api.post(
@@ -38,6 +38,18 @@ async getExamQuestions(attemptId) {
 
   const { data } = await api.get(
     `/student/attempt/${attemptId}/questions`
+  );
+
+  return data;
+}
+
+async updateExamProgress(
+  attemptId,
+  payload
+) {
+  const { data } = await api.patch(
+    `/student/exams/${attemptId}/progress`,
+    payload
   );
 
   return data;

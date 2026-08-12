@@ -46,7 +46,7 @@ const QuestionPalette = ({
   reviewQuestions = {},
   onQuestionClick,
 }) => {
-  // ======================================
+    // ======================================
   // GET QUESTION ID
   // ======================================
 
@@ -61,42 +61,41 @@ const QuestionPalette = ({
   // ======================================
   // GET QUESTION STATUS
   // ======================================
+const getQuestionStatus = (questionId) => {
+  if (!questionId) {
+    return "NOT_VISITED";
+  }
 
-  const getQuestionStatus = (
-    questionId
-  ) => {
-    if (!questionId) {
-      return "NOT_VISITED";
-    }
+  const visited = Array.isArray(visitedQuestions)
+    ? visitedQuestions.includes(questionId.toString())
+    : !!visitedQuestions?.[questionId];
 
-    const visited =
-      !!visitedQuestions?.[questionId];
+  const answered =
+    !!selectedAnswers?.[questionId];
 
-    const answered =
-      !!selectedAnswers?.[questionId];
+  const review = Array.isArray(reviewQuestions)
+    ? reviewQuestions.includes(questionId.toString())
+    : !!reviewQuestions?.[questionId];
 
-    const review =
-      !!reviewQuestions?.[questionId];
+  // Answered always means the question was visited
+  if (review && answered) {
+    return "ANSWERED_REVIEW";
+  }
 
-    if (!visited) {
-      return "NOT_VISITED";
-    }
+  if (review) {
+    return "REVIEW";
+  }
 
-    if (review && answered) {
-      return "ANSWERED_REVIEW";
-    }
+  if (answered) {
+    return "ANSWERED";
+  }
 
-    if (review) {
-      return "REVIEW";
-    }
-
-    if (answered) {
-      return "ANSWERED";
-    }
-
+  if (visited) {
     return "VISITED";
-  };
+  }
 
+  return "NOT_VISITED";
+};
   // ======================================
   // EMPTY STATE
   // ======================================

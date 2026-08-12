@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   selectCurrentQuestionIndex,
   selectQuestions,
+  selectReview,
 } from "../../../redux/studentReview/reviewSelectors";
 
 import { setCurrentQuestion } from "../../../redux/studentReview/reviewSlice";
@@ -23,7 +24,7 @@ function ReviewPalette() {
   const dispatch = useDispatch();
 
   const questions = useSelector(selectQuestions);
-
+  const review = useSelector(selectReview);
   const currentQuestionIndex = useSelector(
     selectCurrentQuestionIndex
   );
@@ -57,9 +58,21 @@ function ReviewPalette() {
               key={question.questionId}
               type="button"
               aria-label={`Question ${index + 1}`}
-              onClick={() =>
-                dispatch(setCurrentQuestion(index))
-              }
+onClick={() => {
+  dispatch(
+    setCurrentQuestion(index)
+  );
+
+  const attemptId =
+    review?.attemptId;
+
+  if (attemptId) {
+    localStorage.setItem(
+      `reviewQuestionIndex_${attemptId}`,
+      String(index)
+    );
+  }
+}}
               className={`
                 h-11
                 w-11

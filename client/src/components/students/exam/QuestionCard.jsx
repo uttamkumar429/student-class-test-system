@@ -23,33 +23,37 @@ const QuestionCard = ({
     );
   }
 
-  // ======================================
-  // BUILD OPTIONS FROM BACKEND RESPONSE
-  // ======================================
+// ======================================
+// BUILD OPTIONS FROM BACKEND RESPONSE
+// ======================================
 
-  const options = [
-    {
-      key: "A",
-      text: question.optionA,
-    },
-    {
-      key: "B",
-      text: question.optionB,
-    },
-    {
-      key: "C",
-      text: question.optionC,
-    },
-    {
-      key: "D",
-      text: question.optionD,
-    },
-  ].filter(
-    (option) =>
-      typeof option.text === "string" &&
-      option.text.trim() !== ""
-  );
+const options = Array.isArray(question.options)
+  ? question.options
+      .map((option, index) => ({
+        key:
+          option?.value ??
+          option?.key ??
+          String.fromCharCode(65 + index),
 
+        text:
+          option?.text ??
+          option?.label ??
+          option?.optionText ??
+          "",
+          
+        image:
+          option?.image ??
+          option?.optionImage ??
+          null,
+      }))
+      .filter(
+        (option) =>
+          typeof option.text === "string" &&
+          option.text.trim() !== ""
+      )
+  : [];
+console.log("RAW OPTIONS:", question?.options);
+console.log("FINAL OPTIONS:", options);
   return (
     <article
       aria-label={`Question ${questionNumber}`}
@@ -76,7 +80,7 @@ const QuestionCard = ({
 
       <div className="mb-6">
         <p className="whitespace-pre-wrap text-lg leading-8 text-slate-800">
-          {question.question}
+          {question.questionText}
         </p>
       </div>
 

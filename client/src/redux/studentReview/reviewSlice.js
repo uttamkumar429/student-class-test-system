@@ -61,20 +61,16 @@ const reviewSlice = createSlice({
       // FETCH REVIEW - SUCCESS
       // ======================================
 
-      .addCase(
-        fetchReview.fulfilled,
-        (state, action) => {
-          state.loading = false;
-          state.error = null;
+.addCase(
+  fetchReview.fulfilled,
+  (state, action) => {
+    state.loading = false;
+    state.error = null;
 
-          state.review =
-            action.payload.data;
-
-          // Always start review from Q1
-          state.currentQuestionIndex = 0;
-        }
-      )
-
+    state.review =
+      action.payload.data;
+  }
+)
       // ======================================
       // FETCH REVIEW - FAILURE
       // ======================================

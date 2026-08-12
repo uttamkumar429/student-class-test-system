@@ -47,9 +47,11 @@ const validateProfile = (body) => {
 
   if (
     typeof body.bio === "string" &&
-    body.bio.length > 500
+    body.bio.length > 250
   ) {
-    errors.push("Bio cannot exceed 500 characters.");
+    errors.push(
+      "Bio cannot exceed 250 characters."
+    );
   }
   return errors;
 };

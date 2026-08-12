@@ -3,11 +3,16 @@ const ExamAttempt = require("../models/ExamAttempt");
 const TestSnapshot = require("../models/TestSnapshot");
 const StudentAnswer = require("../models/StudentAnswer");
 const ApiError = require("../utils/ApiError");
-const { PASS_PERCENTAGE } = require("../config/constants");
+const {
+  SETTING_KEYS,
+} = require("../config/constants");
 const {
   getExamDeadline,
   getRemainingTimeSeconds,
 } = require("../utils/examTime");
+const {
+  getNumberSetting,
+} = require("./systemSetting.service");
 // ==========================================
 // STUDENT DASHBOARD
 // ==========================================
@@ -666,6 +671,109 @@ const startExam = async (studentId, snapshotId) => {
     remainingTime,
   };
 };
+// ======================================
+// CHECK EXAM EXPIRY
+// ======================================
+
+const checkExamExpiry = async (
+  studentId,
+  attempt,
+  snapshot
+) => {
+
+  // --------------------------------------
+  // 1. Validate Attempt
+  // --------------------------------------
+
+  if (!attempt) {
+    throw new ApiError(
+      404,
+      "Exam attempt not found."
+    );
+  }
+
+  // --------------------------------------
+  // 2. Validate Snapshot
+  // --------------------------------------
+
+  if (!snapshot) {
+    throw new ApiError(
+      404,
+      "Test snapshot not found."
+    );
+  }
+
+  // --------------------------------------
+  // 3. Verify Ownership
+  // --------------------------------------
+
+  if (
+    attempt.student.toString() !==
+    studentId.toString()
+  ) {
+    throw new ApiError(
+      403,
+      "You are not allowed to access this exam."
+    );
+  }
+
+  // --------------------------------------
+  // 4. Already Submitted
+  // --------------------------------------
+
+  if (attempt.status === "SUBMITTED") {
+    throw new ApiError(
+      409,
+      "Exam already submitted."
+    );
+  }
+
+  // --------------------------------------
+  // 5. Calculate Server-Side Deadline
+  // --------------------------------------
+
+  const deadline = getExamDeadline({
+    startedAt: attempt.startedAt,
+    endTime: snapshot.endTime,
+    durationMinutes: snapshot.duration,
+  });
+
+  if (!deadline) {
+    throw new ApiError(
+      500,
+      "Unable to determine exam deadline."
+    );
+  }
+
+  // --------------------------------------
+  // 6. Check Server Time
+  // --------------------------------------
+
+  if (new Date() < deadline) {
+    return deadline;
+  }
+
+  // --------------------------------------
+  // 7. Auto Submit
+  // --------------------------------------
+
+  await submitExam(
+    studentId,
+    attempt._id
+  );
+
+  // --------------------------------------
+  // 8. Inform Caller
+  // --------------------------------------
+
+  throw new ApiError(
+    409,
+    "Exam time is over. Your exam has been submitted automatically."
+  );
+};
+
+
+
 // =====================================
 // GET EXAM QUESTIONS
 // =====================================
@@ -776,14 +884,18 @@ const getExamQuestions = async (
   // 8. Build Selected Answers Map
   // -------------------------------------
 
-  const selectedAnswers = {};
+const selectedAnswers = {};
 
-  for (const answer of savedAnswers) {
+for (const answer of savedAnswers) {
+  if (
+    answer.selectedAnswer !== null &&
+    answer.selectedAnswer !== undefined
+  ) {
     selectedAnswers[
       answer.questionId.toString()
     ] = answer.selectedAnswer;
   }
-
+}
   // -------------------------------------
   // 9. Prepare Secure Questions
   // -------------------------------------
@@ -995,6 +1107,7 @@ const saveAnswer = async (
   // --------------------------------------
 
   if (
+    selectedAnswer !== null &&
     !["A", "B", "C", "D"].includes(
       selectedAnswer
     )
@@ -1022,15 +1135,20 @@ const saveAnswer = async (
     );
   }
 
-  // --------------------------------------
-  // 10. Calculate Answer Result
-  // --------------------------------------
+// --------------------------------------
+// 10. Calculate Answer Result
+// --------------------------------------
 
-  const isCorrect =
-    question.correctAnswer ===
+const isAnswered =
+  selectedAnswer !== null;
+
+const isCorrect =
+  isAnswered &&
+  question.correctAnswer ===
     selectedAnswer;
 
-  const marksAwarded = isCorrect
+const marksAwarded =
+  isCorrect
     ? Number(question.marks || 0)
     : 0;
 
@@ -1051,7 +1169,10 @@ const saveAnswer = async (
             question.correctAnswer,
           isCorrect,
           marksAwarded,
-          answeredAt: new Date(),
+          answeredAt:
+            selectedAnswer !== null
+              ? new Date()
+              : null,
         },
       },
       {
@@ -1175,13 +1296,16 @@ const resumeExam = async (studentId) => {
     ] = answer.selectedAnswer;
   }
 
-  // --------------------------------------
-  // 7. Count Answered Questions
-  // --------------------------------------
+// --------------------------------------
+// 7. Count Answered Questions
+// --------------------------------------
 
-  const answeredQuestions =
-    savedAnswers.length;
-
+const answeredQuestions =
+  savedAnswers.filter(
+    (answer) =>
+      answer.selectedAnswer !== null &&
+      answer.selectedAnswer !== undefined
+  ).length;
   // --------------------------------------
   // 8. Return Resume State
   // --------------------------------------
@@ -1350,11 +1474,13 @@ if (attempt.status !== "IN-PROGRESS") {
   const totalMarks =
     Number(snapshot.totalMarks || 0);
 
+
   const answeredQuestions = answers.filter(
-    (answer) =>
-      answer.selectedAnswer !== null &&
-      answer.selectedAnswer !== undefined
-  ).length;
+  (answer) =>
+    ["A", "B", "C", "D"].includes(
+      answer.selectedAnswer
+    )
+).length;
 
   const unansweredQuestions = Math.max(
     totalQuestions - answeredQuestions,
@@ -1375,13 +1501,17 @@ if (attempt.status !== "IN-PROGRESS") {
         )
       : 0;
 
-  // --------------------------------------
-  // 10. Calculate Pass / Fail
-  // --------------------------------------
+// --------------------------------------
+// 10. Calculate Pass / Fail
+// --------------------------------------
 
-  const isPassed =
-    percentage >= PASS_PERCENTAGE;
+const passPercentage =
+  await getNumberSetting(
+    SETTING_KEYS.PASS_PERCENTAGE
+  );
 
+const isPassed =
+  percentage >= passPercentage;
   // --------------------------------------
   // 11. Calculate Time Taken
   // --------------------------------------
@@ -1637,10 +1767,11 @@ const getResultHistory = async (studentId) => {
     obtainedMarks: attempt.obtainedMarks,
     totalMarks: attempt.totalMarks,
     percentage: attempt.percentage,
+    
     status:
-    attempt.percentage >= PASS_PERCENTAGE
-    ? "Pass"
-    : "Fail",
+      attempt.isPassed
+        ? "Pass"
+        : "Fail",
     submittedAt: attempt.submittedAt,
   }));
 
@@ -1669,8 +1800,10 @@ const getReviewAnswers = async (
           "obtainedMarks",
           "totalMarks",
           "percentage",
+          "isPassed",
           "totalQuestions",
           "submittedAt",
+          "timeTaken",
         ].join(" ")
       )
       .lean();
@@ -1828,9 +1961,9 @@ const getReviewAnswers = async (
       }
     );
     const status =
-    attempt.percentage >= PASS_PERCENTAGE
-    ? "Pass"
-    : "Fail";
+      attempt.isPassed
+        ? "Pass"
+        : "Fail";
 
 
   // ----------------------------------

@@ -25,12 +25,20 @@
 //     </div>
 //   );
 // }
+import Sidebar from "../components/layout/Sidebar";
+
 function DashboardLayout({ children }) {
   return (
-    <div>
-      <h1>DashboardLayout Working</h1>
+    <div className="flex min-h-screen bg-slate-100">
 
-      {children}
+      {/* Sidebar */}
+      <Sidebar />
+
+      {/* Main Content */}
+      <main className="min-w-0 flex-1 overflow-y-auto p-6 lg:p-8">
+        {children}
+      </main>
+
     </div>
   );
 }

@@ -8,8 +8,8 @@ const {
   getAvailableExams,
   startExam: startExamService,
   saveAnswer,
+  updateExamProgress,
 } = require("../services/studentExam.service");
-
 // =====================================
 // GET AVAILABLE EXAMS
 // =====================================
@@ -130,5 +130,37 @@ exports.saveAnswer = asyncHandler(
       result
     );
 
+  }
+);
+// =====================================
+// UPDATE EXAM PROGRESS
+// =====================================
+
+exports.updateExamProgress = asyncHandler(
+  async (req, res) => {
+    const { attemptId } =
+      req.params;
+
+    const {
+      currentQuestionIndex,
+      visitedQuestions,
+      reviewQuestions,
+    } = req.body;
+
+    const result =
+      await updateExamProgress(
+        req.user._id,
+        attemptId,
+        currentQuestionIndex,
+        visitedQuestions,
+        reviewQuestions
+      );
+
+    return successResponse(
+      res,
+      200,
+      "Exam progress updated successfully.",
+      result
+    );
   }
 );

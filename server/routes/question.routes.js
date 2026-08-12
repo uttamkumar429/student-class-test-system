@@ -24,16 +24,42 @@ const validateQuestion = require("../validators/question.validator");
  *         application/json:
  *           schema:
  *             type: object
- *                  subject:
-                    chapter:
-                    question:
-                    optionA:
-                    optionB:
-                    optionC:
-                    optionD:
-                    correctAnswer:
-                    difficulty:
-                    marks:
+ *             properties:
+ *               subject:
+ *                 type: string
+ *                 example: Physics
+ *               chapter:
+ *                 type: string
+ *                 example: Magnetism
+ *               question:
+ *                 type: string
+ *                 example: What is the SI unit of magnetic field?
+ *               optionA:
+ *                 type: string
+ *                 example: Tesla
+ *               optionB:
+ *                 type: string
+ *                 example: Weber
+ *               optionC:
+ *                 type: string
+ *                 example: Henry
+ *               optionD:
+ *                 type: string
+ *                 example: Volt
+ *               correctAnswer:
+ *                 type: string
+ *                 enum:
+ *                   - A
+ *                   - B
+ *                   - C
+ *                   - D
+ *                 example: A
+ *               difficulty:
+ *                 type: string
+ *                 example: Medium
+ *               marks:
+ *                 type: number
+ *                 example: 5
  *     responses:
  *       201:
  *         description: Question created successfully.

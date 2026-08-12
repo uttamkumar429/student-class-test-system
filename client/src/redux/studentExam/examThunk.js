@@ -115,7 +115,13 @@ export const saveAnswer =
       if (
         !payload ||
         !payload.questionId ||
-        !payload.selectedAnswer
+        (
+          payload.selectedAnswer !== null &&
+          payload.selectedAnswer !== undefined &&
+          !["A", "B", "C", "D"].includes(
+            payload.selectedAnswer
+          )
+        )
       ) {
         return rejectWithValue(
           "Question and selected answer are required."
@@ -138,6 +144,58 @@ export const saveAnswer =
     }
   );
 
+  // ======================================
+// UPDATE EXAM PROGRESS
+// ======================================
+
+export const updateExamProgress =
+  createAsyncThunk(
+    "studentExam/updateExamProgress",
+
+    async (
+      {
+        attemptId,
+        currentQuestionIndex,
+        visitedQuestions,
+        reviewQuestions,
+      },
+      { rejectWithValue }
+    ) => {
+      if (!attemptId) {
+        return rejectWithValue(
+          "Exam attempt ID is required."
+        );
+      }
+
+      if (
+        !Number.isInteger(
+          currentQuestionIndex
+        )
+      ) {
+        return rejectWithValue(
+          "Invalid current question index."
+        );
+      }
+
+      try {
+        return await studentExamService.updateExamProgress(
+          attemptId,
+          {
+            currentQuestionIndex,
+            visitedQuestions,
+            reviewQuestions,
+          }
+        );
+      } catch (error) {
+        return rejectWithValue(
+          getErrorMessage(
+            error,
+            "Failed to update exam progress."
+          )
+        );
+      }
+    }
+  );
 // ======================================
 // SUBMIT EXAM
 // ======================================

@@ -97,7 +97,7 @@ const {
   percentage,
   correctAnswers,
   wrongAnswers,
-  unansweredQuestions,
+  skippedAnswers,
   timeTaken,
   submittedAt,
   status,
@@ -119,7 +119,7 @@ const {
         <StatisticsCards
           correctAnswers={correctAnswers}
           wrongAnswers={wrongAnswers}
-          skippedAnswers={unansweredQuestions}
+          skippedAnswers={skippedAnswers}
           timeTaken={timeTaken}
           submittedAt={submittedAt}
         />

@@ -68,17 +68,27 @@ exports.updateProfile = async (req, res) => {
       });
     }
 
-    const {
-      schoolName,
-      className,
-      section,
-      rollNumber,
-      dob,
-      gender,
-      state,
-      district,
-      bio,
-    } = req.body;
+const {
+  schoolName,
+  className,
+  section,
+  rollNumber,
+  dob,
+  gender,
+  state,
+  district,
+  bio,
+} = req.body;
+
+const normalizedDob =
+  dob && String(dob).trim() !== ""
+    ? dob
+    : undefined;
+
+const normalizedGender =
+  gender && String(gender).trim() !== ""
+    ? gender
+    : undefined;
 
     let profile = await Profile.findOne({
       userId: req.user._id,
@@ -97,8 +107,8 @@ exports.updateProfile = async (req, res) => {
       className,
       section,
       rollNumber,
-      dob,
-      gender,
+      dob: normalizedDob,
+      gender: normalizedGender,
       state,
       district,
       bio,

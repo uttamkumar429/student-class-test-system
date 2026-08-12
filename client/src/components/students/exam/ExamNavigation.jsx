@@ -59,7 +59,9 @@ const ExamNavigation = ({
 
           <button
             type="button"
-            onClick={onToggleReview}
+            onClick={() => {
+              onToggleReview?.();
+            }}
             disabled={loading}
             className={`
               flex

@@ -27,10 +27,12 @@ import {
   fetchExamQuestions,
   saveAnswer,
   submitExam,
+  updateExamProgress,
 } from "../../redux/studentExam/examThunk";
 
 import {
   saveSelectedAnswer,
+  clearSelectedAnswer,
   setCurrentQuestion,
   markVisited,
   toggleReviewQuestion,
@@ -51,9 +53,10 @@ function ExamPage() {
     useState(false);
 
   const submittingRef = useRef(false);
+  const isExamHydratedRef = useRef(false);
 
   const {
-    attemptId,
+    
     title,
     subject,
     questions,
@@ -64,6 +67,7 @@ function ExamPage() {
     remainingTime,
     loading,
     error,
+    progressSaving,
   } = useSelector(
     (state) => state.studentExam
   );
@@ -105,8 +109,10 @@ function ExamPage() {
   // ANSWERED QUESTIONS
   // ======================================
 
-  const answeredQuestions =
-    Object.keys(answers).length;
+const answeredQuestions =
+  Object.values(answers).filter(
+    (answer) => answer !== null && answer !== undefined
+  ).length;
 
   // ======================================
   // CURRENT QUESTION
@@ -117,6 +123,8 @@ function ExamPage() {
       currentQuestionIndex
     ] || null;
 
+  const currentQuestionForCard =
+    currentQuestion;
   // ======================================
   // QUESTION ID
   // ======================================
@@ -135,35 +143,56 @@ function ExamPage() {
   // ======================================
 
   useEffect(() => {
-    if (!routeAttemptId) {
-      toast.error(
-        "Invalid exam attempt."
-      );
-
-      navigate(
-        "/student/exams",
-        {
-          replace: true,
-        }
-      );
-
-      return;
-    }
-
-    // Clear any old exam state.
-    dispatch(resetExam());
-
-    // Load current attempt.
-    dispatch(
-      fetchExamQuestions(
-        routeAttemptId
-      )
+  if (!routeAttemptId) {
+    toast.error(
+      "Invalid exam attempt."
     );
-  }, [
-    dispatch,
-    routeAttemptId,
-    navigate,
-  ]);
+
+    navigate(
+      "/student/exams",
+      {
+        replace: true,
+      }
+    );
+
+    return;
+  }
+
+  // --------------------------------------
+  // Reset hydration state
+  // --------------------------------------
+
+  isExamHydratedRef.current = false;
+
+  // --------------------------------------
+  // Clear old exam state
+  // --------------------------------------
+
+  dispatch(resetExam());
+
+  // --------------------------------------
+  // Load current attempt
+  // --------------------------------------
+
+  dispatch(
+    fetchExamQuestions(
+      routeAttemptId
+    )
+  )
+    .unwrap()
+    .then(() => {
+      // Server state is now hydrated
+      isExamHydratedRef.current = true;
+    })
+    .catch(() => {
+      // Keep hydration disabled
+      isExamHydratedRef.current = false;
+    });
+}, [
+  dispatch,
+  routeAttemptId,
+  navigate,
+]);
 
   // ======================================
   // MARK CURRENT QUESTION AS VISITED
@@ -183,112 +212,159 @@ function ExamPage() {
     dispatch,
     currentQuestionId,
   ]);
+// ======================================
+// PERSIST EXAM PROGRESS
+// ======================================
 
-  // ======================================
-  // HANDLE OPTION SELECT
-  // ======================================
+useEffect(() => {
+  if (!isExamHydratedRef.current) {
+    return;
+  }
 
-  const handleOptionSelect =
-    useCallback(
-      async (selectedOption) => {
-        if (
-          !currentQuestionId ||
-          !activeAttemptId
-        ) {
-          return;
-        }
+  if (!activeAttemptId) {
+    return;
+  }
 
-        // ----------------------------------
-        // Validate answer
-        // ----------------------------------
+  if (
+    !Number.isInteger(
+      currentQuestionIndex
+    )
+  ) {
+    return;
+  }
 
-        const validAnswers = [
-          "A",
-          "B",
-          "C",
-          "D",
-        ];
+  const timer = setTimeout(() => {
+    dispatch(
+      updateExamProgress({
+        attemptId: activeAttemptId,
 
-        if (
-          !validAnswers.includes(
-            selectedOption
-          )
-        ) {
-          toast.error(
-            "Invalid answer selected."
-          );
-
-          return;
-        }
-
-        // ----------------------------------
-        // Instant UI update
-        // ----------------------------------
-
-        dispatch(
-          saveSelectedAnswer({
-            questionId:
-              currentQuestionId,
-
-            answer:
-              selectedOption,
-          })
-        );
-
-        // ----------------------------------
-        // Persist answer on server
-        // ----------------------------------
-
-        try {
-          await dispatch(
-            saveAnswer({
-              attemptId:
-                activeAttemptId,
-
-              payload: {
-                questionId:
-                  currentQuestionId,
-
-                selectedAnswer:
-                  selectedOption,
-
-                currentQuestionIndex,
-              },
-            })
-          ).unwrap();
-        } catch (error) {
-          console.error(
-            "Save answer failed:",
-            error
-          );
-
-          toast.error(
-            error ||
-              "Failed to save your answer."
-          );
-
-          // --------------------------------
-          // Re-sync with server
-          // --------------------------------
-          //
-          // This prevents the UI from
-          // permanently showing an answer
-          // that the backend failed to save.
-          //
-          dispatch(
-            fetchExamQuestions(
-              activeAttemptId
-            )
-          );
-        }
-      },
-      [
-        dispatch,
-        currentQuestionId,
-        activeAttemptId,
         currentQuestionIndex,
-      ]
+
+        visitedQuestions:
+          Array.isArray(visitedQuestions)
+            ? visitedQuestions
+            : Object.keys(visitedQuestions || {}),
+
+        reviewQuestions:
+          Array.isArray(reviewQuestions)
+            ? reviewQuestions
+            : Object.keys(reviewQuestions || {}),
+      })
     );
+  }, 300);
+
+  return () => {
+    clearTimeout(timer);
+  };
+}, [
+  dispatch,
+  activeAttemptId,
+  currentQuestionIndex,
+  visitedQuestions,
+  reviewQuestions,
+]);
+  // ======================================
+// HANDLE OPTION SELECT
+// ======================================
+
+const handleOptionSelect = useCallback(
+  async (selectedOption) => {
+    console.log(
+      "SELECTED OPTION RECEIVED:",
+      selectedOption,
+      typeof selectedOption
+    );
+
+    if (!currentQuestionId || !activeAttemptId) {
+      return;
+    }
+
+    // ----------------------------------
+    // Validate answer
+    // ----------------------------------
+
+    const validAnswers = ["A", "B", "C", "D"];
+
+    if (
+      selectedOption !== null &&
+      !validAnswers.includes(selectedOption)
+    ) {
+      toast.error("Invalid answer selected.");
+      return;
+    }
+
+    // ----------------------------------
+    // Instant UI update
+    // ----------------------------------
+
+    if (selectedOption === null) {
+      dispatch(
+        clearSelectedAnswer({
+          questionId: currentQuestionId,
+        })
+      );
+    } else {
+      dispatch(
+        saveSelectedAnswer({
+          questionId: currentQuestionId,
+          answer: selectedOption,
+        })
+      );
+    }
+
+    // ----------------------------------
+    // Persist answer on server
+    // IMPORTANT: null must also reach API
+    // ----------------------------------
+
+    try {
+      console.log(
+        "SAVING ANSWER TO SERVER:",
+        selectedOption
+      );
+
+      await dispatch(
+        saveAnswer({
+          attemptId: activeAttemptId,
+
+          payload: {
+            questionId: currentQuestionId,
+
+            selectedAnswer: selectedOption,
+
+            currentQuestionIndex,
+          },
+        })
+      ).unwrap();
+
+      console.log(
+        "ANSWER SAVED SUCCESSFULLY:",
+        selectedOption
+      );
+    } catch (error) {
+      console.error(
+        "Save answer failed:",
+        error
+      );
+
+      toast.error(
+        error || "Failed to save your answer."
+      );
+
+      dispatch(
+        fetchExamQuestions(
+          activeAttemptId
+        )
+      );
+    }
+  },
+  [
+    dispatch,
+    currentQuestionId,
+    activeAttemptId,
+    currentQuestionIndex,
+  ]
+);
 
   // ======================================
   // PREVIOUS QUESTION
@@ -369,6 +445,7 @@ function ExamPage() {
       if (!currentQuestionId) {
         return;
       }
+
 
       dispatch(
         toggleReviewQuestion(
@@ -705,8 +782,9 @@ function ExamPage() {
 
         <div className="lg:col-span-3">
           <QuestionCard
+
             question={
-              currentQuestion
+              currentQuestionForCard
             }
             questionNumber={
               currentQuestionIndex + 1

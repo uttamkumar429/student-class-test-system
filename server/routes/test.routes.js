@@ -7,7 +7,9 @@ const authorize = require("../middleware/role.middleware");
 
 const testController = require("../controllers/test.controller");
 const validate = require("../middleware/validation.middleware");
-const validateTest = require("../validators/test.validator");
+const {
+  validateCreateTest,
+} = require("../validators/test.validator");
 /**
  * @swagger
  * /api/tests:
@@ -43,7 +45,7 @@ router.post(
   "/",
   protect,
   authorize("admin", "superAdmin"),
-  validate(validateTest),
+  validate(validateCreateTest),
   testController.createTest
 );
 /**
@@ -125,7 +127,7 @@ router.put(
   "/:id",
   protect,
   authorize("admin","superAdmin"),
-  validate(validateTest),
+  validate(validateCreateTest),
   testController.updateTest
 );
 /**

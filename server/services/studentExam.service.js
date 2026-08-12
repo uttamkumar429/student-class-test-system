@@ -484,15 +484,17 @@ const saveAnswer = async (
   // 4. Validate Selected Answer
   // --------------------------------------
 
-  const validAnswers = ["A", "B", "C", "D"];
+const validAnswers = ["A", "B", "C", "D"];
 
-  if (!validAnswers.includes(selectedAnswer)) {
-    throw new ApiError(
-      400,
-      "Invalid selected answer."
-    );
-  }
-
+if (
+  selectedAnswer !== null &&
+  !validAnswers.includes(selectedAnswer)
+) {
+  throw new ApiError(
+    400,
+    "Invalid selected answer."
+  );
+}
   // --------------------------------------
   // 5. Find Attempt
   // --------------------------------------
@@ -695,13 +697,305 @@ return {
     savedAnswer.answeredAt,
 };
 };
+// ======================================
+// UPDATE EXAM PROGRESS
+// ======================================
+
+const updateExamProgress = async (
+  studentId,
+  attemptId,
+  currentQuestionIndex,
+  visitedQuestions = [],
+  reviewQuestions = []
+) => {
+  // --------------------------------------
+  // 1. Validate IDs
+  // --------------------------------------
+
+  if (
+    !mongoose.Types.ObjectId.isValid(
+      attemptId
+    )
+  ) {
+    throw new ApiError(
+      400,
+      "Invalid exam attempt ID."
+    );
+  }
+
+  if (!studentId) {
+    throw new ApiError(
+      401,
+      "Authentication required."
+    );
+  }
+
+  // --------------------------------------
+  // 2. Validate Current Question Index
+  // --------------------------------------
+
+  if (
+    !Number.isInteger(
+      currentQuestionIndex
+    ) ||
+    currentQuestionIndex < 0
+  ) {
+    throw new ApiError(
+      400,
+      "Invalid current question index."
+    );
+  }
+
+  // --------------------------------------
+  // 3. Validate Progress Arrays
+  // --------------------------------------
+
+  if (
+    !Array.isArray(visitedQuestions) ||
+    !Array.isArray(reviewQuestions)
+  ) {
+    throw new ApiError(
+      400,
+      "Visited questions and review questions must be arrays."
+    );
+  }
+
+  // --------------------------------------
+  // 4. Validate Question IDs
+  // --------------------------------------
+
+  const allProgressQuestionIds = [
+    ...visitedQuestions,
+    ...reviewQuestions,
+  ];
+
+  for (
+    const questionId
+    of allProgressQuestionIds
+  ) {
+    if (
+      !mongoose.Types.ObjectId.isValid(
+        questionId
+      )
+    ) {
+      throw new ApiError(
+        400,
+        "Invalid question ID in exam progress."
+      );
+    }
+  }
+
+  // --------------------------------------
+  // 5. Find Attempt
+  // --------------------------------------
+
+  const attempt =
+    await ExamAttempt.findById(
+      attemptId
+    );
+
+  if (!attempt) {
+    throw new ApiError(
+      404,
+      "Exam attempt not found."
+    );
+  }
+
+  // --------------------------------------
+  // 6. Verify Student Ownership
+  // --------------------------------------
+
+  if (
+    attempt.student.toString() !==
+    studentId.toString()
+  ) {
+    throw new ApiError(
+      403,
+      "You are not allowed to modify this exam."
+    );
+  }
+
+  // --------------------------------------
+  // 7. Verify Attempt Status
+  // --------------------------------------
+
+  if (
+    attempt.status ===
+    "SUBMITTED"
+  ) {
+    throw new ApiError(
+      409,
+      "Exam already submitted."
+    );
+  }
+
+  if (
+    attempt.status !==
+    "IN-PROGRESS"
+  ) {
+    throw new ApiError(
+      409,
+      "Exam is not currently active."
+    );
+  }
+
+  // --------------------------------------
+  // 8. Load Snapshot
+  // --------------------------------------
+
+  const snapshot =
+    await TestSnapshot.findById(
+      attempt.testSnapshot
+    )
+      .select(
+        "_id questions endTime duration"
+      )
+      .lean();
+
+  if (!snapshot) {
+    throw new ApiError(
+      404,
+      "Test snapshot not found."
+    );
+  }
+
+  // --------------------------------------
+  // 9. Check Exam Expiry
+  // --------------------------------------
+
+  await checkExamExpiry(
+    studentId,
+    attempt,
+    snapshot
+  );
+
+  // --------------------------------------
+  // 10. Validate Current Question
+  // --------------------------------------
+
+  if (
+    currentQuestionIndex >=
+    snapshot.questions.length
+  ) {
+    throw new ApiError(
+      400,
+      "Invalid current question index."
+    );
+  }
+
+  // --------------------------------------
+  // 11. Create Valid Question ID Set
+  // --------------------------------------
+
+  const snapshotQuestionIds =
+    new Set(
+      snapshot.questions.map(
+        (question) =>
+          question.questionId.toString()
+      )
+    );
+
+  // --------------------------------------
+  // 12. Validate Visited Questions
+  // --------------------------------------
+
+  for (
+    const questionId
+    of visitedQuestions
+  ) {
+    if (
+      !snapshotQuestionIds.has(
+        questionId.toString()
+      )
+    ) {
+      throw new ApiError(
+        400,
+        "Visited question does not belong to this exam."
+      );
+    }
+  }
+
+  // --------------------------------------
+  // 13. Validate Review Questions
+  // --------------------------------------
+
+  for (
+    const questionId
+    of reviewQuestions
+  ) {
+    if (
+      !snapshotQuestionIds.has(
+        questionId.toString()
+      )
+    ) {
+      throw new ApiError(
+        400,
+        "Review question does not belong to this exam."
+      );
+    }
+  }
+
+  // --------------------------------------
+  // 14. Remove Duplicate IDs
+  // --------------------------------------
+
+  const uniqueVisitedQuestions = [
+    ...new Set(
+      visitedQuestions.map(
+        (id) => id.toString()
+      )
+    ),
+  ];
+
+  const uniqueReviewQuestions = [
+    ...new Set(
+      reviewQuestions.map(
+        (id) => id.toString()
+      )
+    ),
+  ];
+
+  // --------------------------------------
+  // 15. Update Attempt Progress
+  // --------------------------------------
+
+  attempt.currentQuestionIndex =
+    currentQuestionIndex;
+
+  attempt.visitedQuestions =
+    uniqueVisitedQuestions;
+
+  attempt.reviewQuestions =
+    uniqueReviewQuestions;
+
+  // --------------------------------------
+  // 16. Save Progress
+  // --------------------------------------
+
+  await attempt.save();
+
+  // --------------------------------------
+  // 17. Return Safe Response
+  // --------------------------------------
+
+  return {
+    attemptId:
+      attempt._id,
+
+    currentQuestionIndex:
+      attempt.currentQuestionIndex,
+
+    visitedQuestions:
+      attempt.visitedQuestions,
+
+    reviewQuestions:
+      attempt.reviewQuestions,
+  };
+};
 
 module.exports = {
-
   getAvailableExams,
-
   startExam,
-
   saveAnswer,
-
+  updateExamProgress,
 };

@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-
+import DashboardLayout from "../../layouts/DashboardLayout";
 import { fetchDashboard } from "../../redux/adminDashboard/dashboardThunk";
 import {
   selectDashboard,
@@ -90,7 +90,8 @@ console.log("Archived =", dashboard?.archivedTests);
 
   ]
 
-  return (
+return (
+  <DashboardLayout>
     <div className="space-y-8">
 
       <DashboardHeader adminName="Super Admin" />
@@ -103,26 +104,29 @@ console.log("Archived =", dashboard?.archivedTests);
 
           <QuickActions navigate={navigate} />
 
-        <RecentActivities
+          <RecentActivities
             activities={activities}
-        />
+          />
 
         </div>
 
         <UpcomingTests
-            tests={upcomingTests}
-            onViewAll={() => navigate("/admin/exams")}
+          tests={upcomingTests}
+          onViewAll={() =>
+            navigate("/admin/exams")
+          }
         />
-                
 
       </div>
+
       <AnalyticsCharts
         analytics={dashboard?.analytics}
         loading={loading}
       />
 
     </div>
-  );
+  </DashboardLayout>
+);
 }
 
 export default AdminDashboard;

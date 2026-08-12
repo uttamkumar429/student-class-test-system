@@ -18,15 +18,14 @@ async getProfile() {
     throw error;
   }
 },
-  async updateProfile(profileData) {
-    const response = await api.put(
-      PROFILE_BASE_URL,
-      profileData
-    );
+async updateProfile(profileData) {
+  const response = await api.put(
+    `${PROFILE_BASE_URL}/update`,
+    profileData
+  );
 
-    return response.data.data;
-  },
-
+  return response.data.data;
+},
   async uploadProfilePhoto(formData) {
     const response = await api.patch(
       `${PROFILE_BASE_URL}/photo`,

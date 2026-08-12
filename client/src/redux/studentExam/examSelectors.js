@@ -85,3 +85,16 @@ export const selectExamLoading = (state) =>
 
 export const selectExamError = (state) =>
   state.studentExam.error;
+// ======================================
+// EXAM PROGRESS SELECTORS
+// ======================================
+
+export const selectProgressSaving = (
+  state
+) =>
+  state.studentExam.progressSaving;
+
+export const selectProgressError = (
+  state
+) =>
+  state.studentExam.progressError;

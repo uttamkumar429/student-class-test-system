@@ -9,6 +9,7 @@ const {
   getAvailableExams,
   startExam,
   saveAnswer,
+  updateExamProgress,
 } = require("../controllers/studentExam.controller");
 
 /**
@@ -85,6 +86,16 @@ router.put(
   protect,
   authorize("student"),
   saveAnswer
+);
+// =====================================
+// UPDATE EXAM PROGRESS
+// =====================================
+
+router.patch(
+  "/exams/:attemptId/progress",
+  protect,
+  authorize("student"),
+  updateExamProgress
 );
 
 module.exports = router;

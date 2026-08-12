@@ -2,11 +2,12 @@ import { createSlice } from "@reduxjs/toolkit";
 
 import {
   fetchAvailableExams,
-  fetchExamQuestions,
   startExam,
   resumeExam,
   saveAnswer,
+  updateExamProgress,
   submitExam,
+  fetchExamQuestions,
 } from "./examThunk";
 
 // ======================================
@@ -45,6 +46,9 @@ const initialState = {
   // UI State
   loading: false,
   error: null,
+
+  progressSaving: false,
+  progressError: null,
 };
 
 // ======================================
@@ -156,33 +160,58 @@ const examSlice = createSlice({
         index;
     },
 
-    // ==================================
-    // SAVE SELECTED ANSWER - UI STATE
-    // ==================================
+// ==================================
+// SAVE SELECTED ANSWER - UI STATE
+// ==================================
 
-    saveSelectedAnswer: (
-      state,
-      action
-    ) => {
-      const {
-        questionId,
-        answer,
-      } = action.payload;
+saveSelectedAnswer: (
+  state,
+  action
+) => {
+  const {
+    questionId,
+    answer,
+  } = action.payload;
 
-      if (
-        !questionId ||
-        !["A", "B", "C", "D"].includes(
-          answer
-        )
-      ) {
-        return;
-      }
+  if (!questionId) {
+    return;
+  }
 
-      state.selectedAnswers[
-        questionId
-      ] = answer;
-    },
+  // Unselect answer
+  if (answer === null) {
+    delete state.selectedAnswers[
+      questionId
+    ];
 
+    return;
+  }
+
+  // Validate selected answer
+  if (
+    !["A", "B", "C", "D"].includes(
+      answer
+    )
+  ) {
+    return;
+  }
+
+  // Save selected answer
+  state.selectedAnswers[
+    questionId
+  ] = answer;
+},
+clearSelectedAnswer: (
+  state,
+  action
+) => {
+  const { questionId } = action.payload;
+
+  if (!questionId) {
+    return;
+  }
+
+  delete state.selectedAnswers[questionId];
+},
     // ==================================
     // MARK VISITED
     // ==================================
@@ -528,6 +557,55 @@ const examSlice = createSlice({
             "Failed to save answer.";
         }
       )
+      // ======================================
+// UPDATE EXAM PROGRESS
+// ======================================
+
+.addCase(
+  updateExamProgress.pending,
+  (state) => {
+    state.progressSaving = true;
+  }
+)
+
+.addCase(
+  updateExamProgress.fulfilled,
+  (state, action) => {
+    state.progressSaving = false;
+
+    const progress =
+      action.payload?.data;
+
+    if (!progress) {
+      return;
+    }
+
+    state.currentQuestionIndex =
+      progress.currentQuestionIndex ??
+      state.currentQuestionIndex;
+
+      state.visitedQuestions =
+        normalizeQuestionMap(
+          progress.visitedQuestions
+        );
+
+      state.reviewQuestions =
+        normalizeQuestionMap(
+          progress.reviewQuestions
+        );
+  }
+)
+
+.addCase(
+  updateExamProgress.rejected,
+  (state, action) => {
+    state.progressSaving = false;
+
+    state.progressError =
+      action.payload ||
+      "Failed to update exam progress.";
+  }
+)
 
       // ==================================
       // SUBMIT EXAM
@@ -573,6 +651,7 @@ const examSlice = createSlice({
 export const {
   setCurrentQuestion,
   saveSelectedAnswer,
+  clearSelectedAnswer,
   markVisited,
   toggleReviewQuestion,
   updateRemainingTime,

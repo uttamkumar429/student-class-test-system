@@ -134,12 +134,11 @@ const processQuestions = async (questionIds) => {
     0
   );
 
-  return {
-    questions,
-    totalMarks,
-    totalQuestions: questions.length,
-    questions: orderedQuestions,
-  };
+return {
+  questions: orderedQuestions,
+  totalMarks,
+  totalQuestions: orderedQuestions.length,
+};
 };
 
 // CREATE TEST

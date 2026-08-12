@@ -13,6 +13,7 @@ import reviewReducer from "./studentReview/reviewSlice";
 import adminDashboardReducer from "./adminDashboard/dashboardSlice";
 import adminQuestionReducer from "./adminQuestion/questionSlice";
 import adminTestReducer from "./adminTest/testSlice";
+import settingsReducer from "./adminSettings/settingsSlice";
 export const store = configureStore({
   reducer: {
 
@@ -20,6 +21,7 @@ export const store = configureStore({
     adminDashboard: adminDashboardReducer,
     adminQuestion: adminQuestionReducer,
     adminTest: adminTestReducer,
+    adminSettings: settingsReducer,
     studentProfile: studentProfileReducer,
 
     studentDashboard: dashboardReducer,

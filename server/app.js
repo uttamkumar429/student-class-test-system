@@ -33,6 +33,8 @@ const examRoutes = require("./routes/exam.routes");
 const studentDashboardRoutes = require("./routes/studentDashboard.routes");
 const studentExamRoutes = require("./routes/studentExam.routes");
 const adminRoutes = require("./routes/admin.routes");
+const systemSettingRoutes =
+  require("./routes/systemSetting.routes");
 
 // =========================
 // Global Middleware
@@ -107,6 +109,10 @@ app.use("/api/student/dashboard", studentDashboardRoutes);
 app.use(
   "/api/student",
   studentExamRoutes
+);
+app.use(
+  "/api/settings",
+  systemSettingRoutes
 );
 // app.use(errorHandler);
 // Swagger Documentation

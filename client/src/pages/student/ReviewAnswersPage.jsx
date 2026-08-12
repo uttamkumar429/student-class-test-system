@@ -8,6 +8,7 @@ import {
   selectReview,
   selectLoading,
   selectError,
+  
 } from "../../redux/studentReview/reviewSelectors";
 
 // Components (Next Phase)
@@ -15,7 +16,7 @@ import ReviewHeader from "../../components/students/review/ReviewHeader";
 import ReviewPalette from "../../components/students/review/ReviewPalette";
 import ReviewQuestionCard from "../../components/students/review/ReviewQuestionCard";
 import ReviewNavigation from "../../components/students/review/ReviewNavigation";
-
+import { setCurrentQuestion } from "../../redux/studentReview/reviewSlice";
 function ReviewAnswersPage() {
 
   const dispatch = useDispatch();
@@ -28,6 +29,7 @@ function ReviewAnswersPage() {
   const loading = useSelector(selectLoading);
 
   const error = useSelector(selectError);
+ 
 
   useEffect(() => {
     if (!attemptId) {
@@ -38,8 +40,56 @@ function ReviewAnswersPage() {
       return;
     }
 
+    const savedIndex = Number(
+      localStorage.getItem(
+        `reviewQuestionIndex_${attemptId}`
+      )
+    );
+
+    if (Number.isInteger(savedIndex) && savedIndex >= 0) {
+      dispatch(
+        setCurrentQuestion(savedIndex)
+      );
+    }
+
     dispatch(fetchReview(attemptId));
-  }, [dispatch, attemptId, navigate]);
+  }, [
+    dispatch,
+    attemptId,
+    navigate,
+  ]);
+
+
+
+
+useEffect(() => {
+  if (
+    !review ||
+    !attemptId
+  ) {
+    return;
+  }
+
+  const savedIndex = Number(
+    localStorage.getItem(
+      `reviewQuestionIndex_${attemptId}`
+    )
+  );
+
+  if (
+    Number.isInteger(savedIndex) &&
+    savedIndex >= 0 &&
+    savedIndex < review.questions.length
+  ) {
+    dispatch(
+      setCurrentQuestion(savedIndex)
+    );
+  }
+}, [
+  review,
+  attemptId,
+  dispatch,
+]);
 
   // Loading
   if (loading) {
