@@ -13,6 +13,10 @@ import reviewReducer from "./studentReview/reviewSlice";
 import adminDashboardReducer from "./adminDashboard/dashboardSlice";
 import adminQuestionReducer from "./adminQuestion/questionSlice";
 import adminTestReducer from "./adminTest/testSlice";
+import announcementReducer
+  from "./studentAnnouncement/announcementSlice";
+import adminAnnouncementReducer
+  from "./adminAnnouncement/announcementSlice";
 import settingsReducer from "./adminSettings/settingsSlice";
 export const store = configureStore({
   reducer: {
@@ -21,6 +25,11 @@ export const store = configureStore({
     adminDashboard: adminDashboardReducer,
     adminQuestion: adminQuestionReducer,
     adminTest: adminTestReducer,
+    
+    adminAnnouncement:
+    adminAnnouncementReducer,
+    studentAnnouncement:
+    announcementReducer,
     adminSettings: settingsReducer,
     studentProfile: studentProfileReducer,
 

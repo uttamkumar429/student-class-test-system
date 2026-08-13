@@ -16,6 +16,7 @@ const {
   saveAnswer: saveAnswerService,
   submitExam: submitExamService,
   resumeExam: resumeExamService,
+  updateExamProgress: updateExamProgressService,
   getResult: getResultService,
   getResultHistory: getResultHistoryService,
   getReviewAnswers,
@@ -126,6 +127,31 @@ exports.resumeExam = asyncHandler(async (req, res) => {
   );
 
 });
+
+// =====================================
+// UPDATE EXAM PROGRESS
+// =====================================
+
+exports.updateExamProgress = asyncHandler(
+  async (req, res) => {
+
+    const result =
+      await updateExamProgressService(
+        req.user._id,
+        req.params.attemptId,
+        req.body
+      );
+
+    return successResponse(
+      res,
+      200,
+      "Exam progress updated successfully.",
+      result
+    );
+
+  }
+);
+
 // SUBMIT EXAM
 
 exports.submitExam = asyncHandler(async (req, res) => {

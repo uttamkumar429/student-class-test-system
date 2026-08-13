@@ -4,36 +4,45 @@ import {
   Trophy,
   AlertTriangle,
 } from "lucide-react";
+import PropTypes from "prop-types";
 
-function Announcements() {
-  // Temporary Data
-  // Future → API Response
-  const announcements = [
-    {
-      id: 1,
-      title: "Java Programming Exam Published",
-      description:
-        "The Java Programming examination is now available for all students.",
-      type: "exam",
-      time: "2 hours ago",
-    },
-    {
-      id: 2,
-      title: "DBMS Result Declared",
-      description:
-        "Your DBMS examination result has been published.",
-      type: "result",
-      time: "Yesterday",
-    },
-    {
-      id: 3,
-      title: "Complete Your Profile",
-      description:
-        "Please update your profile before attempting upcoming examinations.",
-      type: "warning",
-      time: "3 days ago",
-    },
-  ];
+// ======================================
+// ANNOUNCEMENT CARD
+// ======================================
+
+function AnnouncementCard({
+  announcements = [],
+  loading = false,
+  error = null,
+}) {
+  // ======================================
+  // FORMAT TIME
+  // ======================================
+
+  const formatAnnouncementTime = (
+    publishedAt
+  ) => {
+    if (!publishedAt) {
+      return "Recently";
+    }
+
+    const date = new Date(
+      publishedAt
+    );
+
+    if (Number.isNaN(date.getTime())) {
+      return "Recently";
+    }
+
+    return date.toLocaleString("en-IN", {
+      dateStyle: "medium",
+      timeStyle: "short",
+    });
+  };
+
+  // ======================================
+  // GET ICON
+  // ======================================
 
   const getIcon = (type) => {
     switch (type) {
@@ -61,6 +70,7 @@ function Announcements() {
           />
         );
 
+      case "info":
       default:
         return (
           <Bell
@@ -71,13 +81,110 @@ function Announcements() {
     }
   };
 
+  // ======================================
+  // LOADING STATE
+  // ======================================
+
+  if (loading) {
+    return (
+      <section className="mt-10 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold text-slate-800">
+            Announcements
+          </h2>
+
+          <p className="mt-1 text-slate-500">
+            Stay updated with the latest activities.
+          </p>
+        </div>
+
+        <div className="space-y-4">
+          {[1, 2, 3].map((item) => (
+            <div
+              key={item}
+              className="animate-pulse rounded-xl border border-slate-100 p-4"
+            >
+              <div className="flex items-start gap-4">
+                <div className="h-12 w-12 rounded-xl bg-slate-200" />
+
+                <div className="flex-1 space-y-3">
+                  <div className="h-4 w-2/3 rounded bg-slate-200" />
+
+                  <div className="h-3 w-full rounded bg-slate-200" />
+
+                  <div className="h-3 w-1/2 rounded bg-slate-200" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+    );
+  }
+
+  // ======================================
+  // ERROR STATE
+  // ======================================
+
+  if (error) {
+    return (
+      <section className="mt-10 rounded-2xl border border-red-200 bg-red-50 p-6">
+        <h2 className="text-xl font-bold text-red-700">
+          Announcements
+        </h2>
+
+        <p className="mt-2 text-sm text-red-600">
+          {error}
+        </p>
+      </section>
+    );
+  }
+
+  // ======================================
+  // EMPTY STATE
+  // ======================================
+
+  if (!announcements.length) {
+    return (
+      <section className="mt-10 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold text-slate-800">
+            Announcements
+          </h2>
+
+          <p className="mt-1 text-slate-500">
+            Stay updated with the latest activities.
+          </p>
+        </div>
+
+        <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center">
+          <Bell
+            size={28}
+            className="mx-auto text-slate-400"
+          />
+
+          <h3 className="mt-3 font-semibold text-slate-700">
+            No Announcements
+          </h3>
+
+          <p className="mt-1 text-sm text-slate-500">
+            There are no new announcements right now.
+          </p>
+        </div>
+      </section>
+    );
+  }
+
+  // ======================================
+  // UI
+  // ======================================
+
   return (
     <section className="mt-10 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
 
       {/* Header */}
 
       <div className="mb-6">
-
         <h2 className="text-2xl font-bold text-slate-800">
           Announcements
         </h2>
@@ -85,7 +192,6 @@ function Announcements() {
         <p className="mt-1 text-slate-500">
           Stay updated with the latest activities.
         </p>
-
       </div>
 
       {/* List */}
@@ -93,24 +199,31 @@ function Announcements() {
       <div className="space-y-5">
 
         {announcements.map((item) => (
-          <div
-            key={item.id}
+          <article
+            key={item._id}
             className="flex items-start gap-4 rounded-xl border border-slate-100 p-4 transition hover:bg-slate-50"
           >
-            <div className="rounded-xl bg-slate-100 p-3">
+
+            {/* Icon */}
+
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-slate-100">
               {getIcon(item.type)}
             </div>
 
-            <div className="flex-1">
+            {/* Content */}
 
-              <div className="flex flex-col justify-between gap-2 md:flex-row md:items-center">
+            <div className="min-w-0 flex-1">
+
+              <div className="flex flex-col justify-between gap-2 md:flex-row md:items-start">
 
                 <h3 className="font-semibold text-slate-800">
                   {item.title}
                 </h3>
 
-                <span className="text-xs text-slate-400">
-                  {item.time}
+                <span className="shrink-0 text-xs text-slate-400">
+                  {formatAnnouncementTime(
+                    item.publishedAt
+                  )}
                 </span>
 
               </div>
@@ -121,7 +234,7 @@ function Announcements() {
 
             </div>
 
-          </div>
+          </article>
         ))}
 
       </div>
@@ -130,4 +243,59 @@ function Announcements() {
   );
 }
 
-export default Announcements;
+// ======================================
+// PROP TYPES
+// ======================================
+
+AnnouncementCard.propTypes = {
+  announcements:
+    PropTypes.arrayOf(
+      PropTypes.shape({
+        _id:
+          PropTypes.string.isRequired,
+
+        title:
+          PropTypes.string.isRequired,
+
+        description:
+          PropTypes.string.isRequired,
+
+        type:
+          PropTypes.oneOf([
+            "exam",
+            "result",
+            "warning",
+            "info",
+          ]).isRequired,
+
+        isPublished:
+          PropTypes.bool,
+
+        publishedAt:
+          PropTypes.string,
+
+        expiresAt:
+          PropTypes.string,
+
+        createdBy:
+          PropTypes.shape({
+            _id:
+              PropTypes.string,
+
+            fullName:
+              PropTypes.string,
+
+            email:
+              PropTypes.string,
+          }),
+      })
+    ),
+
+  loading:
+    PropTypes.bool,
+
+  error:
+    PropTypes.string,
+};
+
+export default AnnouncementCard;

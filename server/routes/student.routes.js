@@ -156,6 +156,17 @@ router.get(
   authorize("student"),
   studentController.resumeExam
 );
+
+// =====================================
+// UPDATE EXAM PROGRESS
+// =====================================
+
+router.patch(
+  "/exams/:attemptId/progress",
+  protect,
+  authorize("student"),
+  studentController.updateExamProgress
+);
 /**
  * @swagger
  * /api/student/attempt/{attemptId}/submit:

@@ -29,6 +29,8 @@ const adminExamRoutes = require("./routes/adminExam.routes");
 const adminAnalyticsRoutes = require("./routes/adminAnalytics.routes");
 const adminReportRoutes=require("./routes/adminReport.routes");
 const adminStudentRoutes = require("./routes/adminStudent.routes");
+const announcementRoutes =
+  require("./routes/announcement.routes");
 const examRoutes = require("./routes/exam.routes");
 const studentDashboardRoutes = require("./routes/studentDashboard.routes");
 const studentExamRoutes = require("./routes/studentExam.routes");
@@ -88,6 +90,10 @@ adminReportRoutes
 app.use(
   "/api/admin/students",
   adminStudentRoutes
+);
+app.use(
+  "/api/announcements",
+  announcementRoutes
 );
 app.use("/api/admin/exams", examRoutes);
 // Profile

@@ -6,6 +6,9 @@ import Exams from "../pages/admin/Exams";
 import Tests from "../pages/admin/Tests";
 import Results from "../pages/admin/Results";
 import Settings from "../pages/admin/Settings";
+import Announcements from "../pages/admin/Announcements";
+import CreateAnnouncement from "../pages/admin/CreateAnnouncement";
+import EditAnnouncement from "../pages/admin/EditAnnouncement";
 import StudentLayout from "../layouts/StudentLayout";
 import StudentDashboard from "../pages/student/StudentDashboard";
 import StudentExams from "../pages/student/StudentExams";
@@ -144,7 +147,31 @@ function AppRoutes() {
                 <Settings />
                 </ProtectedRoute>
             }
-        />   
+        />  
+        <Route
+            path="/admin/announcements"
+            element={
+                <ProtectedRoute>
+                <Announcements />
+                </ProtectedRoute>
+            }
+        /> 
+        <Route
+            path="/admin/announcements/create"
+            element={
+                <ProtectedRoute>
+                <CreateAnnouncement />
+                </ProtectedRoute>
+            }
+        />
+        <Route
+            path="/admin/announcements/:id/edit"
+            element={
+                <ProtectedRoute>
+                <EditAnnouncement />
+                </ProtectedRoute>
+            }
+        />
 
             <Route
                 path="/student"

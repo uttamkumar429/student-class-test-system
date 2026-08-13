@@ -1,7 +1,8 @@
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-
+import { useNavigate } from "react-router-dom";
 import { fetchDashboardThunk } from "../../redux/studentDashboard";
+import { fetchAnnouncements } from "../../redux/studentAnnouncement/announcementThunk";
 
 import DashboardHeader from "../../components/students/dashboard/DashboardHeader";
 import StudentStats from "../../components/students/dashboard/StudentStats";
@@ -11,8 +12,26 @@ import PerformanceChart from "../../components/students/dashboard/PerformanceCha
 import QuickActions from "../../components/students/dashboard/QuickActions";
 import AnnouncementCard from "../../components/students/dashboard/AnnouncementCard";
 
+import {
+  selectAnnouncements,
+  selectAnnouncementLoading,
+  selectAnnouncementError,
+} from "../../redux/studentAnnouncement/announcementSelectors";
 function StudentDashboard() {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  const announcements = useSelector(
+    selectAnnouncements
+  );
+
+  const announcementsLoading = useSelector(
+    selectAnnouncementLoading
+  );
+
+  const announcementsError = useSelector(
+    selectAnnouncementError
+  );
 
 const {
   loading,
@@ -28,6 +47,10 @@ const {
 
   useEffect(() => {
     dispatch(fetchDashboardThunk());
+  }, [dispatch]);
+
+  useEffect(() => {
+    dispatch(fetchAnnouncements(5));
   }, [dispatch]);
 
   if (loading) {
@@ -57,6 +80,7 @@ const {
 
       <StudentStats
         stats={stats}
+        onNavigate={navigate}
       />
 
       <QuickActions />
@@ -76,7 +100,11 @@ const {
 
       </div>
 
-      <AnnouncementCard />
+      <AnnouncementCard
+        announcements={announcements}
+        loading={announcementsLoading}
+        error={announcementsError}
+      />
 
     </div>
   );

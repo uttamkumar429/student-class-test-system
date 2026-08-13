@@ -852,11 +852,17 @@ const handleOptionSelect = useCallback(
             examQuestions.length - 1
           }
           isMarkedForReview={
-            Boolean(
-              reviewQuestions?.[
-                currentQuestionId
-              ]
-            )
+            Array.isArray(reviewQuestions)
+              ? reviewQuestions.some(
+                  (id) =>
+                    id?.toString() ===
+                    currentQuestionId?.toString()
+                )
+              : Boolean(
+                  reviewQuestions?.[
+                    currentQuestionId
+                  ]
+                )
           }
           onPrevious={
             handlePrevious

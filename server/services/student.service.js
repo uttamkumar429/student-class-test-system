@@ -1344,6 +1344,260 @@ const answeredQuestions =
 };
 
 // ======================================
+// UPDATE EXAM PROGRESS
+// ======================================
+
+const updateExamProgress = async (
+  studentId,
+  attemptId,
+  {
+    currentQuestionIndex,
+    visitedQuestions = [],
+    reviewQuestions = [],
+  }
+) => {
+
+  // --------------------------------------
+  // 1. Validate IDs
+  // --------------------------------------
+
+  if (!mongoose.isValidObjectId(studentId)) {
+    throw new ApiError(
+      400,
+      "Invalid student ID."
+    );
+  }
+
+  if (!mongoose.isValidObjectId(attemptId)) {
+    throw new ApiError(
+      400,
+      "Invalid exam attempt ID."
+    );
+  }
+
+  // --------------------------------------
+  // 2. Validate Current Question Index
+  // --------------------------------------
+
+  if (
+    !Number.isInteger(
+      currentQuestionIndex
+    ) ||
+    currentQuestionIndex < 0
+  ) {
+    throw new ApiError(
+      400,
+      "Invalid current question index."
+    );
+  }
+
+  // --------------------------------------
+  // 3. Validate Arrays
+  // --------------------------------------
+
+  if (
+    !Array.isArray(visitedQuestions) ||
+    !Array.isArray(reviewQuestions)
+  ) {
+    throw new ApiError(
+      400,
+      "Visited and review questions must be arrays."
+    );
+  }
+
+  // --------------------------------------
+  // 4. Find Attempt
+  // --------------------------------------
+
+  const attempt =
+    await ExamAttempt.findById(
+      attemptId
+    );
+
+  if (!attempt) {
+    throw new ApiError(
+      404,
+      "Exam attempt not found."
+    );
+  }
+
+  // --------------------------------------
+  // 5. Ownership Check
+  // --------------------------------------
+
+  if (
+    attempt.student.toString() !==
+    studentId.toString()
+  ) {
+    throw new ApiError(
+      403,
+      "You are not allowed to update this exam."
+    );
+  }
+
+  // --------------------------------------
+  // 6. Check Attempt Status
+  // --------------------------------------
+
+  if (
+    attempt.status === "SUBMITTED"
+  ) {
+    throw new ApiError(
+      409,
+      "Exam already submitted."
+    );
+  }
+
+  if (
+    attempt.status !== "IN-PROGRESS"
+  ) {
+    throw new ApiError(
+      409,
+      "Exam is not currently active."
+    );
+  }
+
+  // --------------------------------------
+  // 7. Load Snapshot
+  // --------------------------------------
+
+  const snapshot =
+    await TestSnapshot.findById(
+      attempt.testSnapshot
+    )
+      .select(
+        "questions totalQuestions"
+      )
+      .lean();
+
+  if (!snapshot) {
+    throw new ApiError(
+      404,
+      "Test snapshot not found."
+    );
+  }
+
+  // --------------------------------------
+  // 8. Validate Question Index
+  // --------------------------------------
+
+  if (
+    currentQuestionIndex >=
+    snapshot.questions.length
+  ) {
+    throw new ApiError(
+      400,
+      "Invalid current question index."
+    );
+  }
+
+  // --------------------------------------
+  // 9. Build Valid Question ID Set
+  // --------------------------------------
+
+  const validQuestionIds =
+    new Set(
+      snapshot.questions.map(
+        (question) =>
+          question.questionId.toString()
+      )
+    );
+
+  // --------------------------------------
+  // 10. Validate Visited Questions
+  // --------------------------------------
+
+  const normalizedVisitedQuestions =
+    [
+      ...new Set(visitedQuestions)
+    ].map((id) => {
+
+      if (
+        !mongoose.isValidObjectId(id)
+      ) {
+        throw new ApiError(
+          400,
+          `Invalid visited question ID: ${id}`
+        );
+      }
+
+      if (
+        !validQuestionIds.has(
+          id.toString()
+        )
+      ) {
+        throw new ApiError(
+          400,
+          "Visited question does not belong to this exam."
+        );
+      }
+
+      return id;
+    });
+
+  // --------------------------------------
+  // 11. Validate Review Questions
+  // --------------------------------------
+
+  const normalizedReviewQuestions =
+    [
+      ...new Set(reviewQuestions)
+    ].map((id) => {
+
+      if (
+        !mongoose.isValidObjectId(id)
+      ) {
+        throw new ApiError(
+          400,
+          `Invalid review question ID: ${id}`
+        );
+      }
+
+      if (
+        !validQuestionIds.has(
+          id.toString()
+        )
+      ) {
+        throw new ApiError(
+          400,
+          "Review question does not belong to this exam."
+        );
+      }
+
+      return id;
+    });
+
+  // --------------------------------------
+  // 12. Update Progress
+  // --------------------------------------
+
+  attempt.currentQuestionIndex =
+    currentQuestionIndex;
+
+  attempt.visitedQuestions =
+    normalizedVisitedQuestions;
+
+  attempt.reviewQuestions =
+    normalizedReviewQuestions;
+
+  await attempt.save();
+
+  // --------------------------------------
+  // 13. Return Safe Response
+  // --------------------------------------
+
+  return {
+    attemptId: attempt._id,
+    currentQuestionIndex:
+      attempt.currentQuestionIndex,
+    visitedQuestions:
+      attempt.visitedQuestions,
+    reviewQuestions:
+      attempt.reviewQuestions,
+  };
+};
+
+// ======================================
 // SUBMIT EXAM
 // ======================================
 
@@ -1996,11 +2250,12 @@ const getReviewAnswers = async (
 };
 module.exports = {
   getDashboard,
-  getAvailableExams,   // ← add
+  getAvailableExams,
   startExam,
   getExamQuestions,
   saveAnswer,
   resumeExam,
+  updateExamProgress,
   submitExam,
   getResult,
   getResultHistory,
