@@ -4,6 +4,7 @@ import {
   BookOpen,
   Trophy,
   User,
+  Settings,
   LogOut,
 } from "lucide-react";
 
@@ -28,6 +29,11 @@ const STUDENT_MENUS = [
     icon: User,
     path: "/student/profile",
   },
+  {
+  name: "Settings",
+  icon: Settings,
+  path: "/student/settings",
+},
 ];
 
 function StudentSidebar() {

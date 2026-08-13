@@ -1,7 +1,11 @@
 const bcrypt = require("bcrypt");
 const User = require("../models/User");
 
-const { authenticateUser } = require("../services/auth.service");
+const {
+  authenticateUser,
+  changePassword:
+    changePasswordService,
+} = require("../services/auth.service");
 
 const generateUserId = require("../utils/generateUserId");
 const generateToken = require("../utils/generateToken");
@@ -224,3 +228,127 @@ exports.adminLogin = async (req, res) => {
     });
   }
 };
+
+const validatePasswordStrength = (
+  password
+) => {
+  if (password.length < 8) {
+    return "Password must be at least 8 characters long.";
+  }
+
+  if (!/[A-Z]/.test(password)) {
+    return "Password must contain at least one uppercase letter.";
+  }
+
+  if (!/[a-z]/.test(password)) {
+    return "Password must contain at least one lowercase letter.";
+  }
+
+  if (!/[0-9]/.test(password)) {
+    return "Password must contain at least one number.";
+  }
+
+  if (!/[^A-Za-z0-9]/.test(password)) {
+    return "Password must contain at least one special character.";
+  }
+
+  return null;
+};
+
+// =====================================
+// CHANGE PASSWORD
+// =====================================
+
+exports.changePassword =
+  async (req, res) => {
+    try {
+      const {
+        currentPassword,
+        newPassword,
+      } = req.body;
+
+      // ---------------------------------
+      // Required validation
+      // ---------------------------------
+
+      if (
+        !currentPassword ||
+        !newPassword
+      ) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Current password and new password are required.",
+        });
+      }
+
+      // ---------------------------------
+      // Type validation
+      // ---------------------------------
+
+      if (
+        typeof currentPassword !==
+          "string" ||
+        typeof newPassword !==
+          "string"
+      ) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Invalid password data.",
+        });
+      }
+
+      // ---------------------------------
+      // Password strength
+      // ---------------------------------
+
+      const passwordError =
+        validatePasswordStrength(
+          newPassword
+        );
+
+      if (passwordError) {
+        return res.status(400).json({
+          success: false,
+          message: passwordError,
+        });
+      }
+
+      // ---------------------------------
+      // Change password
+      // ---------------------------------
+
+      const result =
+        await changePasswordService(
+          req.user._id,
+          currentPassword,
+          newPassword
+        );
+
+      if (!result.success) {
+        return res.status(400).json({
+          success: false,
+          message: result.message,
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        message:
+          "Password changed successfully.",
+      });
+
+    } catch (error) {
+      console.error(
+        "Change Password Error:",
+        error
+      );
+
+      return res.status(500).json({
+        success: false,
+        message:
+          "Internal Server Error",
+      });
+    }
+  };

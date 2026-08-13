@@ -21,6 +21,7 @@ import CreateTest from "../pages/admin/CreateTest";
 import TestDetails from "../pages/admin/TestDetails";
 import EditTest from "../pages/admin/EditTest";
 import ProfilePage from "../pages/student/ProfilePage";
+import StudentSettings from "../pages/student/StudentSettings";
 import ResultPage from "../pages/student/ResultPage";
 import ResultHistory from "../pages/student/ResultHistory";
 import ExamPage from "../pages/student/ExamPage";
@@ -37,6 +38,7 @@ function AppRoutes() {
        <Route path="/" element={<LoginPage />} />
 
         <Route path="/login" element={<LoginPage />} />
+
 
         {/* Protected Route */}
         {/* console.log("AppRoutes Rendered"); */}
@@ -184,6 +186,10 @@ function AppRoutes() {
                 <Route path="dashboard" element={<StudentDashboard />} />
 
                 <Route path="profile" element={<ProfilePage />} />
+                <Route
+                    path="settings"
+                    element={<StudentSettings />}
+                />
 
                 <Route path="exams" element={<StudentExams />} />
 

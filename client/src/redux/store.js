@@ -18,6 +18,8 @@ import announcementReducer
 import adminAnnouncementReducer
   from "./adminAnnouncement/announcementSlice";
 import settingsReducer from "./adminSettings/settingsSlice";
+import notificationPreferenceReducer
+  from "./studentNotificationPreference/notificationPreferenceSlice";
 export const store = configureStore({
   reducer: {
 
@@ -30,6 +32,8 @@ export const store = configureStore({
     adminAnnouncementReducer,
     studentAnnouncement:
     announcementReducer,
+    studentNotificationPreference:
+    notificationPreferenceReducer,
     adminSettings: settingsReducer,
     studentProfile: studentProfileReducer,
 

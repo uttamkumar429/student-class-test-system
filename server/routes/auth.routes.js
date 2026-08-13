@@ -6,6 +6,14 @@ const authController = require("../controllers/auth.controller");
 const {
   loginLimiter,
 } = require("../middleware/rateLimiter.middleware");
+
+const {
+  protect,
+} = require("../middleware/auth.middleware");
+
+const authorize =
+  require("../middleware/role.middleware");
+
 // Test Route
 if (process.env.NODE_ENV !== "production") {
   router.get("/test", (req, res) => {
@@ -52,6 +60,20 @@ router.post(
   loginLimiter,
   authController.login
 );
+
+// =====================================
+// CHANGE PASSWORD
+// STUDENT
+// =====================================
+
+router.post(
+  "/change-password",
+  protect,
+  authorize("student"),
+  loginLimiter,
+  authController.changePassword
+);
+
 router.post(
   "/admin/login",
   loginLimiter,

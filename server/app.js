@@ -23,6 +23,10 @@ const questionRoutes = require("./routes/question.routes");
 const testRoutes = require("./routes/test.routes");
 const publishRoutes = require("./routes/publish.routes");
 const studentRoutes = require("./routes/student.routes");
+const notificationPreferenceRoutes =
+  require(
+    "./routes/notificationPreference.routes"
+  );
 const errorHandler = require("./middleware/error.middleware");
 
 const adminExamRoutes = require("./routes/adminExam.routes");
@@ -110,6 +114,10 @@ app.use("/api/tests", publishRoutes);
 
 // Student APIs
 app.use("/api/student", studentRoutes);
+app.use(
+  "/api/student/settings",
+  notificationPreferenceRoutes
+);
 
 app.use("/api/student/dashboard", studentDashboardRoutes);
 app.use(
