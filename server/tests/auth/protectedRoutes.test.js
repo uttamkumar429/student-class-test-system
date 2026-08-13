@@ -21,7 +21,7 @@ describe("Protected Route Authorization", () => {
   test("Should reject request without token", async () => {
 
     const response = await request(app)
-      .get("/api/dashboard/stats");
+      .get("/api/admin/dashboard")
 
     expect(response.statusCode).toBe(401);
 
@@ -36,7 +36,7 @@ describe("Protected Route Authorization", () => {
   test("Should reject invalid token", async () => {
 
     const response = await request(app)
-      .get("/api/dashboard/stats")
+      .get("/api/admin/dashboard")
       .set(
         "Authorization",
         "Bearer invalid_token"
@@ -64,7 +64,7 @@ describe("Protected Route Authorization", () => {
       });
 
     const response = await request(app)
-      .get("/api/dashboard/stats")
+      .get("/api/admin/dashboard")
       .set(
         "Authorization",
         `Bearer ${login.body.token}`
@@ -92,7 +92,7 @@ describe("Protected Route Authorization", () => {
       });
 
     const response = await request(app)
-      .get("/api/dashboard/stats")
+      .get("/api/admin/dashboard")
       .set(
         "Authorization",
         `Bearer ${login.body.token}`

@@ -1,68 +1,233 @@
-import { useEffect, useState } from "react";
+import {useState } from "react";
 
 import QuestionSelector from "../questions/QuestionSelector";
 import { toastService } from "../../lib/toast";
+const getInitialFormData = (initialValues) => ({
+  title: initialValues?.title || "",
+  subject: initialValues?.subject || "",
+  description:
+    initialValues?.description || "",
+  duration:
+    initialValues?.duration || "",
+  startTime: initialValues?.startTime
+    ? initialValues.startTime.slice(0, 16)
+    : "",
+  endTime: initialValues?.endTime
+    ? initialValues.endTime.slice(0, 16)
+    : "",
+});
+
+const getInitialSelectedQuestions = (
+  initialValues
+) => {
+  if (
+    !Array.isArray(
+      initialValues?.questions
+    )
+  ) {
+    return [];
+  }
+
+  return initialValues.questions.map(
+    (question) =>
+      typeof question === "string"
+        ? question
+        : question._id
+  );
+};
 function TestForm({
   initialValues,
   onSubmit,
   loading = false,
   submitText = "Save Test",
 }) {
-  const [formData, setFormData] = useState({
-    title: "",
-    subject: "",
-    description: "",
-    duration: "",
-    startTime: "",
-    endTime: "",
-  });
-
-  const [selectedQuestions, setSelectedQuestions] =
-    useState([]);
-
-  // ===========================
-  // Edit Mode Support
-  // ===========================
-
-
-  useEffect(() => {
-    if (!initialValues) return;
-
-    setFormData({
-      title: initialValues.title || "",
-      subject: initialValues.subject || "",
-      description:
-        initialValues.description || "",
-      duration:
-        initialValues.duration || "",
-      startTime: initialValues.startTime
-        ? initialValues.startTime.slice(0, 16)
-        : "",
-      endTime: initialValues.endTime
-        ? initialValues.endTime.slice(0, 16)
-        : "",
-    });
-
-    
-
-
-
-    setSelectedQuestions(
-      initialValues.questions || []
+  const [formData, setFormData] =
+    useState(() =>
+      getInitialFormData(initialValues)
     );
-  }, [initialValues]);
+
+  const [
+    selectedQuestions,
+    setSelectedQuestions,
+  ] = useState(() =>
+    getInitialSelectedQuestions(
+      initialValues
+    )
+  );
+    // ===========================
+  // Validation Errors
+  // ===========================
+
+  const [formErrors, setFormErrors] =
+    useState({});
+ 
 
   // ===========================
   // Input Change
   // ===========================
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const {
+      name,
+      value,
+    } = e.target;
 
     setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
+
+    setFormErrors((prev) => {
+      if (!prev[name]) {
+        return prev;
+      }
+
+      const next = {
+        ...prev,
+      };
+
+      delete next[name];
+
+      return next;
+    });
+  };
+
+    // ===========================
+  // Validate Form
+  // ===========================
+
+  const validateForm = () => {
+    const errors = {};
+
+    // --------------------------------
+    // Title
+    // --------------------------------
+
+    const title =
+      formData.title.trim();
+
+    if (!title) {
+      errors.title =
+        "Test title is required.";
+    }
+
+    // --------------------------------
+    // Subject
+    // --------------------------------
+
+    const subject =
+      formData.subject.trim();
+
+    if (!subject) {
+      errors.subject =
+        "Subject is required.";
+    }
+
+    // --------------------------------
+    // Duration
+    // --------------------------------
+
+    const duration =
+      Number(formData.duration);
+
+    if (!formData.duration) {
+      errors.duration =
+        "Duration is required.";
+    } else if (
+      !Number.isInteger(duration) ||
+      duration < 1
+    ) {
+      errors.duration =
+        "Duration must be a whole number greater than 0.";
+    }
+
+    // --------------------------------
+    // Start Time
+    // --------------------------------
+
+    if (!formData.startTime) {
+      errors.startTime =
+        "Start time is required.";
+    }
+
+    // --------------------------------
+    // End Time
+    // --------------------------------
+
+    if (!formData.endTime) {
+      errors.endTime =
+        "End time is required.";
+    }
+
+    // --------------------------------
+    // Date Validation
+    // --------------------------------
+
+    if (
+      formData.startTime &&
+      formData.endTime
+    ) {
+      const startDate =
+        new Date(
+          formData.startTime
+        );
+
+      const endDate =
+        new Date(
+          formData.endTime
+        );
+
+      if (
+        Number.isNaN(
+          startDate.getTime()
+        )
+      ) {
+        errors.startTime =
+          "Please enter a valid start time.";
+      }
+
+      if (
+        Number.isNaN(
+          endDate.getTime()
+        )
+      ) {
+        errors.endTime =
+          "Please enter a valid end time.";
+      }
+
+      if (
+        !Number.isNaN(
+          startDate.getTime()
+        ) &&
+        !Number.isNaN(
+          endDate.getTime()
+        ) &&
+        endDate <= startDate
+      ) {
+        errors.endTime =
+          "End time must be later than start time.";
+      }
+    }
+
+    // --------------------------------
+    // Questions
+    // --------------------------------
+
+    if (
+      !Array.isArray(
+        selectedQuestions
+      ) ||
+      selectedQuestions.length === 0
+    ) {
+      errors.questions =
+        "Please select at least one question.";
+    }
+
+    setFormErrors(errors);
+
+    return (
+      Object.keys(errors).length === 0
+    );
   };
 
   // ===========================
@@ -72,21 +237,82 @@ function TestForm({
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    if (selectedQuestions.length === 0) {
-        toastService.error(
-        "Please select at least one question."
-        );
+    const isValid =
+      validateForm();
+
+    if (!isValid) {
+      toastService.error(
+        "Please correct the highlighted fields."
+      );
+
       return;
     }
 
     const payload = {
       ...formData,
-      duration: Number(formData.duration),
+
+      title:
+        formData.title.trim(),
+
+      subject:
+        formData.subject.trim(),
+
+      description:
+        formData.description.trim(),
+
+      duration:
+        Number(formData.duration),
+
       questions:
-      selectedQuestions
+        selectedQuestions,
     };
 
     onSubmit(payload);
+  };
+
+    // ===========================
+  // Question Selection Change
+  // ===========================
+
+  const handleSelectedQuestionsChange = (
+    nextQuestions
+  ) => {
+    setSelectedQuestions(
+      nextQuestions
+    );
+
+    if (
+      nextQuestions.length > 0 &&
+      formErrors.questions
+    ) {
+      setFormErrors((prev) => {
+        const next = {
+          ...prev,
+        };
+
+        delete next.questions;
+
+        return next;
+      });
+    }
+  };
+
+    // ===========================
+  // Reset Form
+  // ===========================
+
+  const handleReset = () => {
+    setFormData(
+      getInitialFormData(initialValues)
+    );
+
+    setSelectedQuestions(
+      getInitialSelectedQuestions(
+        initialValues
+      )
+    );
+
+    setFormErrors({});
   };
 
   return (
@@ -114,6 +340,11 @@ function TestForm({
           placeholder="Physics Motion Test"
           className="w-full rounded-lg border px-4 py-3"
         />
+        {formErrors.title && (
+          <p className="mt-2 text-sm text-red-600">
+            {formErrors.title}
+          </p>
+        )}
 
       </div>
 
@@ -137,6 +368,11 @@ function TestForm({
           placeholder="Physics"
           className="w-full rounded-lg border px-4 py-3"
         />
+        {formErrors.subject && (
+          <p className="mt-2 text-sm text-red-600">
+            {formErrors.subject}
+          </p>
+        )}
 
       </div>
 
@@ -184,6 +420,11 @@ function TestForm({
             onChange={handleChange}
             className="w-full rounded-lg border px-4 py-3"
           />
+          {formErrors.duration && (
+            <p className="mt-2 text-sm text-red-600">
+              {formErrors.duration}
+            </p>
+          )}
 
         </div>
 
@@ -202,6 +443,11 @@ function TestForm({
             onChange={handleChange}
             className="w-full rounded-lg border px-4 py-3"
           />
+          {formErrors.startTime && (
+            <p className="mt-2 text-sm text-red-600">
+              {formErrors.startTime}
+            </p>
+          )}
 
         </div>
 
@@ -220,6 +466,11 @@ function TestForm({
             onChange={handleChange}
             className="w-full rounded-lg border px-4 py-3"
           />
+          {formErrors.endTime && (
+            <p className="mt-2 text-sm text-red-600">
+              {formErrors.endTime}
+            </p>
+          )}
 
         </div>
 
@@ -229,9 +480,25 @@ function TestForm({
       =========================== */}
 
       <QuestionSelector
-        selectedQuestions={selectedQuestions}
-        setSelectedQuestions={setSelectedQuestions}
+        selectedQuestions={
+          selectedQuestions
+        }
+        setSelectedQuestions={
+          handleSelectedQuestionsChange
+        }
+        selectedQuestionDetails={
+          Array.isArray(
+            initialValues?.questions
+          )
+            ? initialValues.questions
+            : []
+        }
       />
+      {formErrors.questions && (
+        <p className="text-sm font-medium text-red-600">
+          {formErrors.questions}
+        </p>
+      )}
 
       {/* ===========================
           Summary
@@ -302,27 +569,13 @@ function TestForm({
       =========================== */}
 
       <div className="flex items-center justify-end gap-4">
-
-        <button
-          type="reset"
-          onClick={() => {
-
-            setFormData({
-              title: "",
-              subject: "",
-              description: "",
-              duration: "",
-              startTime: "",
-              endTime: "",
-            });
-
-            setSelectedQuestions([]);
-
-          }}
-          className="rounded-lg border border-slate-300 px-6 py-3 font-medium text-slate-700 transition hover:bg-slate-100"
-        >
-          Reset
-        </button>
+      <button
+        type="button"
+        onClick={handleReset}
+        className="rounded-lg border border-slate-300 px-6 py-3 font-medium text-slate-700 transition hover:bg-slate-100"
+      >
+        Reset
+      </button>
 
         <button
           type="submit"

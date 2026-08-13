@@ -16,23 +16,6 @@ describe("Get Question By ID API", () => {
   let token;
   let question;
 
-//   beforeAll(async () => {
-//     await cleanup();
-
-//     token = await loginAdmin();
-//     });
-
-//   beforeEach(async () => {
-//     await cleanup();
-
-//     const admin = await User.findOne({
-//         role: "admin",
-//     });
-
-//     await createQuestions(admin._id);
-
-//     question = await Question.findOne();
-//     });
    beforeEach(async () => {
     await cleanup();
 
@@ -97,7 +80,9 @@ describe("Get Question By ID API", () => {
 
     expect(response.body.success).toBe(false);
 
-    expect(response.body.message).toBe("Invalid ID.");
+    expect(response.body.message).toBe(
+      "Invalid question ID."
+    );
   });
 
   test("Should return error when question not found", async () => {

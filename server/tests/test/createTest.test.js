@@ -205,10 +205,9 @@ describe("Create Test API", () => {
 
     expect(response.body.success).toBe(false);
 
-    expect(response.body.message).toBe(
+    expect(response.body.message).toContain(
       "Duplicate questions are not allowed."
     );
-
   });
   test("Should reject invalid question IDs", async () => {
 

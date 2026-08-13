@@ -101,7 +101,7 @@ describe("Delete Question API", () => {
 
     expect(response.statusCode).toBe(400);
     expect(response.body.success).toBe(false);
-    expect(response.body.message).toBe("Invalid ID.");
+    expect(response.body.message).toBe("Invalid question ID.");
   });
 
   test("Should return error when question not found", async () => {

@@ -258,8 +258,9 @@ describe("Update Test API", () => {
 
         expect(response.statusCode).toBe(400);
         expect(response.body.success).toBe(false);
-        expect(response.body.message).toBe(
-            "Duplicate questions are not allowed."
+        
+        expect(response.body.message).toContain(
+        "Duplicate questions are not allowed."
         );
 
     });

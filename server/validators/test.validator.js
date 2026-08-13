@@ -37,24 +37,39 @@ const validateCreateTest = (data) => {
   // Subject
   // =========================
 
-  if (!subject || typeof subject !== "string") {
-    errors.push("Subject is required.");
-  }
+    if (
+      !subject ||
+      typeof subject !== "string" ||
+      subject.trim() === ""
+    ) {
+      errors.push(
+        "Subject is required."
+      );
+    }
 
   // =========================
   // Duration
   // =========================
 
+  const numericDuration =
+    Number(duration);
+
   if (
     duration === undefined ||
     duration === null ||
-    Number(duration) <= 0
+    duration === "" ||
+    !Number.isFinite(
+      numericDuration
+    ) ||
+    !Number.isInteger(
+      numericDuration
+    ) ||
+    numericDuration <= 0
   ) {
     errors.push(
-      "Duration must be greater than 0."
+      "Duration must be a whole number greater than 0."
     );
   }
-
   // =========================
   // Start Time
   // =========================

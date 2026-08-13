@@ -162,7 +162,10 @@ router.delete(
 router.post(
   "/:id/publish",
   protect,
-  authorize("admin"),
+  authorize(
+  "admin",
+  "superAdmin"
+),
   testController.publishTest
 );
 

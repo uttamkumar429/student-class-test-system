@@ -11,7 +11,7 @@ export const fetchTests = createAsyncThunk(
 
   async (params = {}, thunkAPI) => {
     try {
-      return adminTestService.getTests(params);
+      return await adminTestService.getTests(params);
     } catch (error) {
       return thunkAPI.rejectWithValue(
         error.response?.data?.message ||
@@ -30,7 +30,7 @@ export const fetchTestById = createAsyncThunk(
 
   async (testId, thunkAPI) => {
     try {
-      return adminTestService.getTestById(testId);
+      return await adminTestService.getTestById(testId);
     } catch (error) {
       return thunkAPI.rejectWithValue(
         error.response?.data?.message ||
@@ -49,7 +49,9 @@ export const createTest = createAsyncThunk(
 
   async (testData, thunkAPI) => {
     try {
-      return adminTestService.createTest(testData);
+      
+     return await adminTestService.createTest(testData);
+
     } catch (error) {
       return thunkAPI.rejectWithValue(
         error.response?.data?.message ||
@@ -71,7 +73,7 @@ export const updateTest = createAsyncThunk(
     thunkAPI
   ) => {
     try {
-      return adminTestService.updateTest(
+      return await adminTestService.updateTest(
         testId,
         testData
       );
@@ -116,7 +118,7 @@ export const publishTest = createAsyncThunk(
 
   async (testId, thunkAPI) => {
     try {
-      return adminTestService.publishTest(
+      return await adminTestService.publishTest(
         testId
       );
     } catch (error) {

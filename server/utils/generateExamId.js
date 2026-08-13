@@ -1,9 +1,20 @@
-const { customAlphabet } = require("nanoid");
-
-const nanoid = customAlphabet("0123456789", 6);
+// =====================================
+// GENERATE EXAM ID
+// =====================================
 
 const generateExamId = () => {
-  return `EXM${nanoid()}`;
+  const timestamp =
+    Date.now()
+      .toString(36)
+      .toUpperCase();
+
+  const randomPart =
+    Math.random()
+      .toString(36)
+      .substring(2, 8)
+      .toUpperCase();
+
+  return `EXAM-${timestamp}-${randomPart}`;
 };
 
 module.exports = generateExamId;

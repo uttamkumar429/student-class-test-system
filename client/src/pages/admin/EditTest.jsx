@@ -175,6 +175,7 @@ function EditTest() {
         </div>
 
         <TestForm
+          key={id}
           initialValues={test}
           submitText="Update Test"
           loading={saving}

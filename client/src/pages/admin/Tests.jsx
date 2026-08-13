@@ -1,4 +1,7 @@
-import { useEffect } from "react";
+import {
+  useCallback,
+  useEffect,
+} from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 
@@ -46,24 +49,43 @@ function Tests() {
   const pagination = useSelector(
     selectTestPagination
   );
+    // ============================
+  // Test Fetch Parameters
+  // ============================
 
-  useEffect(() => {
-    dispatch(
-      fetchTests({
-        page: pagination.page,
-        limit: pagination.limit,
-        search: filters.search,
-        subject: filters.subject,
-        status: filters.status,
-        sort: filters.sort,
-      })
-    );
-  }, [
-    dispatch,
+const getFetchParams = useCallback(
+  () => ({
+    page: pagination.page,
+    limit: pagination.limit,
+    search: filters.search,
+    subject: filters.subject,
+    status: filters.status,
+    sort: filters.sort,
+  }),
+  [
     pagination.page,
     pagination.limit,
-    filters,
-  ]);
+    filters.search,
+    filters.subject,
+    filters.status,
+    filters.sort,
+  ]
+);
+
+  // ============================
+  // Fetch Tests
+  // ============================
+
+useEffect(() => {
+  dispatch(
+    fetchTests(
+      getFetchParams()
+    )
+  );
+}, [
+  dispatch,
+  getFetchParams,
+]);
 
   // ============================
   // Search / Filter
@@ -117,7 +139,9 @@ function Tests() {
         "Delete this test?"
       );
 
-    if (!confirmDelete) return;
+    if (!confirmDelete) {
+      return;
+    }
 
     try {
       await dispatch(
@@ -128,8 +152,23 @@ function Tests() {
         "Test deleted successfully."
       );
 
+      // --------------------------------
+      // Refetch current page so that:
+      // - pagination stays consistent
+      // - filters remain applied
+      // - sorting remains applied
+      // --------------------------------
+
+      dispatch(
+        fetchTests(
+          getFetchParams()
+        )
+      );
     } catch (error) {
-      toastService.error(error);
+      toastService.error(
+        error ||
+          "Failed to delete test."
+      );
     }
   };
 
@@ -139,16 +178,16 @@ function Tests() {
 
   const handlePublish =
     async (test) => {
-
       const confirmPublish =
         window.confirm(
           "Publish this test?"
         );
 
-      if (!confirmPublish) return;
+      if (!confirmPublish) {
+        return;
+      }
 
       try {
-
         await dispatch(
           publishTest(test._id)
         ).unwrap();
@@ -157,10 +196,20 @@ function Tests() {
           "Test published successfully."
         );
 
+        // --------------------------------
+        // Refresh list from server
+        // --------------------------------
+
+        dispatch(
+          fetchTests(
+            getFetchParams()
+          )
+        );
       } catch (error) {
-
-        toastService.error(error);
-
+        toastService.error(
+          error ||
+            "Failed to publish test."
+        );
       }
     };
 
