@@ -96,7 +96,10 @@ return (
 
       <DashboardHeader adminName="Super Admin" />
 
-      <DashboardStats dashboard={dashboard} />
+      <DashboardStats
+        dashboard={dashboard}
+        onNavigate={navigate}
+      />
 
       <div className="grid gap-8 xl:grid-cols-3">
 

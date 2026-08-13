@@ -4,7 +4,7 @@ import {
 } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-
+import { useSearchParams } from "react-router-dom";
 import DashboardLayout from "../../layouts/DashboardLayout";
 
 import TestToolbar from "../../components/tests/TestToolbar";
@@ -37,6 +37,7 @@ import { toastService } from "../../lib/toast";
 function Tests() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const tests = useSelector(selectTests);
 
@@ -49,6 +50,29 @@ function Tests() {
   const pagination = useSelector(
     selectTestPagination
   );
+  useEffect(() => {
+  const statusFromUrl =
+    searchParams.get("status");
+
+if (
+  statusFromUrl === "published" ||
+  statusFromUrl === "draft" ||
+  statusFromUrl === "archived" ||
+  statusFromUrl === "completed"
+) {
+    if (filters.status !== statusFromUrl) {
+      dispatch(
+        setFilters({
+          status: statusFromUrl,
+        })
+      );
+    }
+  }
+}, [
+  dispatch,
+  searchParams,
+  filters.status,
+]);
     // ============================
   // Test Fetch Parameters
   // ============================
