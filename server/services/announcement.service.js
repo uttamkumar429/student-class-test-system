@@ -1,6 +1,10 @@
 const Announcement = require("../models/Announcement");
 const ApiError = require("../utils/ApiError");
+const User = require("../models/User");
 
+const {
+  createNotifications,
+} = require("./notification.service");
 // =====================================
 // CREATE ANNOUNCEMENT
 // =====================================
@@ -12,6 +16,7 @@ const createAnnouncement = async ({
   isPublished = false,
   publishedAt = null,
   expiresAt = null,
+  
   createdBy,
 }) => {
   if (!createdBy) {
@@ -461,6 +466,46 @@ const publishAnnouncement =
       now;
 
     await announcement.save();
+    // =====================================
+// CREATE STUDENT NOTIFICATIONS
+// =====================================
+
+const students = await User.find({
+  role: "student",
+  isBlocked: false,
+})
+  .select("_id")
+  .lean();
+
+const studentIds =
+  students.map(
+    (student) => student._id
+  );
+
+await createNotifications({
+  studentIds,
+
+  type:
+    "ANNOUNCEMENT",
+
+  title:
+    announcement.title,
+
+  message:
+    announcement.description,
+
+  relatedId:
+    announcement._id,
+
+  relatedModel:
+    "Announcement",
+
+  actionUrl:
+    "/student/dashboard",
+
+  expiresAt:
+    announcement.expiresAt,
+});
 
     return Announcement.findById(
       announcement._id

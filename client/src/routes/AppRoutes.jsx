@@ -9,6 +9,7 @@ import Settings from "../pages/admin/Settings";
 import Announcements from "../pages/admin/Announcements";
 import CreateAnnouncement from "../pages/admin/CreateAnnouncement";
 import EditAnnouncement from "../pages/admin/EditAnnouncement";
+import Notifications from "../pages/student/Notifications";
 import StudentLayout from "../layouts/StudentLayout";
 import StudentDashboard from "../pages/student/StudentDashboard";
 import StudentExams from "../pages/student/StudentExams";
@@ -189,6 +190,10 @@ function AppRoutes() {
                 <Route
                     path="settings"
                     element={<StudentSettings />}
+                />
+                <Route
+                    path="notifications"
+                    element={<Notifications />}
                 />
 
                 <Route path="exams" element={<StudentExams />} />

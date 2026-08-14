@@ -27,6 +27,8 @@ const notificationPreferenceRoutes =
   require(
     "./routes/notificationPreference.routes"
   );
+const notificationRoutes =
+  require("./routes/notification.routes");
 const errorHandler = require("./middleware/error.middleware");
 
 const adminExamRoutes = require("./routes/adminExam.routes");
@@ -35,6 +37,7 @@ const adminReportRoutes=require("./routes/adminReport.routes");
 const adminStudentRoutes = require("./routes/adminStudent.routes");
 const announcementRoutes =
   require("./routes/announcement.routes");
+
 const examRoutes = require("./routes/exam.routes");
 const studentDashboardRoutes = require("./routes/studentDashboard.routes");
 const studentExamRoutes = require("./routes/studentExam.routes");
@@ -117,6 +120,10 @@ app.use("/api/student", studentRoutes);
 app.use(
   "/api/student/settings",
   notificationPreferenceRoutes
+);
+app.use(
+  "/api/student/notifications",
+  notificationRoutes
 );
 
 app.use("/api/student/dashboard", studentDashboardRoutes);
