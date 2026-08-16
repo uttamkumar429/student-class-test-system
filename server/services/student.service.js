@@ -1227,7 +1227,7 @@ const resumeExam = async (studentId) => {
     student: studentId,
     status: "IN-PROGRESS",
   }).select(
-    "_id totalQuestions totalMarks status testSnapshot startedAt currentQuestionIndex visitedQuestions reviewQuestions"
+    "student _id totalQuestions totalMarks status testSnapshot startedAt currentQuestionIndex visitedQuestions reviewQuestions"
   );
 
   if (!attempt) {
