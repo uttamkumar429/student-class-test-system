@@ -13,6 +13,8 @@ const {
 const {
   getNumberSetting,
 } = require("./systemSetting.service");
+const notificationService =
+  require("./notification.service");
 // ==========================================
 // STUDENT DASHBOARD
 // ==========================================
@@ -1827,6 +1829,7 @@ const submittedAttempt =
     }
   );
 
+
 // --------------------------------------
 // 13. Verify Submission
 // --------------------------------------
@@ -1837,8 +1840,42 @@ if (!submittedAttempt) {
     "Exam has already been submitted."
   );
 }
+
+// --------------------------------------
+// 14. Create Result Notification
+// --------------------------------------
+
+try {
+  await notificationService.createNotification({
+    studentId,
+
+    type: "RESULT",
+
+    title: "Result Declared",
+
+    message: `Your result has been declared. You scored ${percentage}% and ${
+      isPassed ? "passed" : "failed"
+    } the exam.`,
+
+    relatedId:
+      submittedAttempt._id,
+
+    relatedModel:
+      "ExamAttempt",
+
+    actionUrl:
+      `/student/result/${submittedAttempt._id}`,
+  });
+} catch (notificationError) {
+  // Result submission must not fail because
+  // notification delivery failed.
+  console.error(
+    "Result Notification Error:",
+    notificationError
+  );
+}
   // --------------------------------------
-  // 14. Return Result
+  // 15. Return Result
   // --------------------------------------
 
   return {
