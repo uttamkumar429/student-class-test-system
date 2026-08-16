@@ -52,8 +52,7 @@ const options = Array.isArray(question.options)
           option.text.trim() !== ""
       )
   : [];
-console.log("RAW OPTIONS:", question?.options);
-console.log("FINAL OPTIONS:", options);
+
   return (
     <article
       aria-label={`Question ${questionNumber}`}
