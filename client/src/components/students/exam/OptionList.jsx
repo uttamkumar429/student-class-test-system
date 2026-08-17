@@ -22,7 +22,7 @@ const OptionList = ({
         Question Options
       </legend>
 
-      {options.map((option, index) => {
+      {options.map((option) => {
         const optionValue =
           option.key ?? option.value;
 

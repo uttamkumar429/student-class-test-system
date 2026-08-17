@@ -7,7 +7,7 @@ import {
 } from "vitest";
 
 import {
-  act,
+  
   render,
   screen,
 } from "@testing-library/react";

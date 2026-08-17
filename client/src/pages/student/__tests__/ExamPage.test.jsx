@@ -1,8 +1,8 @@
-import React from "react";
+
 import ExamPage from "../ExamPage";
 import {
   beforeEach,
-  describe,
+  
   expect,
   test,
   vi,

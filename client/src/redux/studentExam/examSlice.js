@@ -537,7 +537,7 @@ clearSelectedAnswer: (
 
       .addCase(
         saveAnswer.fulfilled,
-        (state) => {
+        () => {
           /*
            * UI answer is already updated
            * optimistically by

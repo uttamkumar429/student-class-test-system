@@ -67,7 +67,7 @@ function ExamPage() {
     remainingTime,
     loading,
     error,
-    progressSaving,
+    
   } = useSelector(
     (state) => state.studentExam
   );

@@ -1,6 +1,5 @@
 import {
   Bell,
-  Check,
   CheckCheck,
   ClipboardCheck,
   Trophy,
