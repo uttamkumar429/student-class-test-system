@@ -1,8 +1,11 @@
+const allowedOrigins = [
+  process.env.CLIENT_URL,
+  "http://localhost:3000",
+  "http://localhost:5173",
+].filter(Boolean);
+
 const corsOptions = {
-  origin: [
-    "http://localhost:3000",
-    "http://localhost:5173",
-  ],
+  origin: allowedOrigins,
 
   methods: [
     "GET",
