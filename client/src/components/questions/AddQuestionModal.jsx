@@ -10,18 +10,14 @@ const initialFormData = {
   subject: "",
   chapter: "",
   question: "",
-
   optionA: "",
   optionB: "",
   optionC: "",
   optionD: "",
 
   correctAnswer: "A",
-
   difficulty: "Medium",
-
   marks: 1,
-
   explanation: "",
 };
 const AddQuestionModal = ({
@@ -38,35 +34,26 @@ const [loading, setLoading] = useState(false);
 
 useEffect(() => {
 
+
+
   if (question) {
-
+    // Intentional synchronization of question data into local form state.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setFormData({
-
       subject: question.subject || "",
-
       chapter: question.chapter || "",
-
       question: question.question || "",
-
       optionA: question.optionA || "",
-
       optionB: question.optionB || "",
-
       optionC: question.optionC || "",
-
       optionD: question.optionD || "",
-
       correctAnswer:
         question.correctAnswer || "A",
-
       difficulty:
         question.difficulty || "Medium",
-
       marks: question.marks || 1,
-
       explanation:
         question.explanation || "",
-
     });
 
   } else {

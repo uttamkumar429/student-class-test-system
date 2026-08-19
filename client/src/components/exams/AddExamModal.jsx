@@ -25,18 +25,21 @@ const AddExamModal = ({
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        if (exam) {
-          setFormData({
-            title: exam.title || "",
-            subject: exam.subject || "",
-            className: exam.className || "",
-            totalMarks: exam.totalMarks || "",
-            duration: exam.duration || "",
-            examDate: exam.examDate
-                ? exam.examDate.split("T")[0]
-                : "",
-            status: exam.status || "Upcoming",
-          });
+      if (exam) {
+        // Intentional synchronization of edit data into local form state.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setFormData({
+          title: exam.title || "",
+          subject: exam.subject || "",
+          className: exam.className || "",
+          totalMarks: exam.totalMarks || "",
+          duration: exam.duration || "",
+          examDate: exam.examDate
+            ? exam.examDate.split("T")[0]
+            : "",
+          status: exam.status || "Upcoming",
+        });
+
         } else {
             setFormData({
                 title: "",

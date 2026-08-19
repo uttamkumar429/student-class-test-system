@@ -6,9 +6,10 @@ const storedUser = localStorage.getItem("user");
 let parsedUser = null;
 
 try {
-  parsedUser = storedUser ? JSON.parse(storedUser) : null;
+  parsedUser = storedUser
+    ? JSON.parse(storedUser)
+    : null;
 } catch {
-  parsedUser = null;
   localStorage.removeItem("user");
 }
 

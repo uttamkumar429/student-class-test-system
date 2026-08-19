@@ -78,6 +78,8 @@ function Settings() {
   // ======================================
 
   useEffect(() => {
+    // Intentional synchronization of persisted setting into editable local input state.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPassPercentageInput(
       String(passPercentage)
     );

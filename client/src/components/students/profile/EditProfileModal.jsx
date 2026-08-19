@@ -21,12 +21,17 @@ function EditProfileModal({
     bio: "",
   });
 
-  useEffect(() => {
+
+useEffect(() => {
     if (profile) {
-      setFormData({
+        // Intentional synchronization of profile data into local form state.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setFormData({
         fullName: profile.fullName || "",
         phone: profile.phone || "",
-        dob: profile.dob ? profile.dob.substring(0, 10) : "",
+        dob: profile.dob
+            ? profile.dob.substring(0, 10)
+            : "",
         gender: profile.gender || "",
         schoolName: profile.schoolName || "",
         className: profile.className || "",
@@ -35,9 +40,9 @@ function EditProfileModal({
         state: profile.state || "",
         district: profile.district || "",
         bio: profile.bio || "",
-      });
+        });
     }
-  }, [profile]);
+    }, [profile]);
 
   const handleChange = (event) => {
     const { name, value } = event.target;

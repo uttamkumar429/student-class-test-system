@@ -27,16 +27,12 @@ function ProfilePage() {
     } = useSelector((state) => state.studentProfile);
 
     useEffect(() => {
-    console.log("✅ ProfilePage Mounted");
 
     dispatch(fetchProfile());
     }, [dispatch]);
     useEffect(() => {
         if (success) {
-            setIsEditModalOpen(false);
-
             dispatch(resetProfileSuccess());
-
             dispatch(fetchProfile());
         }
     }, [success, dispatch]);
@@ -70,14 +66,6 @@ function ProfilePage() {
       </div>
     );
   }
-
-//   if (error) {
-//     return (
-//       <div className="flex min-h-screen items-center justify-center text-red-600">
-//         {error}
-//       </div>
-//     );
-//   }
 
   if (!profile) {
     return (

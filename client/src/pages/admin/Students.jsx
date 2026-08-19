@@ -65,9 +65,12 @@ function Students() {
     }
 
   };
-    useEffect(() => {
-      fetchStudents();
-    }, []);
+  useEffect(() => {
+    // Intentional initial data fetch for the admin students page.
+    // The callback performs async API work and updates loading/student state.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchStudents();
+  }, []);
     const filteredStudents = students.filter((student) => {
 
     const keyword = search.toLowerCase();

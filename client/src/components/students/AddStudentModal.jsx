@@ -32,12 +32,14 @@ function AddStudentModal({
 
     };
     useEffect(() => {
-        if (student) {
+            if (student) {
+            // Intentional synchronization of student data into local form state.
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setFormData({
-            fullName: student.fullName || "",
-            email: student.email || "",
-            phone: student.phone || "",
-            password: "",
+                fullName: student.fullName || "",
+                email: student.email || "",
+                phone: student.phone || "",
+                password: "",
             });
         } else {
             setFormData({

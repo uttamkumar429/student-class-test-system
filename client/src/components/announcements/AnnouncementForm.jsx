@@ -29,10 +29,14 @@ function AnnouncementForm({
 
   useEffect(() => {
     if (!initialValues) {
+      // Intentional prop → local form-state synchronization.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setFormData(DEFAULT_FORM);
       return;
     }
 
+    // Intentional prop → local form-state synchronization.
+    
     setFormData({
       title: initialValues.title || "",
       description:

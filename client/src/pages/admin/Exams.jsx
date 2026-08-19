@@ -28,9 +28,6 @@ const Exams = () => {
 
             const response = await getExams();
 
-            console.log("Response:", response);
-            console.log("Response.data:", response.data);
-
             setExams(response.data);
 
         } catch (error) {
@@ -40,10 +37,13 @@ const Exams = () => {
         }
     }, []);
         
-        useEffect(() => {
-            fetchExams();
-        }, [fetchExams]);
-    console.log("Exams State:", exams);
+    useEffect(() => {
+        // Intentional initial data fetch for the admin exams page.
+        // The callback performs async API work and updates loading/exam state.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        fetchExams();
+    }, [fetchExams]);
+
     const filteredExams = useMemo(() => {
         return exams.filter((exam) => {
             return (
