@@ -70,7 +70,19 @@ app.get("/api/health", (req, res) => {
     message: "Server is running successfully.",
   });
 });
+// Root API Route
 
+app.get("/", (req, res) => {
+
+  return res.status(200).json({
+
+    success: true,
+
+    message: "Student Class Test System API is running successfully.",
+
+  });
+
+});
 // =========================
 // Routes
 // =========================
@@ -105,6 +117,7 @@ app.use(
 app.use("/api/admin/exams", examRoutes);
 // Profile
 app.use("/api/profile", profileRoutes);
+
 
 // Questions
 app.use("/api/questions", questionRoutes);
