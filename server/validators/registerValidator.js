@@ -1,16 +1,19 @@
 const validator = require("validator");
 
-const validateRegister = (body) => {
+const validateRegister = (body = {}) => {
   const errors = [];
 
-  if (!body.fullName || body.fullName.trim().length < 3)
+  if (!body.fullName || body.fullName.trim().length < 3) {
     errors.push("Full name is required.");
+  }
 
-  if (!validator.isEmail(body.email || ""))
+  if (!validator.isEmail(body.email || "")) {
     errors.push("Invalid email.");
+  }
 
-  if (!validator.isMobilePhone(body.phone || "", "en-IN"))
+  if (!validator.isMobilePhone(body.phone || "", "en-IN")) {
     errors.push("Invalid phone number.");
+  }
 
   if (
     !validator.isStrongPassword(body.password || "", {
