@@ -18,13 +18,11 @@ import {
 import {
   selectQuestionLoading,
   selectQuestionError,
-  selectQuestionSuccess,
 } from "../../redux/adminQuestion/questionSelectors";
 
 function CreateQuestion() {
 
   const dispatch = useDispatch();
-
   const navigate = useNavigate();
 
   const loading = useSelector(
@@ -35,22 +33,6 @@ function CreateQuestion() {
     selectQuestionError
   );
 
-  const success = useSelector(
-    selectQuestionSuccess
-  );
-  // ==========================
-// Clear Previous State
-// ==========================
-
-  useEffect(() => {
-    dispatch(clearSuccess());
-    dispatch(clearError());
-  }, [dispatch]);
-
-  // ==========================
-  // Submit
-  // ==========================
-
   const handleSubmit = async (data) => {
 
     try {
@@ -59,39 +41,23 @@ function CreateQuestion() {
         createQuestion(data)
       ).unwrap();
 
+      toast.success(
+        "Question created successfully."
+      );
+
+      dispatch(clearSuccess());
+
+      navigate("/admin/questions");
+
     } catch (error) {
 
-      console.error(error);
+      toast.error(
+        error || "Failed to create question."
+      );
 
     }
 
   };
-
-  // ==========================
-  // Success
-  // ==========================
-
-  useEffect(() => {
-
-    if (!success) return;
-
-    toast.success(
-      "Question created successfully."
-    );
-
-    dispatch(clearSuccess());
-
-    navigate("/admin/questions");
-
-  }, [
-    success,
-    dispatch,
-    navigate,
-  ]);
-
-  // ==========================
-  // Error
-  // ==========================
 
   useEffect(() => {
 
@@ -112,25 +78,17 @@ function CreateQuestion() {
 
       <div className="mx-auto max-w-5xl space-y-6">
 
-        {/* Header */}
-
         <div>
 
           <h1 className="text-3xl font-bold text-slate-900">
-
             Create Question
-
           </h1>
 
           <p className="mt-2 text-slate-500">
-
             Add a new question to the question bank.
-
           </p>
 
         </div>
-
-        {/* Form */}
 
         <QuestionForm
           mode="create"

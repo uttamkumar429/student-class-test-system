@@ -122,7 +122,7 @@ const questionSlice = createSlice({
     .addCase(fetchQuestions.pending, (state) => {
         state.loading = true;
         state.error = null;
-        state.success = false;
+        
     })
 
     .addCase(fetchQuestions.fulfilled, (state, action) => {
@@ -139,7 +139,7 @@ const questionSlice = createSlice({
         totalPages: data.totalPages || 1,
     };
 
-    state.success = true;
+    
     })
 
     .addCase(fetchQuestions.rejected, (state, action) => {
@@ -173,8 +173,9 @@ const questionSlice = createSlice({
       // ============================
 
       .addCase(createQuestion.pending, (state) => {
-        state.loading = true;
-        state.error = null;
+          state.loading = true;
+          state.error = null;
+          state.success = false;
       })
 
       .addCase(createQuestion.fulfilled, (state) => {
@@ -192,8 +193,9 @@ const questionSlice = createSlice({
       // ============================
 
       .addCase(updateQuestion.pending, (state) => {
-        state.loading = true;
-        state.error = null;
+          state.loading = true;
+          state.error = null;
+          state.success = false;
       })
 
       .addCase(updateQuestion.fulfilled, (state) => {

@@ -117,9 +117,9 @@ fetchQuestions({
   // Add Question
   // ==========================================
 
-  const handleAddQuestion = () => {
-    navigate("/admin/questions/create");
-  };
+const handleAddQuestion = () => {
+  navigate("/admin/questions/create");
+};
 
   // ==========================================
   // Preview Question
