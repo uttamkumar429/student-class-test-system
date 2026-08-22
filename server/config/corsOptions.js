@@ -1,19 +1,32 @@
 const allowedOrigins = [
   process.env.CLIENT_URL,
+
   "https://student-class-test-system-1.onrender.com",
+
   "http://localhost:3000",
+
   "http://localhost:5173",
 ].filter(Boolean);
 
 const corsOptions = {
   origin: (origin, callback) => {
-    // Postman / server-to-server requests
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      console.log("Blocked by CORS:", origin);
-      callback(new Error("Not allowed by CORS"));
+
+    // Allow requests without origin
+    // Example: Postman, server-to-server
+    if (!origin) {
+      return callback(null, true);
     }
+
+    // Allow known frontend origins
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    console.log("Blocked by CORS:", origin);
+
+    return callback(
+      new Error(`Not allowed by CORS: ${origin}`)
+    );
   },
 
   methods: [
@@ -22,6 +35,7 @@ const corsOptions = {
     "PUT",
     "DELETE",
     "PATCH",
+    "OPTIONS",
   ],
 
   allowedHeaders: [
@@ -32,6 +46,8 @@ const corsOptions = {
   credentials: true,
 
   optionsSuccessStatus: 200,
+
+  maxAge: 86400,
 };
 
 module.exports = corsOptions;

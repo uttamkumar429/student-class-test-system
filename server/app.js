@@ -46,18 +46,27 @@ const systemSettingRoutes =
   require("./routes/systemSetting.routes");
 
 // =========================
+// =========================
 // Global Middleware
 // =========================
 
-app.use(helmet());
-app.use(apiLimiter);
-app.use(mongoSanitize);
 app.use(cors(corsOptions));
 
+app.use(helmet());
+
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+
+app.use(
+  express.urlencoded({
+    extended: true,
+  })
+);
 
 app.use(cookieParser());
+
+app.use(mongoSanitize);
+
+app.use(apiLimiter);
 
 app.use(morgan("dev"));
 

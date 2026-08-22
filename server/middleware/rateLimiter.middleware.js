@@ -1,31 +1,70 @@
 const rateLimit = require("express-rate-limit");
 
-const isProduction = process.env.NODE_ENV === "production";
+const isProduction =
+  process.env.NODE_ENV === "production";
 
+// ===============================
 // General API Limiter
+// ===============================
+
 const apiLimiter = rateLimit({
+
   windowMs: 15 * 60 * 1000,
-  max: isProduction ? 100 : 100000,
+
+  max: isProduction ? 1000 : 100000,
+
   standardHeaders: true,
+
   legacyHeaders: false,
-  skip: () => process.env.NODE_ENV === "test",
+
+  // Skip OPTIONS preflight requests
+  skip: (req) => {
+
+    if (process.env.NODE_ENV === "test") {
+      return true;
+    }
+
+    if (req.method === "OPTIONS") {
+      return true;
+    }
+
+    return false;
+  },
+
   message: {
     success: false,
-    message: "Too many requests. Please try again after 15 minutes.",
+
+    message:
+      "Too many requests. Please try again after 15 minutes.",
   },
+
 });
 
+// ===============================
 // Login Limiter
+// ===============================
+
 const loginLimiter = rateLimit({
+
   windowMs: 15 * 60 * 1000,
+
   max: 100,
+
   standardHeaders: true,
+
   legacyHeaders: false,
-  skip: () => process.env.NODE_ENV === "test",
+
+  skip: (req) =>
+    process.env.NODE_ENV === "test" ||
+    req.method === "OPTIONS",
+
   message: {
     success: false,
-    message: "Too many login attempts. Please try again later.",
+
+    message:
+      "Too many login attempts. Please try again later.",
   },
+
 });
 
 module.exports = {

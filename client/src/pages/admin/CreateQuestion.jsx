@@ -38,6 +38,14 @@ function CreateQuestion() {
   const success = useSelector(
     selectQuestionSuccess
   );
+  // ==========================
+// Clear Previous State
+// ==========================
+
+  useEffect(() => {
+    dispatch(clearSuccess());
+    dispatch(clearError());
+  }, [dispatch]);
 
   // ==========================
   // Submit
