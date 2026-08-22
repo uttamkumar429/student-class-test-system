@@ -95,7 +95,7 @@ app.use(
     "/api/admin",
     adminRoutes
 );
-
+app.use("/api/admin/exams", examRoutes);
 app.use("/api/admin/exams", adminExamRoutes);
 app.use(
     "/api/admin/analytics",
@@ -114,7 +114,7 @@ app.use(
   "/api/announcements",
   announcementRoutes
 );
-app.use("/api/admin/exams", examRoutes);
+
 // Profile
 app.use("/api/profile", profileRoutes);
 
@@ -159,8 +159,6 @@ if(process.env.NODE_ENV!=="production"){
   );
 
 }
-app.use(errorHandler);
-
 // =========================
 // 404 Route
 // =========================
@@ -170,6 +168,11 @@ app.use((req, res) => {
     message: "Route not found.",
   });
 });
+
+// =========================
+// Global Error Handler
+// =========================
+app.use(errorHandler);
 
 
 
