@@ -27,8 +27,7 @@ import ResultPage from "../pages/student/ResultPage";
 import ResultHistory from "../pages/student/ResultHistory";
 import ExamPage from "../pages/student/ExamPage";
 import ReviewAnswersPage from "../pages/student/ReviewAnswersPage";
-
-import ProtectedRoute from "./ProtectedRoute";
+import RoleProtectedRoute from "./RoleProtectedRoute";
 
 function AppRoutes() {
     
@@ -44,146 +43,146 @@ function AppRoutes() {
         {/* Protected Route */}
         {/* console.log("AppRoutes Rendered"); */}
         <Route
-            path="/admin/dashboard"
-            element={
-            <ProtectedRoute>
-                <AdminDashboard />
-            </ProtectedRoute>
-            }
+        path="/admin/dashboard"
+        element={
+        <RoleProtectedRoute allowedRoles={["admin"]}>
+         <AdminDashboard />
+        </RoleProtectedRoute>
+        }
         />
         <Route
             path="/admin/questions"
             element={
-                <ProtectedRoute>
+                <RoleProtectedRoute allowedRoles={["admin"]}>
                 <Questions />
-                </ProtectedRoute>
+                </RoleProtectedRoute>
             }
         />
         <Route
             path="/admin/questions/create"
             element={
-                <ProtectedRoute>
+                <RoleProtectedRoute allowedRoles={["admin"]}>
                 <CreateQuestion />
-                </ProtectedRoute>
+                </RoleProtectedRoute>
             }
         />
         <Route
             path="/admin/questions/edit/:id"
             element={
-                <ProtectedRoute>
+                <RoleProtectedRoute allowedRoles={["admin"]}>
                 <EditQuestion />
-                </ProtectedRoute>
+               </RoleProtectedRoute>
             }
         />
         <Route
             path="/admin/questions/:id"
             element={
-                <ProtectedRoute>
+                <RoleProtectedRoute allowedRoles={["admin"]}>
                 <QuestionDetails />
-                </ProtectedRoute>
+                </RoleProtectedRoute>
             }
         />
         <Route
             path="/admin/tests/create"
             element={
-              <ProtectedRoute>
+              <RoleProtectedRoute allowedRoles={["admin"]}>
                 <CreateTest />
-              </ProtectedRoute>
+             </RoleProtectedRoute>
             }
             
         />
         <Route
             path="/admin/tests/:id"
             element={
-                <ProtectedRoute>
+                <RoleProtectedRoute allowedRoles={["admin"]}>
                 <TestDetails />
-                </ProtectedRoute>
+               </RoleProtectedRoute>
             }
         />
 
         <Route
             path="/admin/tests/:id/edit"
             element={
-                <ProtectedRoute>
+                <RoleProtectedRoute allowedRoles={["admin"]}>
                 <EditTest />
-                </ProtectedRoute>
+                </RoleProtectedRoute>
             }
         />
         <Route
             path="/admin/students"
             element={
-                <ProtectedRoute>
+               <RoleProtectedRoute allowedRoles={["admin"]}>
                 <Students />
-                </ProtectedRoute>
+                </RoleProtectedRoute>
             }
         />
         <Route
             path="/admin/exams"
             element={
-                <ProtectedRoute>
+                <RoleProtectedRoute allowedRoles={["admin"]}>
                 <Exams />
-                </ProtectedRoute>
+                </RoleProtectedRoute>
             }
         />
         <Route
             path="/admin/tests"
             element={
-                <ProtectedRoute>
+                <RoleProtectedRoute allowedRoles={["admin"]}>
                 <Tests />
-                </ProtectedRoute>
+               </RoleProtectedRoute>
             }
         />
 
         <Route
             path="/admin/results"
             element={
-                <ProtectedRoute>
+                <RoleProtectedRoute allowedRoles={["admin"]}>
                 <Results />
-                </ProtectedRoute>
+                </RoleProtectedRoute>
             }
         />
 
         <Route
             path="/admin/settings"
             element={
-                <ProtectedRoute>
+                <RoleProtectedRoute allowedRoles={["admin"]}>
                 <Settings />
-                </ProtectedRoute>
+               </RoleProtectedRoute>
             }
         />  
         <Route
             path="/admin/announcements"
             element={
-                <ProtectedRoute>
+                <RoleProtectedRoute allowedRoles={["admin"]}>
                 <Announcements />
-                </ProtectedRoute>
+               </RoleProtectedRoute>
             }
         /> 
         <Route
             path="/admin/announcements/create"
             element={
-                <ProtectedRoute>
+                <RoleProtectedRoute allowedRoles={["admin"]}>
                 <CreateAnnouncement />
-                </ProtectedRoute>
+                </RoleProtectedRoute>
             }
         />
         <Route
             path="/admin/announcements/:id/edit"
             element={
-                <ProtectedRoute>
+                <RoleProtectedRoute allowedRoles={["admin"]}>
                 <EditAnnouncement />
-                </ProtectedRoute>
+                </RoleProtectedRoute>
             }
         />
 
             <Route
-                path="/student"
-                element={
-                    <ProtectedRoute>
-                    <StudentLayout />
-                    </ProtectedRoute>
-                }
-                >
+            path="/student"
+            element={
+                <RoleProtectedRoute allowedRoles={["student"]}>
+                <StudentLayout />
+                </RoleProtectedRoute>
+            }
+            >
                 <Route path="dashboard" element={<StudentDashboard />} />
 
                 <Route path="profile" element={<ProfilePage />} />
