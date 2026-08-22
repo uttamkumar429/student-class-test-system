@@ -1,52 +1,42 @@
-# 🎓 Student Class Test System – Backend
+# 🎓 Student Class Test System
 
-> Production-ready REST API for the Student Class Test System, built with Node.js, Express.js, and MongoDB.
+> A production-ready full-stack application for managing student class tests, question banks, online exams, results, analytics, reports, and student performance.
 
-This backend powers the complete examination workflow of the **Student Class Test System**. It provides secure authentication, role-based authorization, student management, question management, test creation and publishing, exam attempts, result generation, analytics, reports, notifications, profile management, and system settings.
+The **Student Class Test System** provides a complete examination workflow for both administrators and students. Administrators can manage students, create questions, build and publish tests, monitor exam activity, analyze performance, and generate reports. Students can securely log in, manage their profiles, attempt available exams, submit answers, and view their results.
 
 ---
 
-## 🚀 Features
+## ✨ Features
+
 
 ### 🔐 Authentication & Authorization
 
 - JWT-based authentication
-- Student registration
-- Student login
+- Secure student registration and login
 - Admin login
 - Role-based authorization
 - Protected API routes
 - Password hashing using bcrypt
-- JWT token verification
+- Secure token verification
 - Request validation
-
----
 
 ### 👨‍💼 Admin Features
 
-- Admin authentication
 - Admin dashboard
 - Student management
 - Question bank management
 - Create, update, and delete questions
-- Search questions
-- Filter questions
-- Sort and paginate questions
+- Search, filter, sort, and paginate questions
 - Create and manage tests
-- Publish tests
-- Manage exam availability
-- View student performance
-- Analytics and statistics
+- Publish and manage exams
+- View analytics
 - Generate reports
 - Manage announcements
-- Manage notifications
 - System settings
-
----
 
 ### 👨‍🎓 Student Features
 
-- Secure registration and login
+- Student registration and login
 - Profile management
 - Profile photo upload
 - Student dashboard
@@ -55,13 +45,13 @@ This backend powers the complete examination workflow of the **Student Class Tes
 - Submit exams
 - View results
 - Notification preferences
-- Receive notifications
+- Student notifications
 
 ---
 
-## 📝 Question Management
+## 📝 Question Bank
 
-The question bank supports:
+The question management system supports:
 
 - Subject
 - Chapter
@@ -73,41 +63,25 @@ The question bank supports:
 - Marks
 - Question creator information
 
-### Supported Difficulty Levels
+Supported difficulty levels:
 
 - Easy
 - Medium
 - Hard
 
-### Additional Features
+Additional features:
 
-- Search
-- Subject filtering
-- Chapter filtering
-- Difficulty filtering
+- Search questions
+- Filter by subject
+- Filter by chapter
+- Filter by difficulty
 - Pagination
 - Sorting
 - Question metadata
 
 ---
 
-## 📚 Test Management
-
-Administrators can:
-
-- Create tests
-- Update tests
-- Delete tests
-- Add questions to tests
-- Manage test status
-- Publish tests
-- View test details
-- Manage exam availability
-- Monitor completed attempts
-
----
-
-## 🧪 Complete Exam Workflow
+## 📚 Complete Exam Workflow
 
 ```text
 Admin Login
@@ -136,7 +110,7 @@ Admin Analytics & Reports
 
 ## 📊 Dashboard & Analytics
 
-The backend provides analytics and statistics for administrators, including:
+The admin dashboard provides important system statistics, including:
 
 - Total students
 - Active students
@@ -162,7 +136,7 @@ The backend provides analytics and statistics for administrators, including:
 
 ## 📑 Reports
 
-The reporting system supports:
+The application supports report generation and analysis, including:
 
 - Student performance reports
 - Exam-related reports
@@ -170,21 +144,17 @@ The reporting system supports:
 - PDF reports
 - Excel reports
 
-The backend uses appropriate services for generating downloadable reports.
-
 ---
 
 ## 🖼️ Profile Image Upload
 
-Profile images are securely handled using:
+Profile image upload is handled securely using:
 
 - Multer
 - File validation
 - Image type validation
 - File size validation
 - Cloudinary
-
-### Upload Flow
 
 ```text
 Image Selected
@@ -205,25 +175,35 @@ Profile Updated
 ## 📁 Project Structure
 
 ```text
-server/
+student-class-test-system/
 │
-├── config/          # Database, Cloudinary, and application configuration
-├── controllers/     # Request handling and controller logic
-├── middleware/      # Authentication, authorization, validation, and error handling
-├── models/          # Mongoose database models
-├── routes/          # API route definitions
-├── services/        # Business logic and reusable services
-├── validators/      # Request validation rules
-├── tests/           # Automated test suites
-├── utils/           # Utility and helper functions
-├── scripts/         # Application scripts
+├── client/
+│   ├── src/
+│   └── ...
 │
-├── app.js           # Express application configuration
-├── server.js        # Application entry point
-├── package.json     # Dependencies and scripts
-└── README.md        # Backend documentation
+├── server/
+│   ├── config/
+│   ├── controllers/
+│   ├── middleware/
+│   ├── models/
+│   ├── routes/
+│   ├── services/
+│   ├── validators/
+│   ├── tests/
+│   ├── utils/
+│   ├── scripts/
+│   ├── app.js
+│   ├── server.js
+│   └── package.json
+│
+├── README.md
+├── PROJECT_DOCUMENTATION.md
+└── .gitignore
+
+```
 
 ---
+
 ## ⚙️ Installation
 
 ### 1. Clone the Repository
@@ -232,21 +212,23 @@ server/
 git clone https://github.com/uttamkumar429/student-class-test-system.git
 ```
 
-### 2. Navigate to the Project Directory
-
 ```bash
 cd student-class-test-system
 ```
 
-### 3. Navigate to the Backend Directory
+### 2. Install Backend Dependencies
 
 ```bash
 cd server
+npm install
 ```
 
-### 4. Install Dependencies
+### 3. Install Frontend Dependencies
+
+Open another terminal:
 
 ```bash
+cd client
 npm install
 ```
 
@@ -256,8 +238,6 @@ npm install
 
 Create a `.env` file inside the `server` directory.
 
-Add the required environment variables:
-
 ```env
 PORT=5000
 
@@ -266,21 +246,16 @@ NODE_ENV=development
 MONGODB_URI=
 
 JWT_SECRET=
-
 JWT_EXPIRES_IN=7d
 
 CLIENT_URL=http://localhost:5173
 
 CLOUDINARY_CLOUD_NAME=
-
 CLOUDINARY_API_KEY=
-
 CLOUDINARY_API_SECRET=
 
 ADMIN_NAME=
-
 ADMIN_EMAIL=
-
 ADMIN_PASSWORD=
 ```
 
@@ -288,32 +263,40 @@ ADMIN_PASSWORD=
 
 ---
 
-## ▶️ Running the Backend
+## ▶️ Running the Application
 
-Make sure MongoDB and all required environment variables are configured before starting the server.
+### Backend
 
-### Development Mode
-
-Run the backend with:
+Inside the `server` directory:
 
 ```bash
 npm run dev
 ```
 
-The server will start in development mode.
-
-### Production Mode
-
-Run the backend with:
+For production:
 
 ```bash
 npm start
 ```
 
-By default, the backend runs on:
+The backend runs on:
 
 ```text
 http://localhost:5000
+```
+
+### Frontend
+
+Inside the `client` directory:
+
+```bash
+npm run dev
+```
+
+The frontend typically runs on:
+
+```text
+http://localhost:5173
 ```
 
 ---
@@ -362,7 +345,7 @@ npm run test:coverage
 
 Swagger API documentation is available in development mode.
 
-Start the backend server and open:
+Start the backend and open:
 
 ```text
 http://localhost:5000/api/docs
@@ -374,7 +357,7 @@ http://localhost:5000/api/docs
 
 ## 🔒 Security Features
 
-The backend includes multiple security layers to help protect the application and its APIs.
+The application includes multiple security layers:
 
 ### Authentication & Authorization
 
@@ -382,7 +365,6 @@ The backend includes multiple security layers to help protect the application an
 - Role-based authorization
 - Protected API routes
 - Password hashing using bcrypt
-- Secure JWT token verification
 
 ### API Security
 
@@ -414,7 +396,7 @@ The backend includes multiple security layers to help protect the application an
 
 ## 🏗️ Backend Architecture
 
-The backend follows a layered architecture to maintain a clean separation of concerns and reusable business logic.
+The backend follows a layered architecture to maintain clean separation of concerns and reusable business logic.
 
 ```text
 Client Request
@@ -429,7 +411,7 @@ Services
        ↓
 Models
        ↓
-MongoDB
+MongoDB Atlas
 ```
 
 This architecture provides:
@@ -478,18 +460,14 @@ Authorization: Bearer YOUR_JWT_TOKEN
 
 ## 🚀 Deployment
 
-The backend is designed for deployment in a production environment.
-
-### Deployment Stack
+The application uses cloud services for deployment and infrastructure.
 
 | Service | Purpose |
 |---|---|
-| Render | Backend application deployment |
-| MongoDB Atlas | Cloud database |
-| Cloudinary | Profile image storage |
-| GitHub | Source code and version control |
-
-Before deploying, make sure all required production environment variables are configured correctly.
+| Render | Application Deployment |
+| MongoDB Atlas | Cloud Database |
+| Cloudinary | Profile Image Storage |
+| GitHub | Source Code & Version Control |
 
 ---
 
