@@ -13,6 +13,9 @@ import {
   Eye,
   EyeOff,
   Save,
+  Sun,
+  Moon,
+  Monitor,
 } from "lucide-react";
 
 import { useNavigate } from "react-router-dom";
@@ -73,7 +76,54 @@ const notificationError =
 
   const [passwordError, setPasswordError] =
     useState("");
+  const [theme, setTheme] = useState(
+    () => localStorage.getItem("studentTheme") || "system"
+  );
+  useEffect(() => {
+  const root = document.documentElement;
 
+  const applyTheme = () => {
+    const systemPrefersDark = window.matchMedia(
+      "(prefers-color-scheme: dark)"
+    ).matches;
+
+    const resolvedTheme =
+      theme === "system"
+        ? systemPrefersDark
+          ? "dark"
+          : "light"
+        : theme;
+
+    root.setAttribute("data-theme", resolvedTheme);
+
+    root.style.colorScheme = resolvedTheme;
+  };
+
+  applyTheme();
+
+  if (theme !== "system") {
+    return;
+  }
+
+  const mediaQuery = window.matchMedia(
+    "(prefers-color-scheme: dark)"
+  );
+
+  mediaQuery.addEventListener("change", applyTheme);
+
+  return () => {
+    mediaQuery.removeEventListener(
+      "change",
+      applyTheme
+    );
+  };
+}, [theme]);
+
+const handleThemeChange = (value) => {
+  setTheme(value);
+
+  localStorage.setItem("studentTheme", value);
+};
   const handleLogout = () => {
     localStorage.clear();
 
@@ -421,6 +471,60 @@ const handleNotificationToggle =
         )}
 
         </section>
+        {/* ======================================
+                APPEARANCE
+            ====================================== */}
+
+            <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+
+              <div className="mb-6">
+
+                <h2 className="flex items-center gap-2 text-xl font-bold text-slate-800">
+                  <SettingsIcon size={22} />
+                  Appearance
+                </h2>
+
+                <p className="mt-1 text-sm text-slate-500">
+                  Choose how the application looks.
+                </p>
+
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-3">
+
+                <ThemeOption
+                  icon={<Sun size={22} />}
+                  title="Light"
+                  description="Always use light mode."
+                  active={theme === "light"}
+                  onClick={() =>
+                    handleThemeChange("light")
+                  }
+                />
+
+                <ThemeOption
+                  icon={<Moon size={22} />}
+                  title="Dark"
+                  description="Always use dark mode."
+                  active={theme === "dark"}
+                  onClick={() =>
+                    handleThemeChange("dark")
+                  }
+                />
+
+                <ThemeOption
+                  icon={<Monitor size={22} />}
+                  title="System"
+                  description="Follow your device setting."
+                  active={theme === "system"}
+                  onClick={() =>
+                    handleThemeChange("system")
+                  }
+                />
+
+              </div>
+
+            </section>
 
       {/* Security */}
 
@@ -736,6 +840,44 @@ function NotificationToggle({
       </button>
 
     </div>
+  );
+}
+
+function ThemeOption({
+  icon,
+  title,
+  description,
+  active,
+  onClick,
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`rounded-xl border p-5 text-left transition ${
+        active
+          ? "border-blue-600 bg-blue-50 ring-2 ring-blue-100"
+          : "border-slate-200 bg-white hover:border-blue-300 hover:bg-slate-50"
+      }`}
+    >
+      <div
+        className={`mb-4 flex h-10 w-10 items-center justify-center rounded-lg ${
+          active
+            ? "bg-blue-600 text-white"
+            : "bg-slate-100 text-slate-600"
+        }`}
+      >
+        {icon}
+      </div>
+
+      <h3 className="font-semibold text-slate-800">
+        {title}
+      </h3>
+
+      <p className="mt-1 text-sm text-slate-500">
+        {description}
+      </p>
+    </button>
   );
 }
 export default StudentSettings;
