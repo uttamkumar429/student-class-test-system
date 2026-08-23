@@ -90,17 +90,48 @@ const createAnnouncement = async ({
     }
   }
 
-  return Announcement.create({
-    title: normalizedTitle,
-    description:
-      normalizedDescription,
-    type,
-    isPublished,
-    publishedAt:
-      finalPublishedAt,
-    expiresAt,
-    createdBy,
+const announcement = await Announcement.create({
+  title: normalizedTitle,
+  description: normalizedDescription,
+  type,
+  isPublished,
+  publishedAt: finalPublishedAt,
+  expiresAt,
+  createdBy,
+});
+
+if (announcement.isPublished) {
+  const students = await User.find({
+    role: "student",
+    isBlocked: false,
+  })
+    .select("_id")
+    .lean();
+
+  const studentIds = students.map(
+    (student) => student._id
+  );
+
+  await createNotifications({
+    studentIds,
+
+    type: "ANNOUNCEMENT",
+
+    title: announcement.title,
+
+    message: announcement.description,
+
+    relatedId: announcement._id,
+
+    relatedModel: "Announcement",
+
+    actionUrl: "/student/dashboard",
+
+    expiresAt: announcement.expiresAt,
   });
+}
+
+return announcement;
 };
 
 // =====================================
