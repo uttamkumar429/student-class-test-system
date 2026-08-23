@@ -4,6 +4,7 @@ const Question = require("../models/Question");
 const ApiError = require("../utils/ApiError");
 const TestSnapshot = require("../models/TestSnapshot");
 
+
 // =====================================
 // ESCAPE REGEX
 // =====================================
@@ -189,9 +190,9 @@ const createTest = async (testData) => {
 
     startTime: testData.startTime,
 
-    endTime: testData.endTime,
+    startTime: new Date(testData.startTime),
 
-    createdBy: testData.createdBy,
+    endTime: new Date(testData.endTime),
 
     status: "draft",
   });

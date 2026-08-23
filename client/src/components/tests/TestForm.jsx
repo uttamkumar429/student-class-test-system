@@ -2,6 +2,29 @@ import {useState } from "react";
 
 import QuestionSelector from "../questions/QuestionSelector";
 import { toastService } from "../../lib/toast";
+const convertLocalToUTC = (dateTime) => {
+  if (!dateTime) return null;
+
+  return new Date(dateTime).toISOString();
+};
+
+const formatDateTimeLocal = (dateTime) => {
+  if (!dateTime) return "";
+
+  const date = new Date(dateTime);
+
+  const offset =
+    date.getTimezoneOffset();
+
+  const localDate = new Date(
+    date.getTime() - offset * 60 * 1000
+  );
+
+  return localDate
+    .toISOString()
+    .slice(0, 16);
+};
+
 const getInitialFormData = (initialValues) => ({
   title: initialValues?.title || "",
   subject: initialValues?.subject || "",
@@ -9,12 +32,13 @@ const getInitialFormData = (initialValues) => ({
     initialValues?.description || "",
   duration:
     initialValues?.duration || "",
-  startTime: initialValues?.startTime
-    ? initialValues.startTime.slice(0, 16)
-    : "",
-  endTime: initialValues?.endTime
-    ? initialValues.endTime.slice(0, 16)
-    : "",
+  startTime: formatDateTimeLocal(
+    initialValues?.startTime
+  ),
+
+  endTime: formatDateTimeLocal(
+    initialValues?.endTime
+  ),
 });
 
 const getInitialSelectedQuestions = (
@@ -248,25 +272,27 @@ function TestForm({
       return;
     }
 
-    const payload = {
-      ...formData,
+  const payload = {
+    ...formData,
 
-      title:
-        formData.title.trim(),
+    title: formData.title.trim(),
 
-      subject:
-        formData.subject.trim(),
+    subject: formData.subject.trim(),
 
-      description:
-        formData.description.trim(),
+    description: formData.description.trim(),
 
-      duration:
-        Number(formData.duration),
+    duration: Number(formData.duration),
 
-      questions:
-        selectedQuestions,
-    };
+    startTime: convertLocalToUTC(
+      formData.startTime
+    ),
 
+    endTime: convertLocalToUTC(
+      formData.endTime
+    ),
+
+    questions: selectedQuestions,
+  };
     onSubmit(payload);
   };
 
