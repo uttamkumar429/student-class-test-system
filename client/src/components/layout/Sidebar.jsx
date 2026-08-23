@@ -1,10 +1,11 @@
-import {
-  LayoutDashboard,
-  Users,
-  FileText,
+import { 
+  LayoutDashboard, 
+  Users, 
+  FileText, 
   ClipboardList,
-  Settings,
-  LogOut,
+  Megaphone, 
+  Settings, 
+  LogOut, 
 } from "lucide-react";
 
 import { NavLink, useNavigate } from "react-router-dom";
@@ -45,14 +46,19 @@ function Sidebar() {
       path: "/admin/tests",
     },
     {
-      title: "Results",
-      icon: FileText,
-      path: "/admin/results",
+      title: "Results", 
+      icon: FileText, 
+      path: "/admin/results", 
     },
     {
-      title: "Settings",
-      icon: Settings,
-      path: "/admin/settings",
+      title: "Announcements",
+      icon: Megaphone,
+      path: "/admin/announcements",
+    },
+    {
+      title: "Settings", 
+      icon: Settings, 
+      path: "/admin/settings", 
     },
   ];
 
