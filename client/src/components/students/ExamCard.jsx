@@ -2,158 +2,169 @@ import {
   BookOpen,
   Clock3,
   CalendarDays,
- Award,
+  Award,
   PlayCircle,
 } from "lucide-react";
 
-const formatDate = (date) =>
-  new Date(date).toLocaleDateString("en-IN", {
+const formatDate = (date) => {
+  if (!date) return "—";
+
+  const parsedDate = new Date(date);
+
+  if (Number.isNaN(parsedDate.getTime())) {
+    return "—";
+  }
+
+  return parsedDate.toLocaleDateString("en-IN", {
     day: "2-digit",
     month: "short",
     year: "numeric",
   });
+};
 
-const formatTime = (date) =>
-  new Date(date).toLocaleTimeString("en-IN", {
+const formatTime = (date) => {
+  if (!date) return "—";
+
+  const parsedDate = new Date(date);
+
+  if (Number.isNaN(parsedDate.getTime())) {
+    return "—";
+  }
+
+  return parsedDate.toLocaleTimeString("en-IN", {
     hour: "2-digit",
     minute: "2-digit",
   });
+};
 
 function ExamCard({ exam, onStart }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
-
+    <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl dark:border-slate-700 dark:bg-slate-800">
       {/* Header */}
 
-      <div className="mb-4 flex items-start justify-between">
-
-        <div>
-
-          <h2 className="text-xl font-bold text-slate-800">
+      <div className="mb-4 flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">
             {exam.title}
           </h2>
 
-          <p className="mt-1 flex items-center gap-2 text-slate-500">
-
+          <p className="mt-1 flex items-center gap-2 text-slate-500 dark:text-slate-400">
             <BookOpen size={16} />
 
             {exam.subject}
-
           </p>
-
         </div>
 
         <span
-          className={`rounded-full px-3 py-1 text-xs font-semibold ${
+          className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${
             exam.status === "UPCOMING"
-              ? "bg-green-100 text-green-700"
+              ? "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400"
               : exam.status === "ACTIVE"
-              ? "bg-blue-100 text-blue-700"
-              : "bg-slate-100 text-slate-700"
+                ? "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400"
+                : "bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300"
           }`}
         >
           {exam.status}
         </span>
-
       </div>
 
       {/* Details */}
 
       <div className="space-y-3 text-sm">
+        {/* Questions */}
 
         <div className="flex items-center justify-between">
-
-          <span className="text-slate-500">
+          <span className="text-slate-500 dark:text-slate-400">
             Questions
           </span>
 
-          <span className="font-semibold">
-            {exam.totalQuestions}
+          <span className="font-semibold text-slate-800 dark:text-slate-100">
+            {exam.totalQuestions ?? 0}
           </span>
-
         </div>
 
-        <div className="flex items-center justify-between">
+        {/* Total Marks */}
 
-          <span className="text-slate-500">
+        <div className="flex items-center justify-between">
+          <span className="text-slate-500 dark:text-slate-400">
             Total Marks
           </span>
 
-          <span className="flex items-center gap-1 font-semibold">
+          <span className="flex items-center gap-1 font-semibold text-slate-800 dark:text-slate-100">
+            <Award
+              size={16}
+              className="text-orange-600 dark:text-orange-400"
+            />
 
-            <Award size={16} />
-
-            {exam.totalMarks}
-
+            {exam.totalMarks ?? 0}
           </span>
-
         </div>
 
-        <div className="flex items-center justify-between">
+        {/* Duration */}
 
-          <span className="text-slate-500">
+        <div className="flex items-center justify-between">
+          <span className="text-slate-500 dark:text-slate-400">
             Duration
           </span>
 
-          <span className="flex items-center gap-1 font-semibold">
+          <span className="flex items-center gap-1 font-semibold text-slate-800 dark:text-slate-100">
+            <Clock3
+              size={16}
+              className="text-slate-600 dark:text-slate-300"
+            />
 
-            <Clock3 size={16} />
-
-            {exam.duration} mins
-
+            {exam.duration ?? 0} mins
           </span>
-
         </div>
 
-        <div className="flex items-center justify-between">
+        {/* Date */}
 
-          <span className="text-slate-500">
+        <div className="flex items-center justify-between">
+          <span className="text-slate-500 dark:text-slate-400">
             Date
           </span>
 
-          <span className="flex items-center gap-1">
-
-            <CalendarDays size={16} />
+          <span className="flex items-center gap-1 text-slate-800 dark:text-slate-100">
+            <CalendarDays
+              size={16}
+              className="text-slate-600 dark:text-slate-300"
+            />
 
             {formatDate(exam.startTime)}
-
           </span>
-
         </div>
 
-        <div className="flex items-center justify-between">
+        {/* Time */}
 
-          <span className="text-slate-500">
+        <div className="flex items-center justify-between">
+          <span className="text-slate-500 dark:text-slate-400">
             Time
           </span>
 
-          <span>
-
+          <span className="text-slate-800 dark:text-slate-100">
             {formatTime(exam.startTime)}
-
           </span>
-
         </div>
-
       </div>
 
       {/* Footer */}
 
       <button
+        type="button"
         disabled={exam.status !== "ACTIVE"}
         onClick={() => onStart(exam)}
-        className={`mt-6 w-full rounded-xl py-3 font-semibold text-white transition ${
+        className={`mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl py-3 font-semibold text-white transition ${
           exam.status === "ACTIVE"
             ? "bg-blue-600 hover:bg-blue-700"
-            : "cursor-not-allowed bg-slate-400"
+            : "cursor-not-allowed bg-slate-400 dark:bg-slate-600"
         }`}
       >
         <PlayCircle size={18} />
+
         {exam.status === "ACTIVE"
           ? "Start Exam"
           : "Not Started Yet"}
       </button>
-
     </div>
   );
 }
