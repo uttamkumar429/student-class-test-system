@@ -51,7 +51,6 @@ const ExamInstructions = () => {
           "Exam started successfully."
       );
 
-      // Navigate using server-created Attempt ID
       navigate(
         `/student/exam/${attemptId}`,
         {
@@ -122,6 +121,8 @@ const ExamInstructions = () => {
         </h2>
 
         <div className="grid gap-5 md:grid-cols-2">
+          {/* Subject */}
+
           <div className="flex items-center gap-3">
             <BookOpen className="text-blue-600" />
 
@@ -135,6 +136,8 @@ const ExamInstructions = () => {
               </h3>
             </div>
           </div>
+
+          {/* Duration */}
 
           <div className="flex items-center gap-3">
             <Clock className="text-green-600" />
@@ -150,6 +153,8 @@ const ExamInstructions = () => {
             </div>
           </div>
 
+          {/* Total Marks */}
+
           <div className="flex items-center gap-3">
             <Award className="text-orange-600" />
 
@@ -163,6 +168,8 @@ const ExamInstructions = () => {
               </h3>
             </div>
           </div>
+
+          {/* Exam Date */}
 
           <div className="flex items-center gap-3">
             <Calendar className="text-purple-600" />
@@ -229,17 +236,17 @@ const ExamInstructions = () => {
       {/* Agreement */}
 
       <div className="mt-8 rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <label className="flex items-center gap-3">
+        <label className="flex items-center gap-3 text-slate-800 dark:text-slate-100">
           <input
             type="checkbox"
             checked={accepted}
             onChange={(event) =>
               setAccepted(event.target.checked)
             }
-            className="h-5 w-5"
+            className="h-5 w-5 accent-blue-600"
           />
 
-          <span className="font-medium text-slate-800 dark:text-slate-100">
+          <span className="font-medium">
             I have read and understood all the
             instructions.
           </span>
@@ -267,7 +274,7 @@ const ExamInstructions = () => {
           className={`rounded-lg px-8 py-3 font-medium text-white transition ${
             accepted && !loading
               ? "bg-blue-600 hover:bg-blue-700"
-              : "cursor-not-allowed bg-slate-400"
+              : "cursor-not-allowed bg-slate-400 dark:bg-slate-700"
           }`}
         >
           {loading
