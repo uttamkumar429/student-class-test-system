@@ -56,7 +56,7 @@ const {
   if (loading) {
     return (
       <div className="flex h-96 items-center justify-center">
-        <h2 className="text-xl font-semibold">
+        <h2 className="text-xl font-semibold text-slate-700 dark:text-slate-200">
           Loading Dashboard...
         </h2>
       </div>
@@ -65,7 +65,7 @@ const {
 
   if (error) {
     return (
-      <div className="rounded-xl bg-red-100 p-6 text-red-600">
+      <div className="rounded-xl bg-red-100 p-6 text-red-600 dark:bg-red-950/40 dark:text-red-400">
         {error}
       </div>
     );

@@ -79,7 +79,8 @@ const notificationError =
   const [theme, setTheme] = useState(
     () => localStorage.getItem("studentTheme") || "system"
   );
-  useEffect(() => {
+
+useEffect(() => {
   const root = document.documentElement;
 
   const applyTheme = () => {
@@ -94,7 +95,9 @@ const notificationError =
           : "light"
         : theme;
 
-    root.setAttribute("data-theme", resolvedTheme);
+    root.classList.remove("light", "dark");
+
+    root.classList.add(resolvedTheme);
 
     root.style.colorScheme = resolvedTheme;
   };
@@ -109,7 +112,10 @@ const notificationError =
     "(prefers-color-scheme: dark)"
   );
 
-  mediaQuery.addEventListener("change", applyTheme);
+  mediaQuery.addEventListener(
+    "change",
+    applyTheme
+  );
 
   return () => {
     mediaQuery.removeEventListener(

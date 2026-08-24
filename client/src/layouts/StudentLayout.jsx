@@ -5,7 +5,7 @@ import StudentTopbar from "../components/students/StudentTopbar";
 
 function StudentLayout() {
   return (
-    <div className="flex min-h-screen bg-slate-100">
+    <div className="flex min-h-screen bg-slate-100 transition-colors duration-200 dark:bg-slate-950">
 
       {/* ================================= */}
       {/* SIDEBAR */}
@@ -21,7 +21,7 @@ function StudentLayout() {
 
         <StudentTopbar />
 
-        <main className="flex-1 overflow-y-auto p-8">
+        <main className="flex-1 overflow-y-auto p-8 transition-colors duration-200 dark:bg-slate-950">
           <Outlet />
         </main>
 

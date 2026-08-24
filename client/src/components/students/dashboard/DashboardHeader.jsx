@@ -27,7 +27,7 @@ function DashboardHeader({ userName = "Student" }) {
   });
 
   return (
-    <section className="mb-8 rounded-3xl bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 p-8 text-white shadow-lg">
+    <section className="mb-8 rounded-3xl bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 p-8 text-white shadow-lg transition-colors duration-200">
 
       <div className="flex flex-col justify-between gap-6 md:flex-row md:items-center">
 

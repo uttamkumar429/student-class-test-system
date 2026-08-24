@@ -13,21 +13,21 @@ function UpcomingExams({ exams = [] }) {
     return (
       <section className="mb-6">
         <div className="mb-6">
-          <h2 className="text-2xl font-bold text-slate-800">
+          <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100">
             Upcoming Exams
           </h2>
 
-          <p className="mt-1 text-slate-500">
+          <p className="mt-1 text-slate-500 dark:text-slate-400">
             Complete your scheduled examinations before the deadline.
           </p>
         </div>
 
-        <div className="rounded-xl border border-slate-200 bg-white p-8 text-center">
-          <h3 className="text-lg font-semibold text-slate-700">
+        <div className="rounded-xl border border-slate-200 bg-white p-8 text-center dark:border-slate-800 dark:bg-slate-900">
+          <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-200">
             No upcoming exams
           </h3>
 
-          <p className="mt-2 text-sm text-slate-500">
+          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
             There are no upcoming examinations available for you right now.
           </p>
         </div>
@@ -39,11 +39,11 @@ function UpcomingExams({ exams = [] }) {
     <section className="mb-6">
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800">
+          <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100">
             Upcoming Exams
           </h2>
 
-          <p className="mt-1 text-slate-500">
+          <p className="mt-1 text-slate-500 dark:text-slate-400">
             Complete your scheduled examinations before the deadline.
           </p>
         </div>

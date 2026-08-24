@@ -50,11 +50,11 @@ function QuickActions() {
 
       <div className="mb-6">
 
-        <h2 className="text-2xl font-bold text-slate-800">
+        <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100">
           Quick Actions
         </h2>
 
-        <p className="mt-1 text-slate-500">
+        <p className="mt-1 text-slate-500 dark:text-slate-400">
           Quickly access the most frequently used features.
         </p>
 
@@ -69,7 +69,7 @@ function QuickActions() {
             <button
               key={action.id}
               onClick={() => navigate(action.path)}
-              className="group rounded-2xl border border-slate-200 bg-white p-6 text-left shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
+              className="group rounded-2xl border border-slate-200 bg-white p-6 text-left shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg dark:border-slate-800 dark:bg-slate-900 dark:hover:shadow-slate-950/40"
             >
               <div
                 className={`mb-5 flex h-14 w-14 items-center justify-center rounded-xl text-white ${action.color}`}
@@ -77,11 +77,11 @@ function QuickActions() {
                 <Icon size={26} />
               </div>
 
-              <h3 className="text-lg font-semibold text-slate-800">
+              <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
                 {action.title}
               </h3>
 
-              <p className="mt-2 text-sm text-slate-500">
+              <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
                 {action.description}
               </p>
             </button>

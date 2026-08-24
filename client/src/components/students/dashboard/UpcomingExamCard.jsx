@@ -25,7 +25,7 @@ function UpcomingExamCard({
   });
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+    <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-colors duration-200 dark:border-slate-800 dark:bg-slate-900">
       {/* Top */}
 
       <div className="flex items-start justify-between">
@@ -36,12 +36,12 @@ function UpcomingExamCard({
               className="text-blue-600"
             />
 
-            <h3 className="text-lg font-semibold text-slate-800">
+            <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
               {title}
             </h3>
           </div>
 
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
             {subject}
           </p>
         </div>
@@ -50,28 +50,28 @@ function UpcomingExamCard({
       {/* Details */}
 
       <div className="mt-6 space-y-3">
-        <div className="flex items-center gap-3 text-sm text-slate-600">
+        <div className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-300">
           <CalendarDays
             size={18}
-            className="text-slate-500"
+            className="text-slate-500 dark:text-slate-400"
           />
 
           <span>{formattedExamDate}</span>
         </div>
 
-        <div className="flex items-center gap-3 text-sm text-slate-600">
+        <div className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-300">
           <Clock3
             size={18}
-            className="text-slate-500"
+            className="text-slate-500 dark:text-slate-400"
           />
 
           <span>{duration} Minutes</span>
         </div>
 
-        <div className="flex items-center gap-3 text-sm text-slate-600">
+        <div className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-300">
           <BookOpen
             size={18}
-            className="text-slate-500"
+            className="text-slate-500 dark:text-slate-400"
           />
 
           <span>{totalMarks} Marks</span>

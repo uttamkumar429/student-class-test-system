@@ -285,7 +285,7 @@ function NotificationBell() {
         }`}
         aria-haspopup="true"
         aria-expanded={open}
-        className="relative flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:bg-slate-50 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+        className="relative flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:bg-slate-50 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-blue-400 dark:focus:ring-offset-slate-950"
       >
         <Bell size={21} />
 
@@ -306,17 +306,16 @@ function NotificationBell() {
         <div
           role="dialog"
           aria-label="Notifications"
-          className="absolute right-0 z-50 mt-3 w-[380px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl"
-        >
-          {/* Header */}
+          className="absolute right-0 z-50 mt-3 w-[380px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-900"
+          >{/* Header */}
 
-          <div className="flex items-center justify-between border-b border-slate-200 px-4 py-4">
+          <div className="flex items-center justify-between border-b border-slate-200 px-4 py-4 dark:border-slate-700">
             <div>
-              <h2 className="font-bold text-slate-800">
+              <h2 className="font-bold text-slate-800 dark:text-slate-100">
                 Notifications
               </h2>
 
-              <p className="mt-0.5 text-xs text-slate-500">
+              <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
                 {unreadCount > 0
                   ? `${unreadCount} unread`
                   : "All caught up"}
@@ -330,7 +329,7 @@ function NotificationBell() {
                   handleMarkAllAsRead
                 }
                 disabled={updating}
-                className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-xs font-semibold text-blue-600 transition hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-xs font-semibold text-blue-600 transition hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50 dark:text-blue-400 dark:hover:bg-blue-950/40"
               >
                 {updating ? (
                   <Loader2
@@ -353,15 +352,15 @@ function NotificationBell() {
             {notifications.length ===
             0 ? (
               <div className="px-6 py-10 text-center">
-                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-400">
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500">
                   <Bell size={22} />
                 </div>
 
-                <p className="mt-3 font-semibold text-slate-700">
+                <p className="mt-3 font-semibold text-slate-700 dark:text-slate-200">
                   No notifications
                 </p>
 
-                <p className="mt-1 text-sm text-slate-500">
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                   Important updates will
                   appear here.
                 </p>
@@ -393,7 +392,7 @@ function NotificationBell() {
 
           {/* Footer */}
 
-          <div className="border-t border-slate-200 p-3">
+          <div className="border-t border-slate-200 p-3 dark:border-slate-700">
             <button
               type="button"
               onClick={() => {
@@ -402,7 +401,7 @@ function NotificationBell() {
                   "/student/notifications"
                 );
               }}
-              className="flex w-full items-center justify-center rounded-xl bg-slate-50 px-4 py-3 text-sm font-semibold text-blue-600 transition hover:bg-blue-50"
+              className="flex w-full items-center justify-center rounded-xl bg-slate-50 px-4 py-3 text-sm font-semibold text-blue-600 transition hover:bg-blue-50 dark:bg-slate-800 dark:text-blue-400 dark:hover:bg-slate-700"
             >
               View all notifications
             </button>
@@ -430,10 +429,10 @@ function NotificationDropdownItem({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className={`flex w-full gap-3 border-b border-slate-100 p-4 text-left transition last:border-b-0 ${
+      className={`flex w-full gap-3 border-b border-slate-100 p-4 text-left transition last:border-b-0 dark:border-slate-800 ${
         isUnread
-          ? "bg-blue-50/50 hover:bg-blue-50"
-          : "hover:bg-slate-50"
+          ? "bg-blue-50/50 hover:bg-blue-50 dark:bg-blue-950/30 dark:hover:bg-blue-950/50"
+          : "hover:bg-slate-50 dark:hover:bg-slate-800"
       } ${
         disabled
           ? "cursor-not-allowed opacity-60"
@@ -444,9 +443,9 @@ function NotificationDropdownItem({
 
       <div
         className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${
-          isUnread
-            ? "bg-blue-100 text-blue-600"
-            : "bg-slate-100 text-slate-500"
+        isUnread
+          ? "bg-blue-100 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400"
+          : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400"
         }`}
       >
         <NotificationIcon
@@ -460,9 +459,9 @@ function NotificationDropdownItem({
         <div className="flex items-start justify-between gap-2">
           <p
             className={`line-clamp-1 text-sm ${
-              isUnread
-                ? "font-bold text-slate-900"
-                : "font-semibold text-slate-700"
+            isUnread
+              ? "font-bold text-slate-900 dark:text-slate-100"
+              : "font-semibold text-slate-700 dark:text-slate-300"
             }`}
           >
             {notification.title}
@@ -473,7 +472,7 @@ function NotificationDropdownItem({
           )}
         </div>
 
-        <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500">
+        <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500 dark:text-slate-400">
           {notification.message}
         </p>
 
