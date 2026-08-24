@@ -25,7 +25,7 @@ function UpcomingExamCard({
   });
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-colors duration-200 dark:border-slate-800 dark:bg-slate-900">
+    <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
       {/* Top */}
 
       <div className="flex items-start justify-between">
@@ -36,12 +36,12 @@ function UpcomingExamCard({
               className="text-blue-600"
             />
 
-            <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+            <h3 className="text-lg font-semibold text-slate-800">
               {title}
             </h3>
           </div>
 
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+          <p className="mt-1 text-sm text-slate-500">
             {subject}
           </p>
         </div>
@@ -50,31 +50,66 @@ function UpcomingExamCard({
       {/* Details */}
 
       <div className="mt-6 space-y-3">
-        <div className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-300">
-          <CalendarDays
-            size={18}
-            className="text-slate-500 dark:text-slate-400"
-          />
+        {/* Questions */}
 
-          <span>{formattedExamDate}</span>
+        <div className="flex items-center justify-between gap-3 text-sm">
+          <span className="text-slate-600">
+            Questions
+          </span>
+
+          <span className="font-medium text-slate-800">
+            {1}
+          </span>
         </div>
 
-        <div className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-300">
-          <Clock3
-            size={18}
-            className="text-slate-500 dark:text-slate-400"
-          />
+        {/* Total Marks */}
 
-          <span>{duration} Minutes</span>
+        <div className="flex items-center justify-between gap-3 text-sm">
+          <span className="text-slate-600">
+            Total Marks
+          </span>
+
+          <span className="font-medium text-slate-800">
+            {totalMarks}
+          </span>
         </div>
 
-        <div className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-300">
-          <BookOpen
-            size={18}
-            className="text-slate-500 dark:text-slate-400"
-          />
+        {/* Duration */}
 
-          <span>{totalMarks} Marks</span>
+        <div className="flex items-center justify-between gap-3 text-sm">
+          <div className="flex items-center gap-2 text-slate-600">
+            <Clock3
+              size={18}
+              className="text-slate-500"
+            />
+
+            <span>
+              Duration
+            </span>
+          </div>
+
+          <span className="font-medium text-slate-800">
+            {duration} mins
+          </span>
+        </div>
+
+        {/* Date */}
+
+        <div className="flex items-center justify-between gap-3 text-sm">
+          <div className="flex items-center gap-2 text-slate-600">
+            <CalendarDays
+              size={18}
+              className="text-slate-500"
+            />
+
+            <span>
+              Date
+            </span>
+          </div>
+
+          <span className="font-medium text-slate-800">
+            {formattedExamDate}
+          </span>
         </div>
       </div>
 
