@@ -169,33 +169,32 @@ const createTest = async (testData) => {
 // =====================================
 // CREATE TEST
 // =====================================
+const test = await Test.create({
+  title: testData.title.trim(),
 
-  const test = await Test.create({
-    title: testData.title.trim(),
+  subject: testData.subject.trim(),
 
-    subject: testData.subject.trim(),
+  description:
+    testData.description?.trim() || "",
 
-    description:
-      testData.description?.trim() || "",
+  duration: Number(testData.duration),
 
-    duration: Number(testData.duration),
+  questions: result.questions.map(
+    (question) => question._id
+  ),
 
-    questions: result.questions.map(
-      (question) => question._id
-    ),
+  totalQuestions: result.totalQuestions,
 
-    totalQuestions: result.totalQuestions,
+  totalMarks: result.totalMarks,
 
-    totalMarks: result.totalMarks,
+  createdBy: testData.createdBy,
 
-    startTime: testData.startTime,
+  startTime: new Date(testData.startTime),
 
-    startTime: new Date(testData.startTime),
+  endTime: new Date(testData.endTime),
 
-    endTime: new Date(testData.endTime),
-
-    status: "draft",
-  });
+  status: "draft",
+});
 
 // Populate response
 

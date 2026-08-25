@@ -16,21 +16,33 @@ const {
 
 // CREATE TEST
 
-exports.createTest = asyncHandler(async (req, res) => {
+exports.createTest = asyncHandler(
+  async (req, res) => {
 
-  const test = await createTestService({
-    ...req.body,
-    createdBy: req.user._id,
-  });
+    console.log(
+      "REQ USER:",
+      req.user
+    );
 
-  return successResponse(
-    res,
-    201,
-    "Test created successfully.",
-    test
-  );
+    console.log(
+      "REQ USER ID:",
+      req.user?._id
+    );
 
-});
+    const test = await createTestService({
+      ...req.body,
+
+      createdBy: req.user?._id,
+    });
+
+    return successResponse(
+      res,
+      201,
+      "Test created successfully.",
+      test
+    );
+  }
+);
 
 // GET ALL TESTS
 
