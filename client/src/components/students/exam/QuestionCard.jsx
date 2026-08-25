@@ -5,6 +5,7 @@ const QuestionCard = ({
   questionNumber = 1,
   totalQuestions = 0,
   selectedAnswer,
+  questionTime = 0,
   onOptionSelect,
 }) => {
   if (!question) {
@@ -22,7 +23,24 @@ const QuestionCard = ({
       </div>
     );
   }
+const formatQuestionTime = (
+  totalSeconds
+) => {
+  const minutes = Math.floor(
+    totalSeconds / 60
+  );
 
+  const seconds =
+    totalSeconds % 60;
+
+  return `${String(minutes).padStart(
+    2,
+    "0"
+  )}:${String(seconds).padStart(
+    2,
+    "0"
+  )}`;
+};
 // ======================================
 // BUILD OPTIONS FROM BACKEND RESPONSE
 // ======================================
@@ -69,6 +87,14 @@ const options = Array.isArray(question.options)
         </div>
 
         <div className="flex items-center gap-3">
+          <span className="rounded-lg bg-purple-100 px-3 py-1 text-sm font-semibold text-purple-700">
+            Time: {
+              formatQuestionTime(
+                questionTime
+              )
+            }
+          </span>
+
           <span className="rounded-lg bg-green-100 px-3 py-1 text-sm font-semibold text-green-700">
             {question.marks} Marks
           </span>

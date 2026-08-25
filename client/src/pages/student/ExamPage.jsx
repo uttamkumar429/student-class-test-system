@@ -56,7 +56,8 @@ function ExamPage() {
   const submittingRef = useRef(false);
   const isExamHydratedRef = useRef(false);
   const questionStartTimeRef = useRef(null);
-
+  const [currentQuestionTime, setCurrentQuestionTime] =
+  useState(0);
   const getCurrentQuestionTimeSpent =
     useCallback(() => {
       if (!questionStartTimeRef.current) {
@@ -160,11 +161,36 @@ const answeredQuestions =
     // ======================================
 // QUESTION TIME TRACKING
 // ======================================
-
 useEffect(() => {
+  if (!currentQuestionId) {
+    return;
+  }
+
   questionStartTimeRef.current =
     Date.now();
+
+  
+
+  const interval = setInterval(() => {
+    const timeSpent = Math.max(
+      0,
+      Math.floor(
+        (Date.now() -
+          questionStartTimeRef.current) /
+          1000
+      )
+    );
+
+    setCurrentQuestionTime(
+      timeSpent
+    );
+  }, 1000);
+
+  return () => {
+    clearInterval(interval);
+  };
 }, [currentQuestionId]);
+
 
   // ======================================
   // FETCH EXAM QUESTIONS
@@ -899,7 +925,6 @@ const handleQuestionClick =
 
         <div className="lg:col-span-3">
           <QuestionCard
-
             question={
               currentQuestionForCard
             }
@@ -913,6 +938,9 @@ const handleQuestionClick =
               answers[
                 currentQuestionId
               ]
+            }
+            questionTime={
+              currentQuestionTime
             }
             onOptionSelect={
               handleOptionSelect

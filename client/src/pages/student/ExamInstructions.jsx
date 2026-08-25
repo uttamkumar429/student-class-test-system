@@ -28,6 +28,160 @@ const ExamInstructions = () => {
   const [selectedLanguage, setSelectedLanguage] =
     useState("english");
 
+const isHindi =
+  selectedLanguage === "hindi";
+
+const text = isHindi
+  ? {
+      heading: "परीक्षा निर्देश",
+
+      subHeading:
+        "परीक्षा शुरू करने से पहले सभी निर्देश ध्यानपूर्वक पढ़ें।",
+
+      examDetails:
+        "परीक्षा विवरण",
+
+      subject:
+        "विषय",
+
+      duration:
+        "समय अवधि",
+
+      totalMarks:
+        "कुल अंक",
+
+      examDate:
+        "परीक्षा तिथि",
+
+      examLanguage:
+        "परीक्षा की भाषा",
+
+      chooseLanguage:
+        "प्रश्न देखने के लिए अपनी पसंदीदा भाषा चुनें।",
+
+      english:
+        "अंग्रेज़ी",
+
+      englishDescription:
+        "प्रश्न अंग्रेज़ी में देखें।",
+
+      hindi:
+        "हिंदी",
+
+      hindiDescription:
+        "प्रश्न हिंदी में देखें।",
+
+      importantInstructions:
+        "महत्वपूर्ण निर्देश",
+
+      instruction1:
+        "हर प्रश्न का उत्तर देने से पहले उसे ध्यानपूर्वक पढ़ें।",
+
+      instruction2:
+        "स्टार्ट एग्जाम पर क्लिक करते ही टाइमर शुरू हो जाएगा।",
+
+      instruction3:
+        "परीक्षा के दौरान ब्राउज़र को रिफ्रेश या बंद न करें।",
+
+      instruction4:
+        "परीक्षा के दौरान सभी उत्तर अपने आप सेव होते रहेंगे।",
+
+      instruction5:
+        "आप परीक्षा के दौरान प्रश्नों की भाषा बदल सकते हैं।",
+
+      instruction6:
+        "टाइमर समाप्त होने पर परीक्षा अपने आप सबमिट हो जाएगी।",
+
+      instruction7:
+        "परीक्षा सबमिट होने के बाद आप अपने उत्तर नहीं बदल सकते।",
+
+      agreement:
+        "मैंने सभी निर्देश पढ़ और समझ लिए हैं।",
+
+      back:
+        "वापस",
+
+      startExam:
+        "परीक्षा शुरू करें",
+
+      starting:
+        "परीक्षा शुरू हो रही है...",
+    }
+  : {
+      heading: "Exam Instructions",
+
+      subHeading:
+        "Please read all instructions carefully before starting your exam.",
+
+      examDetails:
+        "Exam Details",
+
+      subject:
+        "Subject",
+
+      duration:
+        "Duration",
+
+      totalMarks:
+        "Total Marks",
+
+      examDate:
+        "Exam Date",
+
+      examLanguage:
+        "Exam Language",
+
+      chooseLanguage:
+        "Choose your preferred language for viewing questions.",
+
+      english:
+        "English",
+
+      englishDescription:
+        "View questions in English.",
+
+      hindi:
+        "हिंदी",
+
+      hindiDescription:
+        "प्रश्न हिंदी में देखें।",
+
+      importantInstructions:
+        "Important Instructions",
+
+      instruction1:
+        "Read every question carefully before answering.",
+
+      instruction2:
+        "Timer starts immediately after clicking Start Exam.",
+
+      instruction3:
+        "Do not refresh or close the browser during the exam.",
+
+      instruction4:
+        "All answers are auto-saved during the exam.",
+
+      instruction5:
+        "You can change the question language during the examination.",
+
+      instruction6:
+        "When the timer ends, the exam will be submitted automatically.",
+
+      instruction7:
+        "Once submitted, you cannot modify your answers.",
+
+      agreement:
+        "I have read and understood all the instructions.",
+
+      back:
+        "Back",
+
+      startExam:
+        "Start Exam",
+
+      starting:
+        "Starting...",
+    };
   // ======================================
   // START EXAM
   // ======================================
@@ -116,12 +270,11 @@ const ExamInstructions = () => {
 
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-slate-800 dark:text-slate-100">
-          Exam Instructions
+          {text.examInstructions}
         </h1>
 
         <p className="mt-2 text-slate-500 dark:text-slate-400">
-          Please read all instructions carefully
-          before starting your exam.
+        {text.readInstructions}
         </p>
       </div>
 
@@ -129,7 +282,7 @@ const ExamInstructions = () => {
 
       <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <h2 className="mb-6 text-xl font-semibold text-slate-800 dark:text-slate-100">
-          Exam Details
+          {text.examDetails}
         </h2>
 
         <div className="grid gap-5 md:grid-cols-2">
@@ -140,7 +293,7 @@ const ExamInstructions = () => {
 
             <div>
               <p className="text-sm text-slate-500 dark:text-slate-400">
-                Subject
+                {text.subject}
               </p>
 
               <h3 className="font-semibold text-slate-800 dark:text-slate-100">
@@ -156,11 +309,11 @@ const ExamInstructions = () => {
 
             <div>
               <p className="text-sm text-slate-500 dark:text-slate-400">
-                Duration
+                {text.duration}
               </p>
 
               <h3 className="font-semibold text-slate-800 dark:text-slate-100">
-                {exam.duration} Minutes
+                {exam.duration} {text.minutes}
               </h3>
             </div>
           </div>
@@ -172,7 +325,7 @@ const ExamInstructions = () => {
 
             <div>
               <p className="text-sm text-slate-500 dark:text-slate-400">
-                Total Marks
+                {text.totalMarks}
               </p>
 
               <h3 className="font-semibold text-slate-800 dark:text-slate-100">
@@ -188,13 +341,15 @@ const ExamInstructions = () => {
 
             <div>
               <p className="text-sm text-slate-500 dark:text-slate-400">
-                Exam Date
+                {text.examDate}
               </p>
 
               <h3 className="font-semibold text-slate-800 dark:text-slate-100">
-                {new Date(
-                  exam.startTime
-                ).toLocaleString("en-IN")}
+              {new Date(
+                exam.startTime
+              ).toLocaleString(
+                isHindi ? "hi-IN" : "en-IN"
+              )}
               </h3>
             </div>
           </div>
@@ -209,12 +364,11 @@ const ExamInstructions = () => {
 
           <div>
             <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-100">
-              Exam Language
+              {text.examLanguage}
             </h2>
 
             <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-              Choose your preferred language for
-              viewing questions.
+              {text.chooseLanguage}
             </p>
           </div>
         </div>
@@ -273,45 +427,54 @@ const ExamInstructions = () => {
           <AlertTriangle className="text-amber-500" />
 
           <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-100">
-            Important Instructions
+            {text.importantInstructions}
           </h2>
         </div>
 
         <ul className="space-y-3 text-slate-600 dark:text-slate-300">
+
           <li>
-            • Read every question carefully before
-            answering.
+            • {isHindi
+              ? "हर प्रश्न का उत्तर देने से पहले उसे ध्यानपूर्वक पढ़ें।"
+              : "Read every question carefully before answering."}
           </li>
 
           <li>
-            • Timer starts immediately after
-            clicking <b>Start Exam</b>.
+            • {isHindi
+              ? "स्टार्ट एग्जाम पर क्लिक करते ही टाइमर शुरू हो जाएगा।"
+              : "Timer starts immediately after clicking Start Exam."}
           </li>
 
           <li>
-            • Do not refresh or close the browser
-            during the exam.
+            • {isHindi
+              ? "परीक्षा के दौरान ब्राउज़र को रिफ्रेश या बंद न करें।"
+              : "Do not refresh or close the browser during the exam."}
           </li>
 
           <li>
-            • All answers are auto-saved during the
-            exam.
+            • {isHindi
+              ? "परीक्षा के दौरान सभी उत्तर अपने आप सेव होते रहेंगे।"
+              : "All answers are auto-saved during the exam."}
           </li>
 
           <li>
-            • You can change the question language
-            during the examination.
+            • {isHindi
+              ? "आप परीक्षा के दौरान प्रश्नों की भाषा बदल सकते हैं।"
+              : "You can change the question language during the examination."}
           </li>
 
           <li>
-            • When the timer ends, the exam will be
-            submitted automatically.
+            • {isHindi
+              ? "टाइमर समाप्त होने पर परीक्षा अपने आप सबमिट हो जाएगी।"
+              : "When the timer ends, the exam will be submitted automatically."}
           </li>
 
           <li>
-            • Once submitted, you cannot modify your
-            answers.
+            • {isHindi
+              ? "परीक्षा सबमिट होने के बाद आप अपने उत्तर नहीं बदल सकते।"
+              : "Once submitted, you cannot modify your answers."}
           </li>
+
         </ul>
       </div>
 
@@ -329,8 +492,7 @@ const ExamInstructions = () => {
           />
 
           <span className="font-medium">
-            I have read and understood all the
-            instructions.
+          {text.agreement}
           </span>
         </label>
       </div>
@@ -346,7 +508,7 @@ const ExamInstructions = () => {
           }
           className="rounded-lg border border-slate-300 px-6 py-3 text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
         >
-          Back
+          {text.back}
         </button>
 
         <button
@@ -359,9 +521,9 @@ const ExamInstructions = () => {
               : "cursor-not-allowed bg-slate-400 dark:bg-slate-700"
           }`}
         >
-          {loading
-            ? "Starting..."
-            : "Start Exam"}
+        {loading
+          ? text.starting
+          : text.startExam}
         </button>
       </div>
     </div>
