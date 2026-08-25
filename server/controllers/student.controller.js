@@ -101,7 +101,8 @@ exports.saveAnswer = asyncHandler(async (req, res) => {
     req.params.attemptId,
     req.body.questionId,
     req.body.selectedAnswer,
-    req.body.currentQuestionIndex
+    req.body.currentQuestionIndex,
+    req.body.timeSpent
   );
 
   return successResponse(

@@ -989,7 +989,8 @@ const saveAnswer = async (
   attemptId,
   questionId,
   selectedAnswer,
-  currentQuestionIndex
+  currentQuestionIndex,
+  timeSpent = 0
 ) => {
   // --------------------------------------
   // 1. Find Exam Attempt
@@ -1155,6 +1156,15 @@ const marksAwarded =
     : 0;
 
   // --------------------------------------
+// 10.1 Validate Time Spent
+// --------------------------------------
+
+const safeTimeSpent = Math.max(
+  0,
+  Number(timeSpent) || 0
+);
+
+  // --------------------------------------
   // 11. Create / Update Student Answer
   // --------------------------------------
 
@@ -1175,6 +1185,10 @@ const marksAwarded =
             selectedAnswer !== null
               ? new Date()
               : null,
+        },
+
+        $inc: {
+          timeSpent: safeTimeSpent,
         },
       },
       {
@@ -2159,9 +2173,9 @@ const getReviewAnswers = async (
     await StudentAnswer.find({
       attempt: attemptId,
     })
-      .select(
-        "questionId selectedAnswer isCorrect marksAwarded"
-      )
+    .select(
+      "questionId selectedAnswer isCorrect marksAwarded timeSpent"
+    )
       .lean();
 
   // ----------------------------------
@@ -2244,6 +2258,10 @@ const getReviewAnswers = async (
 
           marksAwarded:
             studentAnswer?.marksAwarded ??
+            0,
+
+          timeSpent:
+            studentAnswer?.timeSpent ??
             0,
 
           explanation:

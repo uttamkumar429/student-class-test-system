@@ -7,6 +7,7 @@ import {
   Calendar,
   Clock,
   Award,
+  Languages,
 } from "lucide-react";
 
 import studentExamService from "../../services/studentExamService";
@@ -19,6 +20,13 @@ const ExamInstructions = () => {
 
   const [accepted, setAccepted] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  // ======================================
+  // EXAM LANGUAGE
+  // ======================================
+
+  const [selectedLanguage, setSelectedLanguage] =
+    useState("english");
 
   // ======================================
   // START EXAM
@@ -55,6 +63,10 @@ const ExamInstructions = () => {
         `/student/exam/${attemptId}`,
         {
           replace: true,
+
+          state: {
+            language: selectedLanguage,
+          },
         }
       );
     } catch (error) {
@@ -189,6 +201,71 @@ const ExamInstructions = () => {
         </div>
       </div>
 
+      {/* Language Selection */}
+
+      <div className="mt-8 rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <div className="mb-6 flex items-center gap-3">
+          <Languages className="text-blue-600" />
+
+          <div>
+            <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-100">
+              Exam Language
+            </h2>
+
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+              Choose your preferred language for
+              viewing questions.
+            </p>
+          </div>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          {/* English */}
+
+          <button
+            type="button"
+            onClick={() =>
+              setSelectedLanguage("english")
+            }
+            className={`rounded-xl border p-5 text-left transition ${
+              selectedLanguage === "english"
+                ? "border-blue-600 bg-blue-50 ring-2 ring-blue-100 dark:bg-blue-950/30 dark:ring-blue-900"
+                : "border-slate-200 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800"
+            }`}
+          >
+            <h3 className="font-semibold text-slate-800 dark:text-slate-100">
+              English
+            </h3>
+
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+              View questions in English.
+            </p>
+          </button>
+
+          {/* Hindi */}
+
+          <button
+            type="button"
+            onClick={() =>
+              setSelectedLanguage("hindi")
+            }
+            className={`rounded-xl border p-5 text-left transition ${
+              selectedLanguage === "hindi"
+                ? "border-blue-600 bg-blue-50 ring-2 ring-blue-100 dark:bg-blue-950/30 dark:ring-blue-900"
+                : "border-slate-200 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800"
+            }`}
+          >
+            <h3 className="font-semibold text-slate-800 dark:text-slate-100">
+              हिंदी
+            </h3>
+
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+              प्रश्न हिंदी में देखें।
+            </p>
+          </button>
+        </div>
+      </div>
+
       {/* Instructions */}
 
       <div className="mt-8 rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
@@ -219,6 +296,11 @@ const ExamInstructions = () => {
           <li>
             • All answers are auto-saved during the
             exam.
+          </li>
+
+          <li>
+            • You can change the question language
+            during the examination.
           </li>
 
           <li>

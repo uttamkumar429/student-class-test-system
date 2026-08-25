@@ -34,6 +34,14 @@ const studentAnswerSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+
+    // Time spent on this question in seconds
+    timeSpent: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
     answeredAt: {
       type: Date,
     },
@@ -42,6 +50,7 @@ const studentAnswerSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
 studentAnswerSchema.index(
   {
     attempt: 1,
@@ -51,6 +60,7 @@ studentAnswerSchema.index(
     unique: true,
   }
 );
+
 module.exports = mongoose.model(
   "StudentAnswer",
   studentAnswerSchema

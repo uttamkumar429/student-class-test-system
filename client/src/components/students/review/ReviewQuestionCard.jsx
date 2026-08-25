@@ -8,6 +8,7 @@ import {
   Award,
   Layers,
   CircleDashed,
+  Clock,
 } from "lucide-react";
 
 import {
@@ -18,6 +19,22 @@ import {
 
 import ExplanationCard from "./ExplanationCard";
 import ReviewOptionList from "./ReviewOptionList";
+const formatTimeSpent = (totalSeconds = 0) => {
+  const seconds = Math.max(
+    0,
+    Number(totalSeconds) || 0
+  );
+
+  const minutes = Math.floor(seconds / 60);
+
+  const remainingSeconds = seconds % 60;
+
+  if (minutes > 0) {
+    return `${minutes}m ${remainingSeconds}s`;
+  }
+
+  return `${remainingSeconds}s`;
+};
 
 function ReviewQuestionCard() {
   const question = useSelector(
@@ -124,6 +141,13 @@ function ReviewQuestionCard() {
             icon={<Award size={16} />}
             title={`${question.marks ?? 0} Marks`}
             color="bg-orange-100 text-orange-700"
+          />
+          <Badge
+            icon={<Clock size={16} />}
+            title={`${formatTimeSpent(
+              question.timeSpent
+            )}`}
+            color="bg-purple-100 text-purple-700"
           />
 
           <Badge

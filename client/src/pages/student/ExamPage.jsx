@@ -1,6 +1,7 @@
 import {
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -22,7 +23,7 @@ import QuestionCard from "../../components/students/exam/QuestionCard";
 import QuestionPalette from "../../components/students/exam/QuestionPalette";
 import ExamNavigation from "../../components/students/exam/ExamNavigation";
 import ExamHeader from "../../components/students/exam/ExamHeader";
-
+import studentExamService from "../../services/studentExamService";
 import {
   fetchExamQuestions,
   saveAnswer,
@@ -38,11 +39,11 @@ import {
   toggleReviewQuestion,
   resetExam,
 } from "../../redux/studentExam/examSlice";
-
+const EMPTY_ANSWERS = {};
 function ExamPage() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-
+  // const { attemptId } = useParams();
   const { attemptId: routeAttemptId } =
     useParams();
 
@@ -54,8 +55,24 @@ function ExamPage() {
 
   const submittingRef = useRef(false);
   const isExamHydratedRef = useRef(false);
+  const questionStartTimeRef = useRef(null);
 
+  const getCurrentQuestionTimeSpent =
+    useCallback(() => {
+      if (!questionStartTimeRef.current) {
+        return 0;
+      }
+
+      const timeSpent = Math.floor(
+        (Date.now() -
+          questionStartTimeRef.current) /
+          1000
+      );
+
+      return Math.max(timeSpent, 0);
+    }, []);
   const {
+
     
     title,
     subject,
@@ -89,21 +106,23 @@ function ExamPage() {
   // SAFE QUESTIONS ARRAY
   // ======================================
 
-  const examQuestions = Array.isArray(
-    questions
-  )
-    ? questions
-    : [];
+  const examQuestions = useMemo(
+    () =>
+      Array.isArray(questions)
+        ? questions
+        : [],
+    [questions]
+  );
 
   // ======================================
   // SAFE ANSWERS MAP
   // ======================================
 
-  const answers =
-    selectedAnswers &&
-    typeof selectedAnswers === "object"
-      ? selectedAnswers
-      : {};
+const answers =
+  selectedAnswers &&
+  typeof selectedAnswers === "object"
+    ? selectedAnswers
+    : EMPTY_ANSWERS;
 
   // ======================================
   // ANSWERED QUESTIONS
@@ -137,6 +156,15 @@ const answeredQuestions =
 
   const currentQuestionId =
     currentQuestion?.questionId || null;
+
+    // ======================================
+// QUESTION TIME TRACKING
+// ======================================
+
+useEffect(() => {
+  questionStartTimeRef.current =
+    Date.now();
+}, [currentQuestionId]);
 
   // ======================================
   // FETCH EXAM QUESTIONS
@@ -263,17 +291,27 @@ useEffect(() => {
   visitedQuestions,
   reviewQuestions,
 ]);
-  // ======================================
+// ======================================
 // HANDLE OPTION SELECT
 // ======================================
 
-const handleOptionSelect = useCallback(
-  async (selectedOption) => {
-    console.log(
-      "SELECTED OPTION RECEIVED:",
-      selectedOption,
-      typeof selectedOption
-    );
+  const handleOptionSelect = useCallback(
+    async (selectedOption) => {
+
+      const timeSpent = Math.max(
+        0,
+        Math.floor(
+          (Date.now() -
+            questionStartTimeRef.current) /
+            1000
+        )
+      );
+
+      console.log(
+        "SELECTED OPTION RECEIVED:",
+        selectedOption,
+        typeof selectedOption
+      );
 
     if (!currentQuestionId || !activeAttemptId) {
       return;
@@ -323,24 +361,29 @@ const handleOptionSelect = useCallback(
         selectedOption
       );
 
-      await dispatch(
-        saveAnswer({
-          attemptId: activeAttemptId,
+await dispatch(
+  saveAnswer({
+    attemptId: activeAttemptId,
 
-          payload: {
-            questionId: currentQuestionId,
+    payload: {
+      questionId: currentQuestionId,
 
-            selectedAnswer: selectedOption,
+      selectedAnswer: selectedOption,
 
-            currentQuestionIndex,
-          },
-        })
-      ).unwrap();
+      currentQuestionIndex,
 
-      console.log(
-        "ANSWER SAVED SUCCESSFULLY:",
-        selectedOption
-      );
+      timeSpent,
+    },
+  })
+).unwrap();
+
+questionStartTimeRef.current =
+  Date.now();
+
+console.log(
+  "ANSWER SAVED SUCCESSFULLY:",
+  selectedOption
+);
     } catch (error) {
       console.error(
         "Save answer failed:",
@@ -365,77 +408,140 @@ const handleOptionSelect = useCallback(
     currentQuestionIndex,
   ]
 );
+// ======================================
+// SAVE CURRENT QUESTION TIME
+// ======================================
+
+const saveCurrentQuestionTime =
+  useCallback(async () => {
+    const currentQuestion =
+      examQuestions[currentQuestionIndex];
+
+    if (!currentQuestion) {
+      return;
+    }
+
+    const timeSpent =
+      getCurrentQuestionTimeSpent();
+
+    try {
+  await studentExamService.saveAnswer(
+    activeAttemptId,
+    {
+      questionId:
+        currentQuestion.questionId ||
+        currentQuestion._id,
+
+      selectedAnswer:
+        answers[
+          currentQuestion.questionId ||
+          currentQuestion._id
+        ] ?? null,
+
+      currentQuestionIndex,
+
+      timeSpent,
+    }
+  );
+
+  questionStartTimeRef.current =
+    Date.now();
+
+} catch (error) {
+      console.error(
+        "Failed to save question time:",
+        error
+      );
+    }
+}, [
+  activeAttemptId,
+  examQuestions,
+  currentQuestionIndex,
+  answers,
+  getCurrentQuestionTimeSpent,
+]);
+
 
   // ======================================
   // PREVIOUS QUESTION
   // ======================================
 
-  const handlePrevious =
-    useCallback(() => {
-      if (
-        currentQuestionIndex <= 0
-      ) {
-        return;
-      }
+const handlePrevious =
+  useCallback(async () => {
+    if (
+      currentQuestionIndex <= 0
+    ) {
+      return;
+    }
 
-      dispatch(
-        setCurrentQuestion(
-          currentQuestionIndex - 1
-        )
-      );
-    }, [
-      dispatch,
-      currentQuestionIndex,
-    ]);
+    await saveCurrentQuestionTime();
+
+    dispatch(
+      setCurrentQuestion(
+        currentQuestionIndex - 1
+      )
+    );
+  }, [
+    dispatch,
+    currentQuestionIndex,
+    saveCurrentQuestionTime,
+  ]);
 
   // ======================================
   // NEXT QUESTION
   // ======================================
 
-  const handleNext =
-    useCallback(() => {
-      if (
-        currentQuestionIndex >=
-        examQuestions.length - 1
-      ) {
-        return;
-      }
+const handleNext =
+  useCallback(async () => {
+    if (
+      currentQuestionIndex >=
+      examQuestions.length - 1
+    ) {
+      return;
+    }
 
-      dispatch(
-        setCurrentQuestion(
-          currentQuestionIndex + 1
-        )
-      );
-    }, [
-      dispatch,
-      currentQuestionIndex,
-      examQuestions.length,
-    ]);
+    await saveCurrentQuestionTime();
+
+    dispatch(
+      setCurrentQuestion(
+        currentQuestionIndex + 1
+      )
+    );
+  }, [
+    dispatch,
+    currentQuestionIndex,
+    examQuestions.length,
+    saveCurrentQuestionTime,
+  ]);
 
   // ======================================
   // QUESTION PALETTE
   // ======================================
 
-  const handleQuestionClick =
-    useCallback(
-      (index) => {
-        if (
-          index < 0 ||
-          index >= examQuestions.length
-        ) {
-          return;
-        }
+const handleQuestionClick =
+  useCallback(
+    async (index) => {
+      if (
+        index < 0 ||
+        index >= examQuestions.length ||
+        index === currentQuestionIndex
+      ) {
+        return;
+      }
 
-        dispatch(
-          setCurrentQuestion(index)
-        );
-      },
-      [
-        dispatch,
-        examQuestions.length,
-      ]
-    );
+      await saveCurrentQuestionTime();
 
+      dispatch(
+        setCurrentQuestion(index)
+      );
+    },
+    [
+      dispatch,
+      examQuestions.length,
+      currentQuestionIndex,
+      saveCurrentQuestionTime,
+    ]
+  );
   // ======================================
   // TOGGLE REVIEW
   // ======================================
@@ -570,6 +676,16 @@ const handleOptionSelect = useCallback(
       setSubmitting(true);
 
       try {
+        // --------------------------------
+        // SAVE CURRENT QUESTION TIME
+        // --------------------------------
+
+        await saveCurrentQuestionTime();
+
+        // --------------------------------
+        // SUBMIT EXAM
+        // --------------------------------
+
         await dispatch(
           submitExam(
             activeAttemptId
@@ -604,6 +720,7 @@ const handleOptionSelect = useCallback(
       dispatch,
       activeAttemptId,
       navigate,
+      saveCurrentQuestionTime,
     ]);
 
   // ======================================
