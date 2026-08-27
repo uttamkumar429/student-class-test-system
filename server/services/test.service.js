@@ -653,20 +653,53 @@ const publishTest = async (id) => {
           totalQuestions: test.totalQuestions,
           startTime: test.startTime,
           endTime: test.endTime,
-          questions: test.questions.map((question) => ({
+
+          
+          questions: questions.map((question) => ({
             questionId: question._id,
+
             subject: question.subject,
+
             chapter: question.chapter,
+
             difficulty: question.difficulty,
+
             question: question.question,
+
             optionA: question.optionA,
+
             optionB: question.optionB,
+
             optionC: question.optionC,
+
             optionD: question.optionD,
+
             correctAnswer: question.correctAnswer,
+
             explanation: question.explanation,
+
+            // HINDI TRANSLATION
+
+            questionHindi:
+              question.questionHindi || "",
+
+            optionAHindi:
+              question.optionAHindi || "",
+
+            optionBHindi:
+              question.optionBHindi || "",
+
+            optionCHindi:
+              question.optionCHindi || "",
+
+            optionDHindi:
+              question.optionDHindi || "",
+
+            explanationHindi:
+              question.explanationHindi || "",
+
             marks: question.marks,
-          })),
+          }))
         },
       ],
       { session }

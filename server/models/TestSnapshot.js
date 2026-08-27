@@ -27,6 +27,21 @@ const snapshotQuestionSchema = new mongoose.Schema(
     correctAnswer: String,
 
     explanation: String,
+        // =====================================
+    // HINDI TRANSLATION
+    // =====================================
+
+    questionHindi: String,
+
+    optionAHindi: String,
+
+    optionBHindi: String,
+
+    optionCHindi: String,
+
+    optionDHindi: String,
+
+    explanationHindi: String,
 
     marks: Number,
   },

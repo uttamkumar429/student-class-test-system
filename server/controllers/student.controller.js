@@ -77,11 +77,16 @@ exports.startExam = asyncHandler(async (req, res) => {
 // =====================================
 // GET EXAM QUESTIONS
 // =====================================
+
 exports.getExamQuestions = asyncHandler(async (req, res) => {
+
+  const language =
+    req.query.language || "english";
 
   const result = await getExamQuestionsService(
     req.user._id,
-    req.params.attemptId
+    req.params.attemptId,
+    language
   );
 
   return successResponse(

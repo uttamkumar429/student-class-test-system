@@ -248,9 +248,12 @@ export const fetchExamQuestions =
       }
 
       try {
-        return await studentExamService.getExamQuestions(
-          attemptId
-        );
+        const response =
+          await studentExamService.getExamQuestions(
+            attemptId
+          );
+
+        return response;
       } catch (error) {
         return rejectWithValue(
           getErrorMessage(

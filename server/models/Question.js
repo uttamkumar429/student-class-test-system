@@ -58,6 +58,40 @@ const questionSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+        // =====================================
+    // HINDI TRANSLATION
+    // =====================================
+
+    questionHindi: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    optionAHindi: {
+      type: String,
+      default: "",
+    },
+
+    optionBHindi: {
+      type: String,
+      default: "",
+    },
+
+    optionCHindi: {
+      type: String,
+      default: "",
+    },
+
+    optionDHindi: {
+      type: String,
+      default: "",
+    },
+
+    explanationHindi: {
+      type: String,
+      default: "",
+    },
 
     marks: {
       type: Number,

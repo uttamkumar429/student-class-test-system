@@ -12,6 +12,7 @@ import {
 } from "react-redux";
 
 import {
+  useLocation,
   useNavigate,
   useParams,
 } from "react-router-dom";
@@ -43,6 +44,10 @@ const EMPTY_ANSWERS = {};
 function ExamPage() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
+
+const selectedLanguage =
+  location.state?.language || "english";
   // const { attemptId } = useParams();
   const { attemptId: routeAttemptId } =
     useParams();
@@ -143,8 +148,53 @@ const answeredQuestions =
       currentQuestionIndex
     ] || null;
 
-  const currentQuestionForCard =
-    currentQuestion;
+const currentQuestionForCard =
+  currentQuestion
+    ? {
+        ...currentQuestion,
+
+        questionText:
+          selectedLanguage === "hindi" &&
+          currentQuestion.questionHindi
+            ? currentQuestion.questionHindi
+            : currentQuestion.questionText,
+
+        options: [
+          {
+            value: "A",
+            text:
+              selectedLanguage === "hindi" &&
+              currentQuestion.optionAHindi
+                ? currentQuestion.optionAHindi
+                : currentQuestion.optionA,
+          },
+          {
+            value: "B",
+            text:
+              selectedLanguage === "hindi" &&
+              currentQuestion.optionBHindi
+                ? currentQuestion.optionBHindi
+                : currentQuestion.optionB,
+          },
+          {
+            value: "C",
+            text:
+              selectedLanguage === "hindi" &&
+              currentQuestion.optionCHindi
+                ? currentQuestion.optionCHindi
+                : currentQuestion.optionC,
+          },
+          {
+            value: "D",
+            text:
+              selectedLanguage === "hindi" &&
+              currentQuestion.optionDHindi
+                ? currentQuestion.optionDHindi
+                : currentQuestion.optionD,
+          },
+        ],
+      }
+    : null;
   // ======================================
   // QUESTION ID
   // ======================================

@@ -15,6 +15,9 @@ const {
 } = require("./systemSetting.service");
 const notificationService =
   require("./notification.service");
+  const {
+  translateExamQuestions,
+} = require("./translation.service");
 // ==========================================
 // STUDENT DASHBOARD
 // ==========================================
@@ -782,7 +785,8 @@ const checkExamExpiry = async (
 
 const getExamQuestions = async (
   studentId,
-  attemptId
+  attemptId,
+  language = "english"
 ) => {
   // -------------------------------------
   // 1. Find Exam Attempt
@@ -915,34 +919,36 @@ for (const answer of savedAnswers) {
 
     difficulty: question.difficulty,
 
+    // ENGLISH
     questionText: question.question,
+
+    optionA: question.optionA,
+    optionB: question.optionB,
+    optionC: question.optionC,
+    optionD: question.optionD,
+
+    // HINDI
+    questionHindi:
+      question.questionHindi || "",
+
+    optionAHindi:
+      question.optionAHindi || "",
+
+    optionBHindi:
+      question.optionBHindi || "",
+
+    optionCHindi:
+      question.optionCHindi || "",
+
+    optionDHindi:
+      question.optionDHindi || "",
 
     questionImage:
       question.questionImage || null,
 
-    options: [
-      {
-        value: "A",
-        text: question.optionA,
-      },
-      {
-        value: "B",
-        text: question.optionB,
-      },
-      {
-        value: "C",
-        text: question.optionC,
-      },
-      {
-        value: "D",
-        text: question.optionD,
-      },
-    ],
-
     marks: question.marks,
   })
 );
-
   // -------------------------------------
   // 10. Return Exam Data
   // -------------------------------------

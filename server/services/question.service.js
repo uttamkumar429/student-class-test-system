@@ -1,7 +1,9 @@
 const Question = require("../models/Question");
 
 const ApiError = require("../utils/ApiError");
-
+const {
+  translateQuestionToHindi,
+} = require("./translation.service");
 // =====================================
 // CONSTANTS
 // =====================================
@@ -107,9 +109,16 @@ const buildQuestionUpdate = (data) => {
 const createQuestion = async (
   questionData
 ) => {
-  return await Question.create(
-    questionData
-  );
+  const hindiTranslation =
+    await translateQuestionToHindi(
+      questionData
+    );
+
+  return await Question.create({
+    ...questionData,
+
+    ...hindiTranslation,
+  });
 };
 
 // =====================================
@@ -361,6 +370,68 @@ const updateQuestion = async (
     throw new ApiError(
       400,
       "No valid question fields were provided for update."
+    );
+  }
+
+  const translationFields = [
+    "question",
+    "optionA",
+    "optionB",
+    "optionC",
+    "optionD",
+    "explanation",
+  ];
+
+  const shouldTranslate =
+    translationFields.some((field) =>
+      Object.prototype.hasOwnProperty.call(
+        updateData,
+        field
+      )
+    );
+
+  if (shouldTranslate) {
+    const existingQuestion =
+      await Question.findById(id).lean();
+
+    if (!existingQuestion) {
+      return null;
+    }
+
+    const questionForTranslation = {
+      question:
+        updateData.question ??
+        existingQuestion.question,
+
+      optionA:
+        updateData.optionA ??
+        existingQuestion.optionA,
+
+      optionB:
+        updateData.optionB ??
+        existingQuestion.optionB,
+
+      optionC:
+        updateData.optionC ??
+        existingQuestion.optionC,
+
+      optionD:
+        updateData.optionD ??
+        existingQuestion.optionD,
+
+      explanation:
+        updateData.explanation ??
+        existingQuestion.explanation,
+    };
+
+    const hindiTranslation =
+      await translateQuestionToHindi(
+        questionForTranslation
+      );
+
+    Object.assign(
+      updateData,
+      hindiTranslation
     );
   }
 
