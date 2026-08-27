@@ -8,7 +8,17 @@ const TRANSLATE_URL =
   process.env.LIBRETRANSLATE_URL ||
   "http://127.0.0.1:5001/translate";
 
-const TRANSLATION_TIMEOUT = 60000;
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 1000;
+
+// =====================================
+// DELAY
+// =====================================
+
+const delay = (ms) =>
+  new Promise((resolve) =>
+    setTimeout(resolve, ms)
+  );
 
 // =====================================
 // TRANSLATE SINGLE TEXT
@@ -18,7 +28,7 @@ const translateText = async (
   text,
   target = "hi"
 ) => {
-  // Empty text translate karne ki zarurat nahi
+  // Empty text ko translate nahi karna
   if (
     typeof text !== "string" ||
     !text.trim()
@@ -26,104 +36,98 @@ const translateText = async (
     return "";
   }
 
-  const controller = new AbortController();
+  let lastError;
 
-  const timeoutId = setTimeout(() => {
-    controller.abort();
-  }, TRANSLATION_TIMEOUT);
+  for (
+    let attempt = 1;
+    attempt <= MAX_RETRIES;
+    attempt++
+  ) {
+    try {
+      const response = await fetch(
+        TRANSLATE_URL,
+        {
+          method: "POST",
 
-  try {
-    const response = await fetch(
-      TRANSLATE_URL,
-      {
-        method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
 
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
+          body: JSON.stringify({
+            q: text.trim(),
+            source: "en",
+            target,
+            format: "text",
+          }),
+        }
+      );
 
-        body: JSON.stringify({
-          q: text.trim(),
-          source: "en",
-          target,
-          format: "text",
-        }),
+      const responseText =
+        await response.text();
 
-        signal: controller.signal,
-      }
-    );
+      let data = {};
 
-    const responseText =
-      await response.text();
-
-    let data = {};
-
-    // Safely parse JSON response
-    if (responseText) {
       try {
-        data = JSON.parse(responseText);
-      } catch (parseError) {
+        if (responseText) {
+          data = JSON.parse(responseText);
+        }
+      } catch {
+        throw new Error(
+          `Translation service returned invalid JSON: ${responseText}`
+        );
+      }
+
+      // HTTP error
+      if (!response.ok) {
+        throw new Error(
+          data?.error ||
+          `Translation request failed with status ${response.status}.`
+        );
+      }
+
+      // Validate response
+      if (
+        typeof data?.translatedText !== "string" ||
+        !data.translatedText.trim()
+      ) {
         throw new Error(
           "Translation service returned an invalid response."
         );
       }
+
+      return data.translatedText;
+
+    } catch (error) {
+      lastError = error;
+
+      // Last attempt hai to retry nahi
+      if (attempt < MAX_RETRIES) {
+        await delay(
+          RETRY_DELAY * attempt
+        );
+      }
     }
-
-    // Translation service error
-    if (!response.ok) {
-      throw new Error(
-        data?.error ||
-        `Translation request failed with status ${response.status}.`
-      );
-    }
-
-    // Validate response
-    if (
-      !data?.translatedText ||
-      typeof data.translatedText !==
-        "string"
-    ) {
-      throw new Error(
-        "Translation service returned an invalid translation."
-      );
-    }
-
-    return data.translatedText;
-
-  } catch (error) {
-    if (error instanceof ApiError) {
-      throw error;
-    }
-
-    if (error.name === "AbortError") {
-      throw new ApiError(
-        504,
-        "Translation service request timed out."
-      );
-    }
-
-    throw new ApiError(
-      502,
-      `Question translation failed: ${error.message}`
-    );
-
-  } finally {
-    clearTimeout(timeoutId);
   }
-};
 
+  throw new ApiError(
+    502,
+    `Question translation failed after ${MAX_RETRIES} attempts: ${lastError.message}`
+  );
+};
 
 // =====================================
 // TRANSLATE COMPLETE QUESTION
 // =====================================
+// IMPORTANT:
+// Sequential translation use kar rahe hain.
+// Ek saath 6 requests nahi jayengi.
+// Render LibreTranslate instance overload/invalid
+// response ka chance significantly kam hoga.
+// =====================================
 
 const translateQuestionToHindi =
   async (questionData) => {
-
-    // Sequential requests
-    // Free Render instance par simultaneous
-    // requests avoid karne ke liye.
 
     const questionHindi =
       await translateText(
@@ -164,7 +168,6 @@ const translateQuestionToHindi =
       explanationHindi,
     };
   };
-
 
 // =====================================
 // EXPORTS
