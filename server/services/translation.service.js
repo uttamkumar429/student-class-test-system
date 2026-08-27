@@ -8,12 +8,10 @@ const TRANSLATE_URL =
   process.env.LIBRETRANSLATE_URL ||
   "http://127.0.0.1:5001/translate";
 
-const MAX_RETRIES = 3;
-const RETRY_DELAY = 1000;
-const REQUEST_TIMEOUT = 30000;
+const TRANSLATION_TIMEOUT = 30000;
 
 // =====================================
-// DELAY HELPER
+// DELAY
 // =====================================
 
 const delay = (ms) =>
@@ -36,12 +34,7 @@ const translateText = async (
     return "";
   }
 
-  const requestBody = {
-    q: text.trim(),
-    source: "en",
-    target,
-    format: "text",
-  };
+  const MAX_RETRIES = 3;
 
   let lastError;
 
@@ -50,16 +43,16 @@ const translateText = async (
     attempt <= MAX_RETRIES;
     attempt++
   ) {
+    const controller =
+      new AbortController();
+
+    const timeoutId =
+      setTimeout(
+        () => controller.abort(),
+        TRANSLATION_TIMEOUT
+      );
+
     try {
-      const controller =
-        new AbortController();
-
-      const timeoutId =
-        setTimeout(
-          () => controller.abort(),
-          REQUEST_TIMEOUT
-        );
-
       const response = await fetch(
         TRANSLATE_URL,
         {
@@ -68,36 +61,33 @@ const translateText = async (
           headers: {
             "Content-Type":
               "application/json",
-            Accept:
-              "application/json",
           },
 
-          body: JSON.stringify(
-            requestBody
-          ),
+          body: JSON.stringify({
+            q: text.trim(),
+            source: "en",
+            target,
+            format: "text",
+          }),
 
           signal:
             controller.signal,
         }
       );
 
-      clearTimeout(timeoutId);
-
       const responseText =
         await response.text();
 
-      let data = {};
+      let data;
 
-      if (responseText) {
-        try {
-          data = JSON.parse(
-            responseText
-          );
-        } catch (error) {
-          throw new Error(
-            `Translation service returned an invalid response.`
-          );
-        }
+      try {
+        data = responseText
+          ? JSON.parse(responseText)
+          : {};
+      } catch {
+        throw new Error(
+          `Translation service returned invalid JSON.`
+        );
       }
 
       if (!response.ok) {
@@ -108,16 +98,16 @@ const translateText = async (
       }
 
       if (
-        typeof data?.translatedText !==
-          "string" ||
-        !data.translatedText.trim()
+        !data?.translatedText ||
+        typeof data.translatedText !==
+          "string"
       ) {
         throw new Error(
           "Translation service returned an invalid response."
         );
       }
 
-      return data.translatedText.trim();
+      return data.translatedText;
 
     } catch (error) {
       lastError = error;
@@ -127,77 +117,70 @@ const translateText = async (
         error.message
       );
 
-      if (
-        attempt < MAX_RETRIES
-      ) {
+      if (attempt < MAX_RETRIES) {
         await delay(
-          RETRY_DELAY * attempt
+          attempt * 2000
         );
       }
+
+    } finally {
+      clearTimeout(timeoutId);
     }
   }
 
   throw new ApiError(
     502,
-    `Question translation failed: ${lastError?.message || "Translation service unavailable."}`
+    `Question translation failed: ${lastError?.message}`
   );
 };
 
 // =====================================
 // TRANSLATE COMPLETE QUESTION
-// IMPORTANT:
-// Sequential requests prevent the
-// LibreTranslate service from being
-// overloaded by 6 simultaneous requests.
+// SEQUENTIAL REQUESTS
 // =====================================
 
-const translateQuestionToHindi =
-  async (questionData) => {
+const translateQuestionToHindi = async (
+  questionData
+) => {
+  const questionHindi =
+    await translateText(
+      questionData.question
+    );
 
-    const questionHindi =
-      await translateText(
-        questionData.question
-      );
+  const optionAHindi =
+    await translateText(
+      questionData.optionA
+    );
 
-    const optionAHindi =
-      await translateText(
-        questionData.optionA
-      );
+  const optionBHindi =
+    await translateText(
+      questionData.optionB
+    );
 
-    const optionBHindi =
-      await translateText(
-        questionData.optionB
-      );
+  const optionCHindi =
+    await translateText(
+      questionData.optionC
+    );
 
-    const optionCHindi =
-      await translateText(
-        questionData.optionC
-      );
+  const optionDHindi =
+    await translateText(
+      questionData.optionD
+    );
 
-    const optionDHindi =
-      await translateText(
-        questionData.optionD
-      );
+  const explanationHindi =
+    await translateText(
+      questionData.explanation || ""
+    );
 
-    const explanationHindi =
-      await translateText(
-        questionData.explanation || ""
-      );
-
-    return {
-      questionHindi,
-
-      optionAHindi,
-
-      optionBHindi,
-
-      optionCHindi,
-
-      optionDHindi,
-
-      explanationHindi,
-    };
+  return {
+    questionHindi,
+    optionAHindi,
+    optionBHindi,
+    optionCHindi,
+    optionDHindi,
+    explanationHindi,
   };
+};
 
 // =====================================
 // EXPORTS
