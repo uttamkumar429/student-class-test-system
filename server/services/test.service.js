@@ -607,25 +607,33 @@ const publishTest = async (id) => {
     // =====================================
     // FIND TEST WITH QUESTIONS
     // =====================================
+  const test = await Test.findById(id)
+    .populate({
+      path: "questions",
+      select: `
+        subject
+        chapter
+        difficulty
 
-    const test = await Test.findById(id)
-      .populate({
-        path: "questions",
-        select: `
-          subject
-          chapter
-          difficulty
-          question
-          optionA
-          optionB
-          optionC
-          optionD
-          correctAnswer
-          explanation
-          marks
-        `,
-      })
-      .session(session);
+        question
+        optionA
+        optionB
+        optionC
+        optionD
+        correctAnswer
+        explanation
+
+        questionHindi
+        optionAHindi
+        optionBHindi
+        optionCHindi
+        optionDHindi
+        explanationHindi
+
+        marks
+      `,
+    })
+    .session(session);
 
     if (!test) {
       throw new ApiError(
@@ -682,35 +690,42 @@ const publishTest = async (id) => {
 
           endTime: test.endTime,
 
-          questions: test.questions.map(
-            (question) => ({
-              questionId: question._id,
+          questions: test.questions.map((question) => ({
+            questionId: question._id,
 
-              subject: question.subject,
+            subject: question.subject,
+            chapter: question.chapter,
+            difficulty: question.difficulty,
 
-              chapter: question.chapter,
+            // =====================================
+            // ENGLISH
+            // =====================================
 
-              difficulty: question.difficulty,
+            question: question.question,
+            optionA: question.optionA,
+            optionB: question.optionB,
+            optionC: question.optionC,
+            optionD: question.optionD,
+            explanation: question.explanation,
 
-              question: question.question,
+            // =====================================
+            // HINDI
+            // =====================================
 
-              optionA: question.optionA,
+            questionHindi: question.questionHindi || "",
+            optionAHindi: question.optionAHindi || "",
+            optionBHindi: question.optionBHindi || "",
+            optionCHindi: question.optionCHindi || "",
+            optionDHindi: question.optionDHindi || "",
+            explanationHindi: question.explanationHindi || "",
 
-              optionB: question.optionB,
+            // =====================================
+            // EXAM DATA
+            // =====================================
 
-              optionC: question.optionC,
-
-              optionD: question.optionD,
-
-              correctAnswer:
-                question.correctAnswer,
-
-              explanation:
-                question.explanation,
-
-              marks: question.marks,
-            })
-          ),
+            correctAnswer: question.correctAnswer,
+            marks: question.marks,
+          })),
         },
       ],
       { session }
