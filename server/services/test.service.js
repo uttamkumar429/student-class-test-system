@@ -594,16 +594,18 @@ const deleteTest = async (id) => {
 };
 
 // Publish Test
-const publishTest = async (id) => {
+// =====================================
+// PUBLISH TEST
+// =====================================
 
+const publishTest = async (id) => {
   const session = await mongoose.startSession();
 
   try {
-
     session.startTransaction();
 
     // =====================================
-    // FIND TEST
+    // FIND TEST WITH QUESTIONS
     // =====================================
 
     const test = await Test.findById(id)
@@ -626,8 +628,15 @@ const publishTest = async (id) => {
       .session(session);
 
     if (!test) {
-      throw new ApiError(404, "Test not found.");
+      throw new ApiError(
+        404,
+        "Test not found."
+      );
     }
+
+    // =====================================
+    // CHECK STATUS
+    // =====================================
 
     if (test.status === "published") {
       throw new ApiError(
@@ -636,7 +645,14 @@ const publishTest = async (id) => {
       );
     }
 
-    if (test.questions.length === 0) {
+    // =====================================
+    // CHECK QUESTIONS
+    // =====================================
+
+    if (
+      !Array.isArray(test.questions) ||
+      test.questions.length === 0
+    ) {
       throw new ApiError(
         400,
         "Cannot publish a test without questions."
@@ -644,82 +660,74 @@ const publishTest = async (id) => {
     }
 
     // =====================================
-    // CREATE SNAPSHOT
+    // CREATE QUESTION SNAPSHOT
     // =====================================
 
     const snapshot = await TestSnapshot.create(
       [
         {
           testId: test._id,
+
           title: test.title,
+
           subject: test.subject,
+
           duration: test.duration,
+
           totalMarks: test.totalMarks,
+
           totalQuestions: test.totalQuestions,
+
           startTime: test.startTime,
+
           endTime: test.endTime,
 
+          questions: test.questions.map(
+            (question) => ({
+              questionId: question._id,
 
-          questions: questions.map((question) => ({
-            questionId: question._id,
+              subject: question.subject,
 
-            subject: question.subject,
+              chapter: question.chapter,
 
-            chapter: question.chapter,
+              difficulty: question.difficulty,
 
-            difficulty: question.difficulty,
+              question: question.question,
 
-            question: question.question,
+              optionA: question.optionA,
 
-            optionA: question.optionA,
+              optionB: question.optionB,
 
-            optionB: question.optionB,
+              optionC: question.optionC,
 
-            optionC: question.optionC,
+              optionD: question.optionD,
 
-            optionD: question.optionD,
+              correctAnswer:
+                question.correctAnswer,
 
-            correctAnswer: question.correctAnswer,
+              explanation:
+                question.explanation,
 
-            explanation: question.explanation,
-
-            // HINDI TRANSLATION
-
-            questionHindi:
-              question.questionHindi || "",
-
-            optionAHindi:
-              question.optionAHindi || "",
-
-            optionBHindi:
-              question.optionBHindi || "",
-
-            optionCHindi:
-              question.optionCHindi || "",
-
-            optionDHindi:
-              question.optionDHindi || "",
-
-            explanationHindi:
-              question.explanationHindi || "",
-
-            marks: question.marks,
-          }))
+              marks: question.marks,
+            })
+          ),
         },
       ],
       { session }
     );
 
     // =====================================
-    // UPDATE STATUS
+    // UPDATE TEST STATUS
     // =====================================
 
     test.status = "published";
 
-    await test.save({ session });
+    await test.save({
+      session,
+    });
 
     // =====================================
-    // COMMIT
+    // COMMIT TRANSACTION
     // =====================================
 
     await session.commitTransaction();
@@ -737,9 +745,7 @@ const publishTest = async (id) => {
     session.endSession();
 
   }
-
 };
-
 
 module.exports = {
   createTest,
