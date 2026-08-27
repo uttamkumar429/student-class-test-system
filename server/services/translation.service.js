@@ -8,6 +8,8 @@ const TRANSLATE_URL =
   process.env.LIBRETRANSLATE_URL ||
   "http://127.0.0.1:5001/translate";
 
+const TRANSLATION_TIMEOUT = 60000;
+
 // =====================================
 // TRANSLATE SINGLE TEXT
 // =====================================
@@ -16,14 +18,19 @@ const translateText = async (
   text,
   target = "hi"
 ) => {
-  // Empty text ko translate karne ki
-  // zarurat nahi hai.
+  // Empty text translate karne ki zarurat nahi
   if (
     typeof text !== "string" ||
     !text.trim()
   ) {
     return "";
   }
+
+  const controller = new AbortController();
+
+  const timeoutId = setTimeout(() => {
+    controller.abort();
+  }, TRANSLATION_TIMEOUT);
 
   try {
     const response = await fetch(
@@ -32,8 +39,8 @@ const translateText = async (
         method: "POST",
 
         headers: {
-          "Content-Type":
-            "application/json",
+          "Content-Type": "application/json",
+          Accept: "application/json",
         },
 
         body: JSON.stringify({
@@ -42,41 +49,70 @@ const translateText = async (
           target,
           format: "text",
         }),
+
+        signal: controller.signal,
       }
     );
 
-    const data =
-      await response.json();
+    const responseText =
+      await response.text();
 
+    let data = {};
+
+    // Safely parse JSON response
+    if (responseText) {
+      try {
+        data = JSON.parse(responseText);
+      } catch (parseError) {
+        throw new Error(
+          "Translation service returned an invalid response."
+        );
+      }
+    }
+
+    // Translation service error
     if (!response.ok) {
       throw new Error(
         data?.error ||
-        "Translation request failed."
+        `Translation request failed with status ${response.status}.`
       );
     }
 
+    // Validate response
     if (
       !data?.translatedText ||
       typeof data.translatedText !==
         "string"
     ) {
       throw new Error(
-        "Invalid translation response."
+        "Translation service returned an invalid translation."
       );
     }
 
     return data.translatedText;
+
   } catch (error) {
     if (error instanceof ApiError) {
       throw error;
+    }
+
+    if (error.name === "AbortError") {
+      throw new ApiError(
+        504,
+        "Translation service request timed out."
+      );
     }
 
     throw new ApiError(
       502,
       `Question translation failed: ${error.message}`
     );
+
+  } finally {
+    clearTimeout(timeoutId);
   }
 };
+
 
 // =====================================
 // TRANSLATE COMPLETE QUESTION
@@ -84,53 +120,51 @@ const translateText = async (
 
 const translateQuestionToHindi =
   async (questionData) => {
-    const [
-      questionHindi,
-      optionAHindi,
-      optionBHindi,
-      optionCHindi,
-      optionDHindi,
-      explanationHindi,
-    ] = await Promise.all([
-      translateText(
+
+    // Sequential requests
+    // Free Render instance par simultaneous
+    // requests avoid karne ke liye.
+
+    const questionHindi =
+      await translateText(
         questionData.question
-      ),
+      );
 
-      translateText(
+    const optionAHindi =
+      await translateText(
         questionData.optionA
-      ),
+      );
 
-      translateText(
+    const optionBHindi =
+      await translateText(
         questionData.optionB
-      ),
+      );
 
-      translateText(
+    const optionCHindi =
+      await translateText(
         questionData.optionC
-      ),
+      );
 
-      translateText(
+    const optionDHindi =
+      await translateText(
         questionData.optionD
-      ),
+      );
 
-      translateText(
+    const explanationHindi =
+      await translateText(
         questionData.explanation || ""
-      ),
-    ]);
+      );
 
     return {
       questionHindi,
-
       optionAHindi,
-
       optionBHindi,
-
       optionCHindi,
-
       optionDHindi,
-
       explanationHindi,
     };
   };
+
 
 // =====================================
 // EXPORTS
