@@ -397,9 +397,14 @@ const getAllTests = async (
 // =====================================
 
 const getTestById = async (id) => {
+  if (!mongoose.isValidObjectId(id)) {
+    throw new ApiError(
+      400,
+      "Invalid test ID."
+    );
+  }
 
   const test = await Test.findById(id)
-
     .select(`
       title
       subject
@@ -415,15 +420,12 @@ const getTestById = async (id) => {
       createdBy
       questions
     `)
-
     .populate(
       "createdBy",
       "fullName email"
     )
-
     .populate({
       path: "questions",
-
       select: `
         subject
         chapter
@@ -438,7 +440,6 @@ const getTestById = async (id) => {
         marks
       `,
     })
-
     .lean();
 
   if (!test) {
@@ -448,8 +449,12 @@ const getTestById = async (id) => {
     );
   }
 
-  return test;
-
+  return {
+    ...test,
+    questions: Array.isArray(test.questions)
+      ? test.questions
+      : [],
+  };
 };
 // // =====================================
 // // UPDATE TEST
@@ -654,7 +659,7 @@ const publishTest = async (id) => {
           startTime: test.startTime,
           endTime: test.endTime,
 
-          
+
           questions: questions.map((question) => ({
             questionId: question._id,
 
