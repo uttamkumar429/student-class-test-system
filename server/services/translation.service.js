@@ -10,9 +10,10 @@ const TRANSLATE_URL =
 
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000;
+const REQUEST_TIMEOUT = 30000;
 
 // =====================================
-// DELAY
+// DELAY HELPER
 // =====================================
 
 const delay = (ms) =>
@@ -28,13 +29,19 @@ const translateText = async (
   text,
   target = "hi"
 ) => {
-  // Empty text ko translate nahi karna
   if (
     typeof text !== "string" ||
     !text.trim()
   ) {
     return "";
   }
+
+  const requestBody = {
+    q: text.trim(),
+    source: "en",
+    target,
+    format: "text",
+  };
 
   let lastError;
 
@@ -44,41 +51,55 @@ const translateText = async (
     attempt++
   ) {
     try {
+      const controller =
+        new AbortController();
+
+      const timeoutId =
+        setTimeout(
+          () => controller.abort(),
+          REQUEST_TIMEOUT
+        );
+
       const response = await fetch(
         TRANSLATE_URL,
         {
           method: "POST",
 
           headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
+            "Content-Type":
+              "application/json",
+            Accept:
+              "application/json",
           },
 
-          body: JSON.stringify({
-            q: text.trim(),
-            source: "en",
-            target,
-            format: "text",
-          }),
+          body: JSON.stringify(
+            requestBody
+          ),
+
+          signal:
+            controller.signal,
         }
       );
+
+      clearTimeout(timeoutId);
 
       const responseText =
         await response.text();
 
       let data = {};
 
-      try {
-        if (responseText) {
-          data = JSON.parse(responseText);
+      if (responseText) {
+        try {
+          data = JSON.parse(
+            responseText
+          );
+        } catch (error) {
+          throw new Error(
+            `Translation service returned an invalid response.`
+          );
         }
-      } catch {
-        throw new Error(
-          `Translation service returned invalid JSON: ${responseText}`
-        );
       }
 
-      // HTTP error
       if (!response.ok) {
         throw new Error(
           data?.error ||
@@ -86,9 +107,9 @@ const translateText = async (
         );
       }
 
-      // Validate response
       if (
-        typeof data?.translatedText !== "string" ||
+        typeof data?.translatedText !==
+          "string" ||
         !data.translatedText.trim()
       ) {
         throw new Error(
@@ -96,13 +117,19 @@ const translateText = async (
         );
       }
 
-      return data.translatedText;
+      return data.translatedText.trim();
 
     } catch (error) {
       lastError = error;
 
-      // Last attempt hai to retry nahi
-      if (attempt < MAX_RETRIES) {
+      console.error(
+        `Translation attempt ${attempt}/${MAX_RETRIES} failed:`,
+        error.message
+      );
+
+      if (
+        attempt < MAX_RETRIES
+      ) {
         await delay(
           RETRY_DELAY * attempt
         );
@@ -112,18 +139,16 @@ const translateText = async (
 
   throw new ApiError(
     502,
-    `Question translation failed after ${MAX_RETRIES} attempts: ${lastError.message}`
+    `Question translation failed: ${lastError?.message || "Translation service unavailable."}`
   );
 };
 
 // =====================================
 // TRANSLATE COMPLETE QUESTION
-// =====================================
 // IMPORTANT:
-// Sequential translation use kar rahe hain.
-// Ek saath 6 requests nahi jayengi.
-// Render LibreTranslate instance overload/invalid
-// response ka chance significantly kam hoga.
+// Sequential requests prevent the
+// LibreTranslate service from being
+// overloaded by 6 simultaneous requests.
 // =====================================
 
 const translateQuestionToHindi =
@@ -161,10 +186,15 @@ const translateQuestionToHindi =
 
     return {
       questionHindi,
+
       optionAHindi,
+
       optionBHindi,
+
       optionCHindi,
+
       optionDHindi,
+
       explanationHindi,
     };
   };
