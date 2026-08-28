@@ -1,27 +1,14 @@
 const ApiError = require("../utils/ApiError");
 
-// =====================================
-// LIBRETRANSLATE CONFIGURATION
-// =====================================
-
 const TRANSLATE_URL =
   process.env.LIBRETRANSLATE_URL ||
-  "http://127.0.0.1:5001/translate";
+  "https://libretranslate-sj86.onrender.com/translate";
 
-const TRANSLATION_TIMEOUT = 30000;
-
-// =====================================
-// DELAY
-// =====================================
+const TRANSLATION_TIMEOUT = 90000;
+const MAX_RETRIES = 5;
 
 const delay = (ms) =>
-  new Promise((resolve) =>
-    setTimeout(resolve, ms)
-  );
-
-// =====================================
-// TRANSLATE SINGLE TEXT
-// =====================================
+  new Promise((resolve) => setTimeout(resolve, ms));
 
 const translateText = async (
   text,
@@ -34,8 +21,6 @@ const translateText = async (
     return "";
   }
 
-  const MAX_RETRIES = 3;
-
   let lastError;
 
   for (
@@ -46,13 +31,16 @@ const translateText = async (
     const controller =
       new AbortController();
 
-    const timeoutId =
-      setTimeout(
-        () => controller.abort(),
-        TRANSLATION_TIMEOUT
-      );
+    const timeoutId = setTimeout(
+      () => controller.abort(),
+      TRANSLATION_TIMEOUT
+    );
 
     try {
+      console.log(
+        `Translation attempt ${attempt}/${MAX_RETRIES}`
+      );
+
       const response = await fetch(
         TRANSLATE_URL,
         {
@@ -60,6 +48,8 @@ const translateText = async (
 
           headers: {
             "Content-Type":
+              "application/json",
+            Accept:
               "application/json",
           },
 
@@ -70,42 +60,53 @@ const translateText = async (
             format: "text",
           }),
 
-          signal:
-            controller.signal,
+          signal: controller.signal,
         }
       );
 
       const responseText =
         await response.text();
 
-      let data;
-
-      try {
-        data = responseText
-          ? JSON.parse(responseText)
-          : {};
-      } catch {
-        throw new Error(
-          `Translation service returned invalid JSON.`
-        );
-      }
+      console.log(
+        `Translation response status: ${response.status}`
+      );
 
       if (!response.ok) {
         throw new Error(
-          data?.error ||
-          `Translation request failed with status ${response.status}.`
+          `Translation request failed with status ${response.status}: ${responseText.slice(
+            0,
+            300
+          )}`
+        );
+      }
+
+      let data;
+
+      try {
+        data = JSON.parse(responseText);
+      } catch {
+        throw new Error(
+          `Translation service returned invalid JSON: ${responseText.slice(
+            0,
+            300
+          )}`
         );
       }
 
       if (
-        !data?.translatedText ||
+        !data ||
         typeof data.translatedText !==
-          "string"
+          "string" ||
+        !data.translatedText.trim()
       ) {
         throw new Error(
           "Translation service returned an invalid response."
         );
       }
+
+      console.log(
+        `Translation successful on attempt ${attempt}`
+      );
 
       return data.translatedText;
 
@@ -118,9 +119,14 @@ const translateText = async (
       );
 
       if (attempt < MAX_RETRIES) {
-        await delay(
-          attempt * 2000
+        const waitTime =
+          attempt * 5000;
+
+        console.log(
+          `Waiting ${waitTime}ms before retry...`
         );
+
+        await delay(waitTime);
       }
 
     } finally {
@@ -130,14 +136,9 @@ const translateText = async (
 
   throw new ApiError(
     502,
-    `Question translation failed: ${lastError?.message}`
+    `Question translation failed after ${MAX_RETRIES} attempts: ${lastError?.message}`
   );
 };
-
-// =====================================
-// TRANSLATE COMPLETE QUESTION
-// SEQUENTIAL REQUESTS
-// =====================================
 
 const translateQuestionToHindi = async (
   questionData
@@ -181,10 +182,6 @@ const translateQuestionToHindi = async (
     explanationHindi,
   };
 };
-
-// =====================================
-// EXPORTS
-// =====================================
 
 module.exports = {
   translateText,
