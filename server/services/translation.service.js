@@ -143,35 +143,28 @@ const translateText = async (
 const translateQuestionToHindi = async (
   questionData
 ) => {
-  const questionHindi =
-    await translateText(
-      questionData.question
-    );
+  const [
+    questionHindi,
+    optionAHindi,
+    optionBHindi,
+    optionCHindi,
+    optionDHindi,
+    explanationHindi,
+  ] = await Promise.all([
+    translateText(questionData.question),
 
-  const optionAHindi =
-    await translateText(
-      questionData.optionA
-    );
+    translateText(questionData.optionA),
 
-  const optionBHindi =
-    await translateText(
-      questionData.optionB
-    );
+    translateText(questionData.optionB),
 
-  const optionCHindi =
-    await translateText(
-      questionData.optionC
-    );
+    translateText(questionData.optionC),
 
-  const optionDHindi =
-    await translateText(
-      questionData.optionD
-    );
+    translateText(questionData.optionD),
 
-  const explanationHindi =
-    await translateText(
+    translateText(
       questionData.explanation || ""
-    );
+    ),
+  ]);
 
   return {
     questionHindi,
