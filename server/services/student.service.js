@@ -2197,84 +2197,114 @@ const getReviewAnswers = async (
     );
   }
 
-  // ----------------------------------
-  // 7. Build Review Questions
-  // ----------------------------------
+// ----------------------------------
+// 7. Build Review Questions
+// ----------------------------------
 
-  const reviewQuestions =
-    snapshot.questions.map(
-      (question, index) => {
-        const questionId =
-          question.questionId.toString();
+const reviewQuestions =
+  snapshot.questions.map(
+    (question, index) => {
+      const questionId =
+        question.questionId.toString();
 
-        const studentAnswer =
-          answerMap.get(questionId);
+      const studentAnswer =
+        answerMap.get(questionId);
 
-        return {
-          questionId:
-            question.questionId,
+      return {
+        questionId:
+          question.questionId,
 
-          questionNumber:
-            index + 1,
+        questionNumber:
+          index + 1,
 
-          subject:
-            question.subject,
+        subject:
+          question.subject,
 
-          chapter:
-            question.chapter,
+        chapter:
+          question.chapter,
 
-          difficulty:
-            question.difficulty,
+        difficulty:
+          question.difficulty,
 
-          question:
-            question.question,
+        // ==================================
+        // ENGLISH + HINDI QUESTION
+        // ==================================
 
-          marks:
-            question.marks,
+        question:
+          question.question,
 
-          options: [
-            {
-              value: "A",
-              text: question.optionA,
-            },
-            {
-              value: "B",
-              text: question.optionB,
-            },
-            {
-              value: "C",
-              text: question.optionC,
-            },
-            {
-              value: "D",
-              text: question.optionD,
-            },
-          ],
+        questionHindi:
+          question.questionHindi || "",
 
-          selectedAnswer:
-            studentAnswer?.selectedAnswer ??
-            null,
+        marks:
+          question.marks,
 
-          correctAnswer:
-            question.correctAnswer,
+        // ==================================
+        // OPTIONS
+        // ==================================
 
-          isCorrect:
-            studentAnswer?.isCorrect ??
-            false,
+        options: [
+          {
+            value: "A",
+            text: question.optionA,
+            textHindi:
+              question.optionAHindi || "",
+          },
+          {
+            value: "B",
+            text: question.optionB,
+            textHindi:
+              question.optionBHindi || "",
+          },
+          {
+            value: "C",
+            text: question.optionC,
+            textHindi:
+              question.optionCHindi || "",
+          },
+          {
+            value: "D",
+            text: question.optionD,
+            textHindi:
+              question.optionDHindi || "",
+          },
+        ],
 
-          marksAwarded:
-            studentAnswer?.marksAwarded ??
-            0,
+        // ==================================
+        // STUDENT ANSWER
+        // ==================================
 
-          timeSpent:
-            studentAnswer?.timeSpent ??
-            0,
+        selectedAnswer:
+          studentAnswer?.selectedAnswer ??
+          null,
 
-          explanation:
-            question.explanation || "",
-        };
-      }
-    );
+        correctAnswer:
+          question.correctAnswer,
+
+        isCorrect:
+          studentAnswer?.isCorrect ??
+          false,
+
+        marksAwarded:
+          studentAnswer?.marksAwarded ??
+          0,
+
+        timeSpent:
+          studentAnswer?.timeSpent ??
+          0,
+
+        // ==================================
+        // EXPLANATION
+        // ==================================
+
+        explanation:
+          question.explanation || "",
+
+        explanationHindi:
+          question.explanationHindi || "",
+      };
+    }
+  );
     const status =
       attempt.isPassed
         ? "Pass"

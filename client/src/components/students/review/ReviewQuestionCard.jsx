@@ -1,5 +1,5 @@
 import PropTypes from "prop-types";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 
 import {
@@ -48,6 +48,8 @@ function ReviewQuestionCard() {
   const questions = useSelector(
     selectQuestions
   );
+  const [language, setLanguage] =
+  useState("english");
 
   // ======================================
   // SCROLL TO TOP ON QUESTION CHANGE
@@ -112,7 +114,6 @@ function ReviewQuestionCard() {
       ====================================== */}
 
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-
         <div>
 
           <p className="text-sm font-semibold uppercase tracking-wider text-blue-600">
@@ -125,6 +126,45 @@ function ReviewQuestionCard() {
           </h2>
 
         </div>
+          <div className="relative">
+            <label
+              htmlFor="review-language"
+              className="sr-only"
+            >
+              Language
+            </label>
+
+            <select
+              id="review-language"
+              value={language}
+              onChange={(event) =>
+                setLanguage(event.target.value)
+              }
+              className="cursor-pointer appearance-none rounded-lg border border-slate-200 bg-white py-2 pl-10 pr-10 text-sm font-semibold text-slate-700 shadow-sm outline-none transition hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            >
+              <option value="english">
+                English
+              </option>
+
+              <option value="hindi">
+                हिंदी
+              </option>
+            </select>
+
+            <span
+              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-base"
+              aria-hidden="true"
+            >
+              🌐
+            </span>
+
+            <span
+              className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"
+              aria-hidden="true"
+            >
+              ▾
+            </span>
+          </div>
 
         <div className="flex flex-wrap gap-3">
 
@@ -167,7 +207,10 @@ function ReviewQuestionCard() {
       <div className="mt-8">
 
         <p className="whitespace-pre-wrap text-lg leading-8 text-slate-800">
-          {question.question}
+          {language === "hindi" &&
+          question.questionHindi
+            ? question.questionHindi
+            : question.question}
         </p>
 
       </div>
@@ -202,7 +245,16 @@ function ReviewQuestionCard() {
       <div className="mt-8">
 
         <ReviewOptionList
-          options={question.options || []}
+          options={(question.options || []).map(
+            (option) => ({
+              ...option,
+              text:
+                language === "hindi" &&
+                option.textHindi
+                  ? option.textHindi
+                  : option.text,
+            })
+          )}
           selectedAnswer={
             question.selectedAnswer
           }
@@ -221,7 +273,10 @@ function ReviewQuestionCard() {
 
         <ExplanationCard
           explanation={
-            question.explanation
+            language === "hindi" &&
+            question.explanationHindi
+              ? question.explanationHindi
+              : question.explanation
           }
         />
 
