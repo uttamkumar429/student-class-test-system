@@ -70,7 +70,7 @@ const handleSubmit = async (e) => {
         <div className="hidden flex-col justify-center bg-blue-600 p-12 text-white lg:flex">
 
           <h1 className="mb-4 text-4xl font-bold">
-            Student Class Test System
+            TestVeda
           </h1>
 
           <p className="mb-10 text-blue-100">

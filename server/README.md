@@ -1,8 +1,8 @@
-# 🎓 Student Class Test System – Backend
+# 🎓 TestVeda – Backend
 
-> Production-ready REST API for the Student Class Test System, built with Node.js, Express.js, and MongoDB.
+> Production-ready REST API for TestVeda, built with Node.js, Express.js, and MongoDB.
 
-This backend powers the complete examination workflow of the **Student Class Test System**. It provides secure authentication, role-based authorization, student management, question management, test creation and publishing, exam attempts, result generation, analytics, reports, notifications, profile management, and system settings.
+This backend powers the complete examination workflow of **TestVeda**. It provides secure authentication, role-based authorization, student management, question management, test creation and publishing, exam attempts, result generation, analytics, reports, notifications, profile management, and system settings.
 
 ---
 

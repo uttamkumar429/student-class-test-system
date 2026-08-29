@@ -1,8 +1,8 @@
-# 🎓 Student Class Test System
+# 🎓 TestVeda
 
-> A production-ready full-stack application for managing student class tests, question banks, online exams, results, analytics, reports, and student performance.
+> A production-ready full-stack assessment platform for managing question banks, online exams, results, analytics, reports, and student performance.
 
-The **Student Class Test System** provides a complete examination workflow for both administrators and students. Administrators can manage students, create questions, build and publish tests, monitor exam activity, analyze performance, and generate reports. Students can securely log in, manage their profiles, attempt available exams, submit answers, and view their results.
+The The **TestVeda** provides a complete examination workflow for both administrators and students. Administrators can manage students, create questions, build and publish tests, monitor exam activity, analyze performance, and generate reports. Students can securely log in, manage their profiles, attempt available exams, submit answers, and view their results.
 
 ---
 

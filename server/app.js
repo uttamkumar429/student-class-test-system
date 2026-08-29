@@ -87,7 +87,7 @@ app.get("/", (req, res) => {
 
     success: true,
 
-    message: "Student Class Test System API is running successfully.",
+    message: "TestVeda API is running successfully.",
 
   });
 

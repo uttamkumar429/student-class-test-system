@@ -1,7 +1,7 @@
 {
   "name": "server",
   "version": "1.0.0",
-  "description": "Production-ready Student Class Test & Result Management System built with Node.js, Express.js, MongoDB and JWT Authentication.",
+  "description": "Production-ready TestVeda assessment and result management platform built with Node.js, Express.js, MongoDB and JWT Authentication.",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

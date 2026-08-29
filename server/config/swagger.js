@@ -5,7 +5,7 @@ const options = {
     openapi: "3.0.0",
 
     info: {
-      title: "Student Class Test System API",
+      title: "TestVeda API",
       version: "1.0.0",
       description: "Industry-level Online Examination System Backend API",
     },
