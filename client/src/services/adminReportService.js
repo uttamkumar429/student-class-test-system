@@ -1,5 +1,15 @@
 import api from "./api";
+// ======================================
+// PUBLISHED EXAMS
+// ======================================
 
+export const getPublishedExams = async () => {
+  const response = await api.get(
+    "/admin/exams/published"
+  );
+
+  return response.data?.data ?? [];
+};
 // ======================================
 // EXAM STATISTICS
 // ======================================

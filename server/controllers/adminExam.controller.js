@@ -8,6 +8,7 @@ const {
   getExamMonitoring: getExamMonitoringService,
   getStudentAttempts: getStudentAttemptsService,
   getAttemptDetails: getAttemptDetailsService,
+  getPublishedExams: getPublishedExamsService,
 } = require("../services/adminExam.service");
 
 // =====================================
@@ -63,4 +64,18 @@ exports.getAttemptDetails = asyncHandler(async (req, res) => {
     result
   );
 
+});
+// =====================================
+// PUBLISHED EXAM LIST
+// =====================================
+
+exports.getPublishedExams = asyncHandler(async (req, res) => {
+  const result = await getPublishedExamsService();
+
+  return successResponse(
+    res,
+    200,
+    "Published exams fetched successfully.",
+    result
+  );
 });

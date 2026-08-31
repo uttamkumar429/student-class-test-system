@@ -1,7 +1,7 @@
 const ExamAttempt = require("../models/ExamAttempt");
 const TestSnapshot = require("../models/TestSnapshot");
 const StudentAnswer = require("../models/StudentAnswer");
-
+const ApiError = require("../utils/ApiError");
 // =====================================
 // EXAM MONITORING
 // =====================================
@@ -183,9 +183,24 @@ const getAttemptDetails = async (snapshotId, attemptId) => {
   };
 
 };
+// =====================================
+// PUBLISHED EXAM LIST
+// =====================================
+
+const getPublishedExams = async () => {
+  return await TestSnapshot.find({})
+    .select(
+      "_id testId title subject duration totalMarks totalQuestions startTime endTime"
+    )
+    .sort({
+      createdAt: -1,
+    })
+    .lean();
+};
 
 module.exports = {
   getExamMonitoring,
   getStudentAttempts,
   getAttemptDetails,
+  getPublishedExams,
 };

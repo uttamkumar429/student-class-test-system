@@ -9,6 +9,7 @@ const {
   getExamMonitoring,
   getStudentAttempts,
   getAttemptDetails,
+  getPublishedExams,
 } = require("../controllers/adminExam.controller");
 
 /**
@@ -97,6 +98,17 @@ const {
  *         description: Attempt not found.
  */
 
+
+// =====================================
+// PUBLISHED EXAM LIST
+// =====================================
+
+router.get(
+  "/published",
+  protect,
+  authorize("admin", "superAdmin"),
+  getPublishedExams
+);
 // =====================================
 // EXAM MONITORING
 // =====================================
