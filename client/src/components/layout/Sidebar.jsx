@@ -51,6 +51,11 @@ function Sidebar() {
       path: "/admin/results", 
     },
     {
+      title: "Reports",
+      icon: FileText,
+      path: "/admin/reports",
+    },
+    {
       title: "Announcements",
       icon: Megaphone,
       path: "/admin/announcements",

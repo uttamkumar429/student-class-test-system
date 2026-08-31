@@ -5,6 +5,7 @@ import Students from "../pages/admin/Students";
 import Exams from "../pages/admin/Exams";
 import Tests from "../pages/admin/Tests";
 import Results from "../pages/admin/Results";
+import Reports from "../pages/admin/Reports";
 import Settings from "../pages/admin/Settings";
 import Announcements from "../pages/admin/Announcements";
 import CreateAnnouncement from "../pages/admin/CreateAnnouncement";
@@ -138,6 +139,14 @@ function AppRoutes() {
             element={
                 <RoleProtectedRoute allowedRoles={["admin"]}>
                 <Results />
+                </RoleProtectedRoute>
+            }
+        />
+        <Route
+            path="/admin/reports"
+            element={
+                <RoleProtectedRoute allowedRoles={["admin"]}>
+                <Reports />
                 </RoleProtectedRoute>
             }
         />
