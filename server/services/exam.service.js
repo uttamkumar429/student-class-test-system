@@ -1,14 +1,13 @@
-const mongoose = require("mongoose");
-
+const Exam = require("../models/Exam");
 const ExamAttempt = require("../models/ExamAttempt");
 const TestSnapshot = require("../models/TestSnapshot");
-
 const ApiError = require("../utils/ApiError");
 
-const startExam = async (
-  studentId,
-  testId
-) => {
+// ===================================================
+// START EXAM
+// ===================================================
+
+const startExam = async (studentId, testId) => {
 
   // ===================================================
   // FETCH SNAPSHOT
@@ -29,11 +28,10 @@ const startExam = async (
   // CHECK EXISTING ATTEMPT
   // ===================================================
 
-  const existingAttempt =
-    await ExamAttempt.findOne({
-      student: studentId,
-      testSnapshot: snapshot._id,
-    });
+  const existingAttempt = await ExamAttempt.findOne({
+    student: studentId,
+    testSnapshot: snapshot._id,
+  });
 
   // ===================================================
   // IF ALREADY SUBMITTED
@@ -54,53 +52,50 @@ const startExam = async (
   // ===================================================
 
   if (existingAttempt) {
-
     return existingAttempt;
-
   }
 
   // ===================================================
   // CREATE ATTEMPT
   // ===================================================
 
-  const attempt =
-    await ExamAttempt.create({
-
-      student: studentId,
-
-      testSnapshot: snapshot._id,
-
-      totalQuestions:
-        snapshot.totalQuestions,
-
-      totalMarks:
-        snapshot.totalMarks,
-
-      currentQuestionIndex: 0,
-
-      status: "IN-PROGRESS",
-
-    });
+  const attempt = await ExamAttempt.create({
+    student: studentId,
+    testSnapshot: snapshot._id,
+    totalQuestions: snapshot.totalQuestions,
+    totalMarks: snapshot.totalMarks,
+    currentQuestionIndex: 0,
+    status: "IN-PROGRESS",
+  });
 
   return attempt;
 };
 
-module.exports = {
+// ===================================================
+// GET EXAMS
+// ===================================================
 
-  startExam,
-
-};
-
-
-const Exam = require("../models/Exam");
-
-exports.getExams = async () => {
+const getExams = async () => {
   return await Exam.find()
     .populate("createdBy", "fullName email")
     .sort({ createdAt: -1 });
 };
 
-exports.getExamById = async (id) => {
+// ===================================================
+// GET EXAM BY ID
+// ===================================================
+
+const getExamById = async (id) => {
   return await Exam.findById(id)
     .populate("createdBy", "fullName email");
+};
+
+// ===================================================
+// EXPORTS
+// ===================================================
+
+module.exports = {
+  startExam,
+  getExams,
+  getExamById,
 };
