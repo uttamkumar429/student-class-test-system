@@ -27,7 +27,10 @@ describe("Student Registration API", () => {
 
     expect(response.body.success).toBe(true);
 
-    expect(response.body.token).toBeDefined();
+    // Registration intentionally does not issue a JWT.
+    // The student must verify the mobile OTP before login.
+    expect(response.body.token).toBeUndefined();
+    expect(response.body.user.isVerified).toBe(false);
 
     expect(response.body.user.fullName).toBe(
       users.student.fullName

@@ -10,7 +10,7 @@ import {
 
 import { NavLink, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
-import { logout } from "../../redux/slices/authSlice";
+import { logout } from "../../redux/auth/authSlice";
 
 
 function Sidebar() {

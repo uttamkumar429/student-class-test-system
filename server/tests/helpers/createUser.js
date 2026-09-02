@@ -10,6 +10,10 @@ const createUser = async (userData) => {
   return await User.create({
     ...userData,
     password: hashedPassword,
+    // API authorization tests need an authenticated student token.
+    // Production registration still creates users as unverified; this
+    // helper only controls test fixtures. Respect an explicit override.
+    isVerified: userData.isVerified ?? true,
     userId: `TEST${Date.now()}${Math.floor(Math.random() * 10000)}`,
   });
 };

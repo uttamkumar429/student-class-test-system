@@ -102,6 +102,30 @@ const buildQuestionUpdate = (data) => {
   return updateData;
 };
 
+
+// =====================================
+// SAFE HINDI TRANSLATION
+// =====================================
+
+const safeTranslateQuestionToHindi = async (questionData) => {
+  try {
+    return await translateQuestionToHindi(questionData);
+  } catch (error) {
+    console.warn(
+      `Hindi translation unavailable. Continuing without translation: ${error.message}`
+    );
+
+    return {
+      questionHindi: "",
+      optionAHindi: "",
+      optionBHindi: "",
+      optionCHindi: "",
+      optionDHindi: "",
+      explanationHindi: "",
+    };
+  }
+};
+
 // =====================================
 // CREATE QUESTION
 // =====================================
@@ -110,7 +134,7 @@ const createQuestion = async (
   questionData
 ) => {
   const hindiTranslation =
-    await translateQuestionToHindi(
+    await safeTranslateQuestionToHindi(
       questionData
     );
 
@@ -425,7 +449,7 @@ const updateQuestion = async (
     };
 
     const hindiTranslation =
-      await translateQuestionToHindi(
+      await safeTranslateQuestionToHindi(
         questionForTranslation
       );
 

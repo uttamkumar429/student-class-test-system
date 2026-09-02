@@ -1,5 +1,7 @@
 import { Routes, Route } from "react-router-dom";
 import LoginPage from "../pages/auth/LoginPage";
+import RegisterPage from "../pages/auth/RegisterPage";
+import VerifyOtpPage from "../pages/auth/VerifyOtpPage";
 import AdminDashboard from "../pages/admin/AdminDashboard";
 import Students from "../pages/admin/Students";
 import Exams from "../pages/admin/Exams";
@@ -39,6 +41,15 @@ function AppRoutes() {
        <Route path="/" element={<LoginPage />} />
 
         <Route path="/login" element={<LoginPage />} />
+        <Route
+            path="/register"
+            element={<RegisterPage />}
+        />
+
+        <Route
+            path="/verify-otp"
+            element={<VerifyOtpPage />}
+        />
 
 
         {/* Protected Route */}

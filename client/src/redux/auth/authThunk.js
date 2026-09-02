@@ -1,7 +1,7 @@
 // src/redux/auth/authThunk.js
 
 import authService from "../../services/authService";
-import { loginSuccess, logout } from "../slices/authSlice";
+import { loginSuccess, logout } from "./authSlice";
 import { toastService } from "../../lib/toast";
 
 export const loginThunk = (credentials, navigate) => {
@@ -13,6 +13,19 @@ export const loginThunk = (credentials, navigate) => {
 
       console.log("FULL RESPONSE =>", data);
 
+      // 🔐 Mobile verification required
+      if (data?.verificationRequired) {
+        navigate("/verify-otp", {
+          state: {
+            phone: data.phone,
+            purpose: "login",
+          },
+        });
+
+        return;
+      }
+
+      // ✅ Normal login for already verified users
       dispatch(
         loginSuccess({
           user: data.user,
@@ -32,13 +45,13 @@ export const loginThunk = (credentials, navigate) => {
       }
 
       console.log("NAVIGATION DONE");
-
     } catch (error) {
       console.error("LOGIN ERROR =>", error);
       throw error;
     }
   };
 };
+
 export const logoutThunk = (navigate) => {
   return async (dispatch) => {
     try {
@@ -53,7 +66,7 @@ export const logoutThunk = (navigate) => {
         navigate("/login", { replace: true });
       }, 300);
     } catch (error) {
-         console.error(error);
+      console.error(error);
       toastService.error("Logout failed.");
     }
   };

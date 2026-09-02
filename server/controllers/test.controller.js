@@ -19,16 +19,6 @@ const {
 exports.createTest = asyncHandler(
   async (req, res) => {
 
-    console.log(
-      "REQ USER:",
-      req.user
-    );
-
-    console.log(
-      "REQ USER ID:",
-      req.user?._id
-    );
-
     const test = await createTestService({
       ...req.body,
 

@@ -3,6 +3,7 @@ const express = require("express");
 const router = express.Router();
 
 const authController = require("../controllers/auth.controller");
+const otpController = require("../controllers/otp.controller");
 const {
   loginLimiter,
 } = require("../middleware/rateLimiter.middleware");
@@ -14,6 +15,7 @@ const {
 const authorize =
   require("../middleware/role.middleware");
 
+
 // Test Route
 if (process.env.NODE_ENV !== "production") {
   router.get("/test", (req, res) => {
@@ -24,7 +26,14 @@ if (process.env.NODE_ENV !== "production") {
 }
 // Register
 router.post("/register", authController.register);
-
+// =====================================
+// VERIFY STUDENT MOBILE OTP
+// =====================================
+router.post(
+  "/verify-otp",
+  loginLimiter,
+  otpController.verifyStudentOtp
+);
 /**
  * @swagger
  * /api/auth/login:
@@ -73,6 +82,7 @@ router.post(
   loginLimiter,
   authController.changePassword
 );
+
 
 router.post(
   "/admin/login",

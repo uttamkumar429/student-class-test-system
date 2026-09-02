@@ -168,6 +168,16 @@ const handleSubmit = async (e) => {
             >
               Login
             </Button>
+            <div className="mt-6 text-center text-sm text-slate-600">
+              Don't have an account?{" "}
+              <button
+                type="button"
+                onClick={() => navigate("/register")}
+                className="font-semibold text-blue-600 hover:underline"
+              >
+                Create an account
+              </button>
+            </div>
 
           </form>
 

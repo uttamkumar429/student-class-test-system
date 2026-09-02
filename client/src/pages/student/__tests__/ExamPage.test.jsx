@@ -23,6 +23,7 @@ const {
   mockNavigate,
   mockUseSelector,
   mockUseParams,
+  mockUseLocation,
   mockFetchExamQuestions,
   mockSaveAnswer,
   mockSubmitExam,
@@ -32,6 +33,7 @@ const {
   mockNavigate: vi.fn(),
   mockUseSelector: vi.fn(),
   mockUseParams: vi.fn(),
+  mockUseLocation: vi.fn(),
 
   mockFetchExamQuestions: vi.fn(),
   mockSaveAnswer: vi.fn(),
@@ -66,6 +68,9 @@ vi.mock(
 
     useParams: () =>
       mockUseParams(),
+
+    useLocation: () =>
+      mockUseLocation(),
   })
 );
 
@@ -311,6 +316,12 @@ beforeEach(() => {
     attemptId: "attempt-123",
   });
 
+  mockUseLocation.mockReturnValue({
+    state: {
+      language: "english",
+    },
+  });
+
   mockUseSelector.mockImplementation(
     (selector) =>
       selector(
@@ -540,6 +551,9 @@ test(
 
         currentQuestionIndex:
           0,
+
+        timeSpent:
+          expect.any(Number),
       },
     });
 

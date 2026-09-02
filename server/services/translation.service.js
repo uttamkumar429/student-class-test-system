@@ -4,8 +4,8 @@ const TRANSLATE_URL =
   process.env.LIBRETRANSLATE_URL ||
   "https://libretranslate-sj86.onrender.com/translate";
 
-const TRANSLATION_TIMEOUT = 90000;
-const MAX_RETRIES = 5;
+const TRANSLATION_TIMEOUT = 8000;
+const MAX_RETRIES = 1;
 
 const delay = (ms) =>
   new Promise((resolve) => setTimeout(resolve, ms));
@@ -37,10 +37,6 @@ const translateText = async (
     );
 
     try {
-      console.log(
-        `Translation attempt ${attempt}/${MAX_RETRIES}`
-      );
-
       const response = await fetch(
         TRANSLATE_URL,
         {
@@ -66,10 +62,6 @@ const translateText = async (
 
       const responseText =
         await response.text();
-
-      console.log(
-        `Translation response status: ${response.status}`
-      );
 
       if (!response.ok) {
         throw new Error(
@@ -104,28 +96,17 @@ const translateText = async (
         );
       }
 
-      console.log(
-        `Translation successful on attempt ${attempt}`
-      );
-
       return data.translatedText;
 
     } catch (error) {
       lastError = error;
 
-      console.error(
-        `Translation attempt ${attempt}/${MAX_RETRIES} failed:`,
-        error.message
+      console.warn(
+        `Translation failed: ${error.message}`
       );
 
       if (attempt < MAX_RETRIES) {
-        const waitTime =
-          attempt * 5000;
-
-        console.log(
-          `Waiting ${waitTime}ms before retry...`
-        );
-
+        const waitTime = attempt * 1000;
         await delay(waitTime);
       }
 

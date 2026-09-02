@@ -14,6 +14,9 @@ const validateRegister = require("../validators/registerValidator");
 // ===============================
 // REGISTER
 // ===============================
+ // ===============================
+// REGISTER
+// ===============================
 exports.register = async (req, res) => {
   try {
     const errors = validateRegister(req.body);
@@ -33,12 +36,13 @@ exports.register = async (req, res) => {
     } = req.body;
 
     const normalizedEmail = email.trim().toLowerCase();
+    const normalizedPhone = phone.trim();
 
     const existingUser = await User.findOne({
       $or: [
         { email: normalizedEmail },
-        { phone }
-      ]
+        { phone: normalizedPhone },
+      ],
     });
 
     if (existingUser) {
@@ -48,24 +52,26 @@ exports.register = async (req, res) => {
       });
     }
 
-    const saltRounds = Number(process.env.BCRYPT_SALT_ROUNDS) || 12;
+    const saltRounds =
+      Number(process.env.BCRYPT_SALT_ROUNDS) || 12;
 
-    const hashedPassword = await bcrypt.hash(password, saltRounds);
+    const hashedPassword = await bcrypt.hash(
+      password,
+      saltRounds
+    );
 
     const user = await User.create({
       userId: generateUserId(),
-      fullName,
+      fullName: fullName.trim(),
       email: normalizedEmail,
-      phone,
+      phone: normalizedPhone,
       password: hashedPassword,
+      isVerified: false,
     });
-
-    const token = generateToken(user._id, user.role);
 
     return res.status(201).json({
       success: true,
-      message: "Registration successful.",
-      token,
+      message: "Registration successful. Please verify your mobile number.",
       user: {
         id: user._id,
         userId: user.userId,
@@ -73,11 +79,11 @@ exports.register = async (req, res) => {
         email: user.email,
         phone: user.phone,
         role: user.role,
+        isVerified: user.isVerified,
       },
     });
-
   } catch (error) {
-    console.error("Register Error:", error);
+    console.error("Register Error:", error.message);
 
     return res.status(500).json({
       success: false,
@@ -130,6 +136,17 @@ exports.login = async (req, res) => {
 
     const user = authResult.user;
 
+    // 🔐 Unverified student → OTP verification required
+    if (user.role === "student" && !user.isVerified) {
+      return res.status(200).json({
+        success: true,
+        verificationRequired: true,
+        message: "Please verify your mobile number.",
+        phone: user.phone,
+      });
+    }
+
+    // ✅ Verified user → normal login
     const token = generateToken(user._id, user.role);
 
     await User.findByIdAndUpdate(user._id, {
