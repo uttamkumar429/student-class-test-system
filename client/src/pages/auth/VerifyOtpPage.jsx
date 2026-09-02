@@ -70,6 +70,22 @@ function VerifyOtpPage() {
   useEffect(() => {
     if (!phone) return;
 
+    // Reset the OTP session whenever this verification page
+    // is opened for a different phone number.
+    reqIdRef.current = null;
+    initialOtpSentRef.current = false;
+    verifyingRef.current = false;
+    resendInProgressRef.current = false;
+
+    if (mountedRef.current) {
+      setSdkReady(false);
+      setHasReqId(false);
+      setOtp("");
+      setError("");
+      setSuccess("");
+      setResendTimer(RESEND_COOLDOWN);
+    }
+
     mountedRef.current = true;
 
     const setupMsg91 = async () => {
@@ -151,59 +167,56 @@ function VerifyOtpPage() {
   // =========================================
   // Send OTP
   // =========================================
+const sendOtp = useCallback(() => {
+  return new Promise((resolve, reject) => {
+    if (!window.sendOtp) {
+      reject(new Error("MSG91 OTP service is not ready."));
+      return;
+    }
 
-  const sendOtp = useCallback(() => {
-    return new Promise((resolve, reject) => {
-      if (!window.sendOtp) {
-        reject(
-          new Error(
-            "MSG91 OTP service is not ready."
-          )
-        );
-        return;
-      }
+    const identifier = `91${phone}`;
 
-      if (!phone) {
-        reject(
-          new Error("Mobile number is required.")
-        );
-        return;
-      }
+    window.sendOtp(
+      identifier,
 
-      const identifier = `91${phone}`;
+      (data) => {
+        // MSG91 widget returns reqId inside `message`
+        // for the current SDK response format.
+        const requestId =
+          data?.reqId ||
+          data?.requestId ||
+          data?.message ||
+          null;
 
-      window.sendOtp(
-        identifier,
+        if (!requestId) {
+          console.error("MSG91 SEND OTP RESPONSE:", data);
+          reject(
+            new Error("OTP request ID was not received.")
+          );
+          return;
+        }
 
-        (data) => {
-          const requestId =
-            data?.reqId ||
-            data?.requestId ||
-            data?.request_id ||
-            null;
+        reqIdRef.current = requestId;
 
-          if (!requestId) {
-            reject(
-              new Error(
-                "OTP request ID was not received."
-              )
-            );
-            return;
-          }
+        if (mountedRef.current) {
+          setHasReqId(true);
+        }
 
-         reqIdRef.current = requestId;
-        setHasReqId(Boolean(requestId));
+        console.log("MSG91 OTP SENT:", {
+          type: data?.type,
+          requestId,
+        });
 
         resolve(data);
-        },
+      },
 
-        (error) => {
-          reject(error);
-        }
-      );
-    });
-  }, [phone]);
-
+      (error) => {
+        console.error("MSG91 SEND OTP FAILURE:", error);
+        reject(error);
+      }
+    );
+  });
+}, [phone]);
   // =========================================
   // Initial OTP
   // =========================================
@@ -315,15 +328,12 @@ function VerifyOtpPage() {
                 data?.message;
 
               if (!accessToken) {
-                console.error(
-                  "MSG91 verification response did not contain access token."
-                );
+                console.error("MSG91 VERIFY RESPONSE:", data);
 
                 reject(
-                  new Error(
-                    "OTP verification token was not received."
-                  )
+                  new Error("OTP verification token was not received.")
                 );
+
                 return;
               }
 
@@ -385,7 +395,7 @@ function VerifyOtpPage() {
 
       // Clear OTP session reference after success.
       reqIdRef.current = null;
-        setHasReqId(false);
+      setHasReqId(false);
 
       navigate("/student/dashboard", {
         replace: true,
@@ -454,6 +464,7 @@ function VerifyOtpPage() {
               data?.reqId ||
               data?.requestId ||
               data?.request_id ||
+              data?.message ||
               reqIdRef.current;
 
             reqIdRef.current = requestId;
@@ -586,7 +597,7 @@ function VerifyOtpPage() {
             <button
               type="button"
               onClick={handleResend}
-              disabled={resending}
+              disabled={!sdkReady || resending}
               className="text-sm font-medium text-blue-600 hover:underline disabled:cursor-not-allowed disabled:opacity-50"
             >
               {resending
