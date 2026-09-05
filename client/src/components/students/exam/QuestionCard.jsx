@@ -5,12 +5,9 @@ const QuestionCard = ({
   questionNumber = 1,
   totalQuestions = 0,
   selectedAnswer,
+  questionTime = 0,
   onOptionSelect,
 }) => {
-  // ======================================
-  // EMPTY QUESTION
-  // ======================================
-
   if (!question) {
     return (
       <div className="flex min-h-[300px] items-center justify-center rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
@@ -26,110 +23,60 @@ const QuestionCard = ({
       </div>
     );
   }
+const formatQuestionTime = (
+  totalSeconds
+) => {
+  const minutes = Math.floor(
+    totalSeconds / 60
+  );
 
-  // ======================================
-  // BUILD OPTIONS
-  // ======================================
-  //
-  // Production backend returns:
-  // optionA, optionB, optionC, optionD
-  //
-  // Older UI architecture may return:
-  // options[]
-  //
-  // Support both formats safely.
-  // ======================================
+  const seconds =
+    totalSeconds % 60;
 
-  const optionsFromBackend = [
-    {
-      key: "A",
-      text: question.optionA,
-    },
-    {
-      key: "B",
-      text: question.optionB,
-    },
-    {
-      key: "C",
-      text: question.optionC,
-    },
-    {
-      key: "D",
-      text: question.optionD,
-    },
-  ];
+  return `${String(minutes).padStart(
+    2,
+    "0"
+  )}:${String(seconds).padStart(
+    2,
+    "0"
+  )}`;
+};
+// ======================================
+// BUILD OPTIONS FROM BACKEND RESPONSE
+// ======================================
 
-  const optionsFromArray = Array.isArray(
-    question.options
-  )
-    ? question.options
-        .map((option, index) => ({
-          key:
-            option?.key ??
-            option?.value ??
-            String.fromCharCode(65 + index),
+const options = Array.isArray(question.options)
+  ? question.options
+      .map((option, index) => ({
+        key:
+          option?.value ??
+          option?.key ??
+          String.fromCharCode(65 + index),
 
-          text:
-            option?.text ??
-            option?.label ??
-            option?.optionText ??
-            option?.value ??
-            "",
-
-          image:
-            option?.image ??
-            option?.optionImage ??
-            null,
-        }))
-        .filter(
-          (option) =>
-            typeof option.text === "string" &&
-            option.text.trim() !== ""
-        )
-    : [];
-
-  const backendOptions =
-    optionsFromBackend.filter(
-      (option) =>
-        typeof option.text === "string" &&
-        option.text.trim() !== ""
-    );
-
-  const options =
-    backendOptions.length > 0
-      ? backendOptions
-      : optionsFromArray;
-
-  // ======================================
-  // QUESTION TEXT
-  // ======================================
-
-  const questionText =
-    question.question ??
-    question.questionText ??
-    "";
-
-  // ======================================
-  // QUESTION IMAGE
-  // ======================================
-
-  const questionImage =
-    question.questionImage ??
-    question.image ??
-    null;
-
-  // ======================================
-  // RENDER
-  // ======================================
+        text:
+          option?.text ??
+          option?.label ??
+          option?.optionText ??
+          "",
+          
+        image:
+          option?.image ??
+          option?.optionImage ??
+          null,
+      }))
+      .filter(
+        (option) =>
+          typeof option.text === "string" &&
+          option.text.trim() !== ""
+      )
+  : [];
 
   return (
     <article
       aria-label={`Question ${questionNumber}`}
       className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
     >
-      {/* ==================================
-          HEADER
-      ================================== */}
+      {/* Header */}
 
       <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
@@ -140,30 +87,34 @@ const QuestionCard = ({
         </div>
 
         <div className="flex items-center gap-3">
+          <span className="rounded-lg bg-purple-100 px-3 py-1 text-sm font-semibold text-purple-700">
+            Time: {
+              formatQuestionTime(
+                questionTime
+              )
+            }
+          </span>
+
           <span className="rounded-lg bg-green-100 px-3 py-1 text-sm font-semibold text-green-700">
-            {question.marks ?? 0} Marks
+            {question.marks} Marks
           </span>
         </div>
       </div>
 
-      {/* ==================================
-          QUESTION
-      ================================== */}
+      {/* Question */}
 
       <div className="mb-6">
         <p className="whitespace-pre-wrap text-lg leading-8 text-slate-800">
-          {questionText}
+          {question.questionText}
         </p>
       </div>
 
-      {/* ==================================
-          QUESTION IMAGE
-      ================================== */}
+      {/* Question Image */}
 
-      {questionImage && (
+      {question.questionImage && (
         <div className="mb-6">
           <img
-            src={questionImage}
+            src={question.questionImage}
             alt={`Question ${questionNumber}`}
             loading="lazy"
             onError={(event) => {
@@ -175,9 +126,7 @@ const QuestionCard = ({
         </div>
       )}
 
-      {/* ==================================
-          OPTIONS
-      ================================== */}
+      {/* Options */}
 
       {options.length > 0 ? (
         <OptionList
