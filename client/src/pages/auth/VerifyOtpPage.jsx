@@ -124,6 +124,43 @@ function VerifyOtpPage() {
           },
         });
 
+        // MSG91 may expose its global methods a moment after
+        // initializeMsg91Widget() returns. Wait for the methods
+        // before declaring the SDK ready, preventing the first
+        // OTP request from racing against SDK startup.
+        const waitForMsg91Methods = () =>
+          new Promise((resolve, reject) => {
+            const startedAt = Date.now();
+            const timeout = 10000;
+            const interval = 100;
+
+            const check = () => {
+              if (!mountedRef.current) return;
+
+              const ready =
+                typeof window.sendOtp === "function" &&
+                typeof window.verifyOtp === "function";
+
+              if (ready) {
+                resolve();
+                return;
+              }
+
+              if (Date.now() - startedAt >= timeout) {
+                reject(
+                  new Error("MSG91 OTP methods are not ready.")
+                );
+                return;
+              }
+
+              window.setTimeout(check, interval);
+            };
+
+            check();
+          });
+
+        await waitForMsg91Methods();
+
         if (mountedRef.current) {
           setSdkReady(true);
         }
