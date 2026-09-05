@@ -1,7 +1,6 @@
 import {
   useCallback,
   useEffect,
-  useMemo,
   useRef,
   useState,
 } from "react";
@@ -12,7 +11,6 @@ import {
 } from "react-redux";
 
 import {
-  useLocation,
   useNavigate,
   useParams,
 } from "react-router-dom";
@@ -24,7 +22,7 @@ import QuestionCard from "../../components/students/exam/QuestionCard";
 import QuestionPalette from "../../components/students/exam/QuestionPalette";
 import ExamNavigation from "../../components/students/exam/ExamNavigation";
 import ExamHeader from "../../components/students/exam/ExamHeader";
-import studentExamService from "../../services/studentExamService";
+
 import {
   fetchExamQuestions,
   saveAnswer,
@@ -38,17 +36,12 @@ import {
   setCurrentQuestion,
   markVisited,
   toggleReviewQuestion,
-  resetExam,
 } from "../../redux/studentExam/examSlice";
-const EMPTY_ANSWERS = {};
+
 function ExamPage() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const location = useLocation();
 
-const selectedLanguage =
-  location.state?.language || "english";
-  // const { attemptId } = useParams();
   const { attemptId: routeAttemptId } =
     useParams();
 
@@ -60,26 +53,10 @@ const selectedLanguage =
 
   const submittingRef = useRef(false);
   const isExamHydratedRef = useRef(false);
-  const questionStartTimeRef = useRef(null);
-  const [currentQuestionTime, setCurrentQuestionTime] =
-  useState(0);
-  const getCurrentQuestionTimeSpent =
-    useCallback(() => {
-      if (!questionStartTimeRef.current) {
-        return 0;
-      }
 
-      const timeSpent = Math.floor(
-        (Date.now() -
-          questionStartTimeRef.current) /
-          1000
-      );
-
-      return Math.max(timeSpent, 0);
-    }, []);
   const {
-
     
+    attemptId,
     title,
     subject,
     questions,
@@ -112,23 +89,21 @@ const selectedLanguage =
   // SAFE QUESTIONS ARRAY
   // ======================================
 
-  const examQuestions = useMemo(
-    () =>
-      Array.isArray(questions)
-        ? questions
-        : [],
-    [questions]
-  );
+  const examQuestions = Array.isArray(
+    questions
+  )
+    ? questions
+    : [];
 
   // ======================================
   // SAFE ANSWERS MAP
   // ======================================
 
-const answers =
-  selectedAnswers &&
-  typeof selectedAnswers === "object"
-    ? selectedAnswers
-    : EMPTY_ANSWERS;
+  const answers =
+    selectedAnswers &&
+    typeof selectedAnswers === "object"
+      ? selectedAnswers
+      : {};
 
   // ======================================
   // ANSWERED QUESTIONS
@@ -148,53 +123,8 @@ const answeredQuestions =
       currentQuestionIndex
     ] || null;
 
-const currentQuestionForCard =
-  currentQuestion
-    ? {
-        ...currentQuestion,
-
-        questionText:
-          selectedLanguage === "hindi" &&
-          currentQuestion.questionHindi
-            ? currentQuestion.questionHindi
-            : currentQuestion.questionText,
-
-        options: [
-          {
-            value: "A",
-            text:
-              selectedLanguage === "hindi" &&
-              currentQuestion.optionAHindi
-                ? currentQuestion.optionAHindi
-                : currentQuestion.optionA,
-          },
-          {
-            value: "B",
-            text:
-              selectedLanguage === "hindi" &&
-              currentQuestion.optionBHindi
-                ? currentQuestion.optionBHindi
-                : currentQuestion.optionB,
-          },
-          {
-            value: "C",
-            text:
-              selectedLanguage === "hindi" &&
-              currentQuestion.optionCHindi
-                ? currentQuestion.optionCHindi
-                : currentQuestion.optionC,
-          },
-          {
-            value: "D",
-            text:
-              selectedLanguage === "hindi" &&
-              currentQuestion.optionDHindi
-                ? currentQuestion.optionDHindi
-                : currentQuestion.optionD,
-          },
-        ],
-      }
-    : null;
+  const currentQuestionForCard =
+    currentQuestion;
   // ======================================
   // QUESTION ID
   // ======================================
@@ -207,40 +137,6 @@ const currentQuestionForCard =
 
   const currentQuestionId =
     currentQuestion?.questionId || null;
-
-    // ======================================
-// QUESTION TIME TRACKING
-// ======================================
-useEffect(() => {
-  if (!currentQuestionId) {
-    return;
-  }
-
-  questionStartTimeRef.current =
-    Date.now();
-
-  
-
-  const interval = setInterval(() => {
-    const timeSpent = Math.max(
-      0,
-      Math.floor(
-        (Date.now() -
-          questionStartTimeRef.current) /
-          1000
-      )
-    );
-
-    setCurrentQuestionTime(
-      timeSpent
-    );
-  }, 1000);
-
-  return () => {
-    clearInterval(interval);
-  };
-}, [currentQuestionId]);
-
 
   // ======================================
   // FETCH EXAM QUESTIONS
@@ -269,14 +165,15 @@ useEffect(() => {
   isExamHydratedRef.current = false;
 
   // --------------------------------------
-  // Clear old exam state
-  // --------------------------------------
-
-  dispatch(resetExam());
-
-  // --------------------------------------
   // Load current attempt
   // --------------------------------------
+  //
+  // IMPORTANT:
+  // Do not dispatch resetExam() here.
+  // On a browser refresh Redux starts empty anyway,
+  // and on an in-app re-entry clearing the state first
+  // creates a visible timer/question reset.
+  //
 
   dispatch(
     fetchExamQuestions(
@@ -285,11 +182,10 @@ useEffect(() => {
   )
     .unwrap()
     .then(() => {
-      // Server state is now hydrated
+      // Server state is now hydrated.
       isExamHydratedRef.current = true;
     })
     .catch(() => {
-      // Keep hydration disabled
       isExamHydratedRef.current = false;
     });
 }, [
@@ -367,27 +263,17 @@ useEffect(() => {
   visitedQuestions,
   reviewQuestions,
 ]);
-// ======================================
+  // ======================================
 // HANDLE OPTION SELECT
 // ======================================
 
-  const handleOptionSelect = useCallback(
-    async (selectedOption) => {
-
-      const timeSpent = Math.max(
-        0,
-        Math.floor(
-          (Date.now() -
-            questionStartTimeRef.current) /
-            1000
-        )
-      );
-
-      console.log(
-        "SELECTED OPTION RECEIVED:",
-        selectedOption,
-        typeof selectedOption
-      );
+const handleOptionSelect = useCallback(
+  async (selectedOption) => {
+    console.log(
+      "SELECTED OPTION RECEIVED:",
+      selectedOption,
+      typeof selectedOption
+    );
 
     if (!currentQuestionId || !activeAttemptId) {
       return;
@@ -437,29 +323,24 @@ useEffect(() => {
         selectedOption
       );
 
-await dispatch(
-  saveAnswer({
-    attemptId: activeAttemptId,
+      await dispatch(
+        saveAnswer({
+          attemptId: activeAttemptId,
 
-    payload: {
-      questionId: currentQuestionId,
+          payload: {
+            questionId: currentQuestionId,
 
-      selectedAnswer: selectedOption,
+            selectedAnswer: selectedOption,
 
-      currentQuestionIndex,
+            currentQuestionIndex,
+          },
+        })
+      ).unwrap();
 
-      timeSpent,
-    },
-  })
-).unwrap();
-
-questionStartTimeRef.current =
-  Date.now();
-
-console.log(
-  "ANSWER SAVED SUCCESSFULLY:",
-  selectedOption
-);
+      console.log(
+        "ANSWER SAVED SUCCESSFULLY:",
+        selectedOption
+      );
     } catch (error) {
       console.error(
         "Save answer failed:",
@@ -470,11 +351,9 @@ console.log(
         error || "Failed to save your answer."
       );
 
-      dispatch(
-        fetchExamQuestions(
-          activeAttemptId
-        )
-      );
+      // Keep the current exam UI stable.
+      // Do NOT re-fetch the entire exam here: a late response can
+      // hydrate an older currentQuestionIndex and cause Q1/Q2 flicker.
     }
   },
   [
@@ -484,140 +363,77 @@ console.log(
     currentQuestionIndex,
   ]
 );
-// ======================================
-// SAVE CURRENT QUESTION TIME
-// ======================================
-
-const saveCurrentQuestionTime =
-  useCallback(async () => {
-    const currentQuestion =
-      examQuestions[currentQuestionIndex];
-
-    if (!currentQuestion) {
-      return;
-    }
-
-    const timeSpent =
-      getCurrentQuestionTimeSpent();
-
-    try {
-  await studentExamService.saveAnswer(
-    activeAttemptId,
-    {
-      questionId:
-        currentQuestion.questionId ||
-        currentQuestion._id,
-
-      selectedAnswer:
-        answers[
-          currentQuestion.questionId ||
-          currentQuestion._id
-        ] ?? null,
-
-      currentQuestionIndex,
-
-      timeSpent,
-    }
-  );
-
-  questionStartTimeRef.current =
-    Date.now();
-
-} catch (error) {
-      console.error(
-        "Failed to save question time:",
-        error
-      );
-    }
-}, [
-  activeAttemptId,
-  examQuestions,
-  currentQuestionIndex,
-  answers,
-  getCurrentQuestionTimeSpent,
-]);
-
 
   // ======================================
   // PREVIOUS QUESTION
   // ======================================
 
-const handlePrevious =
-  useCallback(async () => {
-    if (
-      currentQuestionIndex <= 0
-    ) {
-      return;
-    }
+  const handlePrevious =
+    useCallback(() => {
+      if (
+        currentQuestionIndex <= 0
+      ) {
+        return;
+      }
 
-    await saveCurrentQuestionTime();
-
-    dispatch(
-      setCurrentQuestion(
-        currentQuestionIndex - 1
-      )
-    );
-  }, [
-    dispatch,
-    currentQuestionIndex,
-    saveCurrentQuestionTime,
-  ]);
+      dispatch(
+        setCurrentQuestion(
+          currentQuestionIndex - 1
+        )
+      );
+    }, [
+      dispatch,
+      currentQuestionIndex,
+    ]);
 
   // ======================================
   // NEXT QUESTION
   // ======================================
 
-const handleNext =
-  useCallback(async () => {
-    if (
-      currentQuestionIndex >=
-      examQuestions.length - 1
-    ) {
-      return;
-    }
+  const handleNext =
+    useCallback(() => {
+      if (
+        currentQuestionIndex >=
+        examQuestions.length - 1
+      ) {
+        return;
+      }
 
-    await saveCurrentQuestionTime();
-
-    dispatch(
-      setCurrentQuestion(
-        currentQuestionIndex + 1
-      )
-    );
-  }, [
-    dispatch,
-    currentQuestionIndex,
-    examQuestions.length,
-    saveCurrentQuestionTime,
-  ]);
+      dispatch(
+        setCurrentQuestion(
+          currentQuestionIndex + 1
+        )
+      );
+    }, [
+      dispatch,
+      currentQuestionIndex,
+      examQuestions.length,
+    ]);
 
   // ======================================
   // QUESTION PALETTE
   // ======================================
 
-const handleQuestionClick =
-  useCallback(
-    async (index) => {
-      if (
-        index < 0 ||
-        index >= examQuestions.length ||
-        index === currentQuestionIndex
-      ) {
-        return;
-      }
+  const handleQuestionClick =
+    useCallback(
+      (index) => {
+        if (
+          index < 0 ||
+          index >= examQuestions.length
+        ) {
+          return;
+        }
 
-      await saveCurrentQuestionTime();
+        dispatch(
+          setCurrentQuestion(index)
+        );
+      },
+      [
+        dispatch,
+        examQuestions.length,
+      ]
+    );
 
-      dispatch(
-        setCurrentQuestion(index)
-      );
-    },
-    [
-      dispatch,
-      examQuestions.length,
-      currentQuestionIndex,
-      saveCurrentQuestionTime,
-    ]
-  );
   // ======================================
   // TOGGLE REVIEW
   // ======================================
@@ -752,16 +568,6 @@ const handleQuestionClick =
       setSubmitting(true);
 
       try {
-        // --------------------------------
-        // SAVE CURRENT QUESTION TIME
-        // --------------------------------
-
-        await saveCurrentQuestionTime();
-
-        // --------------------------------
-        // SUBMIT EXAM
-        // --------------------------------
-
         await dispatch(
           submitExam(
             activeAttemptId
@@ -796,8 +602,41 @@ const handleQuestionClick =
       dispatch,
       activeAttemptId,
       navigate,
-      saveCurrentQuestionTime,
     ]);
+
+  // ======================================
+  // HYDRATING / INITIAL LOADING
+  // ======================================
+  // Never render the actual exam with initial Redux state.
+  // Readiness is derived instead of using setState inside an effect.
+
+  const examReady =
+    Boolean(
+      activeAttemptId &&
+      activeAttemptId === attemptId &&
+      examQuestions.length > 0 &&
+      !loading
+    );
+
+  if (!examReady) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center px-6">
+        <div
+          className="text-center"
+          role="status"
+          aria-live="polite"
+        >
+          <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
+          <h2 className="mt-5 text-xl font-semibold text-slate-700">
+            Resuming Exam...
+          </h2>
+          <p className="mt-2 text-sm text-slate-500">
+            Restoring your current question and remaining time.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   // ======================================
   // LOADING
@@ -975,6 +814,7 @@ const handleQuestionClick =
 
         <div className="lg:col-span-3">
           <QuestionCard
+
             question={
               currentQuestionForCard
             }
@@ -988,9 +828,6 @@ const handleQuestionClick =
               answers[
                 currentQuestionId
               ]
-            }
-            questionTime={
-              currentQuestionTime
             }
             onOptionSelect={
               handleOptionSelect
