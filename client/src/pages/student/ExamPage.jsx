@@ -1,6 +1,7 @@
 import {
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -11,6 +12,7 @@ import {
 } from "react-redux";
 
 import {
+  useLocation,
   useNavigate,
   useParams,
 } from "react-router-dom";
@@ -22,7 +24,7 @@ import QuestionCard from "../../components/students/exam/QuestionCard";
 import QuestionPalette from "../../components/students/exam/QuestionPalette";
 import ExamNavigation from "../../components/students/exam/ExamNavigation";
 import ExamHeader from "../../components/students/exam/ExamHeader";
-
+import studentExamService from "../../services/studentExamService";
 import {
   fetchExamQuestions,
   saveAnswer,
@@ -36,12 +38,17 @@ import {
   setCurrentQuestion,
   markVisited,
   toggleReviewQuestion,
+  resetExam,
 } from "../../redux/studentExam/examSlice";
-
+const EMPTY_ANSWERS = {};
 function ExamPage() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
 
+const selectedLanguage =
+  location.state?.language || "english";
+  // const { attemptId } = useParams();
   const { attemptId: routeAttemptId } =
     useParams();
 
@@ -53,10 +60,49 @@ function ExamPage() {
 
   const submittingRef = useRef(false);
   const isExamHydratedRef = useRef(false);
+  const questionStartTimeRef = useRef(null);
+  const questionStoredTimeRef = useRef(0);
 
+  // Serialize exam writes because saveAnswer(),
+  // saveCurrentQuestionTime(), and updateExamProgress()
+  // all update the same attempt progress.
+  const serverWriteQueueRef = useRef(
+    Promise.resolve()
+  );
+
+  const enqueueServerWrite = useCallback(
+    (operation) => {
+      const next =
+        serverWriteQueueRef.current
+          .catch(() => undefined)
+          .then(operation);
+
+      serverWriteQueueRef.current =
+        next.catch(() => undefined);
+
+      return next;
+    },
+    []
+  );
+  const [currentQuestionTime, setCurrentQuestionTime] =
+  useState(0);
+  const getCurrentQuestionTimeSpent =
+    useCallback(() => {
+      if (!questionStartTimeRef.current) {
+        return 0;
+      }
+
+      const timeSpent = Math.floor(
+        (Date.now() -
+          questionStartTimeRef.current) /
+          1000
+      );
+
+      return Math.max(timeSpent, 0);
+    }, []);
   const {
+
     
-    attemptId,
     title,
     subject,
     questions,
@@ -89,21 +135,23 @@ function ExamPage() {
   // SAFE QUESTIONS ARRAY
   // ======================================
 
-  const examQuestions = Array.isArray(
-    questions
-  )
-    ? questions
-    : [];
+  const examQuestions = useMemo(
+    () =>
+      Array.isArray(questions)
+        ? questions
+        : [],
+    [questions]
+  );
 
   // ======================================
   // SAFE ANSWERS MAP
   // ======================================
 
-  const answers =
-    selectedAnswers &&
-    typeof selectedAnswers === "object"
-      ? selectedAnswers
-      : {};
+const answers =
+  selectedAnswers &&
+  typeof selectedAnswers === "object"
+    ? selectedAnswers
+    : EMPTY_ANSWERS;
 
   // ======================================
   // ANSWERED QUESTIONS
@@ -123,8 +171,53 @@ const answeredQuestions =
       currentQuestionIndex
     ] || null;
 
-  const currentQuestionForCard =
-    currentQuestion;
+const currentQuestionForCard =
+  currentQuestion
+    ? {
+        ...currentQuestion,
+
+        questionText:
+          selectedLanguage === "hindi" &&
+          currentQuestion.questionHindi
+            ? currentQuestion.questionHindi
+            : currentQuestion.questionText,
+
+        options: [
+          {
+            value: "A",
+            text:
+              selectedLanguage === "hindi" &&
+              currentQuestion.optionAHindi
+                ? currentQuestion.optionAHindi
+                : currentQuestion.optionA,
+          },
+          {
+            value: "B",
+            text:
+              selectedLanguage === "hindi" &&
+              currentQuestion.optionBHindi
+                ? currentQuestion.optionBHindi
+                : currentQuestion.optionB,
+          },
+          {
+            value: "C",
+            text:
+              selectedLanguage === "hindi" &&
+              currentQuestion.optionCHindi
+                ? currentQuestion.optionCHindi
+                : currentQuestion.optionC,
+          },
+          {
+            value: "D",
+            text:
+              selectedLanguage === "hindi" &&
+              currentQuestion.optionDHindi
+                ? currentQuestion.optionDHindi
+                : currentQuestion.optionD,
+          },
+        ],
+      }
+    : null;
   // ======================================
   // QUESTION ID
   // ======================================
@@ -137,7 +230,75 @@ const answeredQuestions =
 
   const currentQuestionId =
     currentQuestion?.questionId || null;
+// ======================================
+// QUESTION TIME TRACKING
+// ======================================
+useEffect(() => {
+  if (!currentQuestionId || !activeAttemptId) {
+    questionStartTimeRef.current = null;
+    questionStoredTimeRef.current = 0;
+    
+    return undefined;
+  }
 
+  const storageKey =
+    `testveda:question-time:${activeAttemptId}:${currentQuestionId}`;
+
+  const storedTime = Number(
+    window.localStorage.getItem(storageKey)
+  );
+
+  const baseTime =
+    Number.isFinite(storedTime) && storedTime >= 0
+      ? Math.floor(storedTime)
+      : 0;
+
+  questionStoredTimeRef.current = baseTime;
+  questionStartTimeRef.current = Date.now();
+
+  const updateQuestionTime = () => {
+    const elapsed = Math.max(
+      0,
+      Math.floor(
+        (Date.now() -
+          questionStartTimeRef.current) /
+          1000
+      )
+    );
+
+    const totalTime =
+      questionStoredTimeRef.current +
+      elapsed;
+
+    setCurrentQuestionTime(totalTime);
+
+    window.localStorage.setItem(
+      storageKey,
+      String(totalTime)
+    );
+  };
+
+  // Show saved time immediately.
+
+
+  // Update every second.
+  const interval = setInterval(
+    updateQuestionTime,
+    1000
+  );
+
+  return () => {
+    clearInterval(interval);
+
+    // Save the latest value before leaving the question.
+    updateQuestionTime();
+
+    questionStartTimeRef.current = null;
+  };
+}, [
+  currentQuestionId,
+  activeAttemptId,
+]);
   // ======================================
   // FETCH EXAM QUESTIONS
   // ======================================
@@ -165,15 +326,14 @@ const answeredQuestions =
   isExamHydratedRef.current = false;
 
   // --------------------------------------
+  // Clear old exam state
+  // --------------------------------------
+
+  dispatch(resetExam());
+
+  // --------------------------------------
   // Load current attempt
   // --------------------------------------
-  //
-  // IMPORTANT:
-  // Do not dispatch resetExam() here.
-  // On a browser refresh Redux starts empty anyway,
-  // and on an in-app re-entry clearing the state first
-  // creates a visible timer/question reset.
-  //
 
   dispatch(
     fetchExamQuestions(
@@ -182,10 +342,11 @@ const answeredQuestions =
   )
     .unwrap()
     .then(() => {
-      // Server state is now hydrated.
+      // Server state is now hydrated
       isExamHydratedRef.current = true;
     })
     .catch(() => {
+      // Keep hydration disabled
       isExamHydratedRef.current = false;
     });
 }, [
@@ -233,24 +394,35 @@ useEffect(() => {
     return;
   }
 
+  const progressPayload = {
+    attemptId: activeAttemptId,
+
+    currentQuestionIndex,
+
+    visitedQuestions:
+      Array.isArray(visitedQuestions)
+        ? visitedQuestions
+        : Object.keys(visitedQuestions || {}),
+
+    reviewQuestions:
+      Array.isArray(reviewQuestions)
+        ? reviewQuestions
+        : Object.keys(reviewQuestions || {}),
+  };
+
   const timer = setTimeout(() => {
-    dispatch(
-      updateExamProgress({
-        attemptId: activeAttemptId,
-
-        currentQuestionIndex,
-
-        visitedQuestions:
-          Array.isArray(visitedQuestions)
-            ? visitedQuestions
-            : Object.keys(visitedQuestions || {}),
-
-        reviewQuestions:
-          Array.isArray(reviewQuestions)
-            ? reviewQuestions
-            : Object.keys(reviewQuestions || {}),
-      })
-    );
+    enqueueServerWrite(() =>
+      dispatch(
+        updateExamProgress(
+          progressPayload
+        )
+      ).unwrap()
+    ).catch((error) => {
+      console.error(
+        "Progress save failed:",
+        error
+      );
+    });
   }, 300);
 
   return () => {
@@ -258,22 +430,33 @@ useEffect(() => {
   };
 }, [
   dispatch,
+  enqueueServerWrite,
   activeAttemptId,
   currentQuestionIndex,
   visitedQuestions,
   reviewQuestions,
 ]);
-  // ======================================
+// ======================================
 // HANDLE OPTION SELECT
 // ======================================
 
-const handleOptionSelect = useCallback(
-  async (selectedOption) => {
-    console.log(
-      "SELECTED OPTION RECEIVED:",
-      selectedOption,
-      typeof selectedOption
-    );
+  const handleOptionSelect = useCallback(
+    async (selectedOption) => {
+
+      const timeSpent = Math.max(
+        0,
+        Math.floor(
+          (Date.now() -
+            questionStartTimeRef.current) /
+            1000
+        )
+      );
+
+      console.log(
+        "SELECTED OPTION RECEIVED:",
+        selectedOption,
+        typeof selectedOption
+      );
 
     if (!currentQuestionId || !activeAttemptId) {
       return;
@@ -323,24 +506,47 @@ const handleOptionSelect = useCallback(
         selectedOption
       );
 
-      await dispatch(
-        saveAnswer({
-          attemptId: activeAttemptId,
+await enqueueServerWrite(() =>
+  dispatch(
+    saveAnswer({
+      attemptId: activeAttemptId,
 
-          payload: {
-            questionId: currentQuestionId,
+      payload: {
+        questionId: currentQuestionId,
 
-            selectedAnswer: selectedOption,
+        selectedAnswer: selectedOption,
 
-            currentQuestionIndex,
-          },
-        })
-      ).unwrap();
+        currentQuestionIndex,
 
-      console.log(
-        "ANSWER SAVED SUCCESSFULLY:",
-        selectedOption
-      );
+        timeSpent,
+      },
+    })
+  ).unwrap()
+);
+
+const totalQuestionTime =
+  questionStoredTimeRef.current +
+  timeSpent;
+
+questionStoredTimeRef.current =
+  totalQuestionTime;
+
+window.localStorage.setItem(
+  `testveda:question-time:${activeAttemptId}:${currentQuestionId}`,
+  String(totalQuestionTime)
+);
+
+setCurrentQuestionTime(
+  totalQuestionTime
+);
+
+questionStartTimeRef.current =
+  Date.now();
+
+console.log(
+  "ANSWER SAVED SUCCESSFULLY:",
+  selectedOption
+);
     } catch (error) {
       console.error(
         "Save answer failed:",
@@ -351,89 +557,177 @@ const handleOptionSelect = useCallback(
         error || "Failed to save your answer."
       );
 
-      // Keep the current exam UI stable.
-      // Do NOT re-fetch the entire exam here: a late response can
-      // hydrate an older currentQuestionIndex and cause Q1/Q2 flicker.
+      dispatch(
+        fetchExamQuestions(
+          activeAttemptId
+        )
+      );
     }
   },
   [
     dispatch,
+    enqueueServerWrite,
     currentQuestionId,
     activeAttemptId,
     currentQuestionIndex,
   ]
 );
+// ======================================
+// SAVE CURRENT QUESTION TIME
+// ======================================
+
+const saveCurrentQuestionTime =
+  useCallback(async () => {
+    const currentQuestion =
+      examQuestions[currentQuestionIndex];
+
+    if (!currentQuestion || !activeAttemptId) {
+      return;
+    }
+
+    const questionId =
+      currentQuestion.questionId ||
+      currentQuestion._id;
+
+    if (!questionId) {
+      return;
+    }
+
+    const storageKey =
+      `testveda:question-time:${activeAttemptId}:${questionId}`;
+
+    const elapsed = Math.max(
+      0,
+      getCurrentQuestionTimeSpent()
+    );
+
+    const timeSpent =
+      questionStoredTimeRef.current +
+      elapsed;
+
+    try {
+      await enqueueServerWrite(() =>
+        studentExamService.saveAnswer(
+          activeAttemptId,
+          {
+            questionId,
+            selectedAnswer:
+              answers[questionId] ?? null,
+            currentQuestionIndex,
+            timeSpent,
+          }
+        )
+      );
+
+      questionStoredTimeRef.current =
+        timeSpent;
+
+      window.localStorage.setItem(
+        storageKey,
+        String(timeSpent)
+      );
+
+      setCurrentQuestionTime(
+        timeSpent
+      );
+
+      questionStartTimeRef.current =
+        Date.now();
+    } catch (error) {
+      console.error(
+        "Failed to save question time:",
+        error
+      );
+    }
+  }, [
+    activeAttemptId,
+    examQuestions,
+    currentQuestionIndex,
+    answers,
+    getCurrentQuestionTimeSpent,
+    enqueueServerWrite,
+  ]);
 
   // ======================================
   // PREVIOUS QUESTION
   // ======================================
 
-  const handlePrevious =
-    useCallback(() => {
-      if (
-        currentQuestionIndex <= 0
-      ) {
-        return;
-      }
+const handlePrevious =
+  useCallback(async () => {
+    if (
+      currentQuestionIndex <= 0
+    ) {
+      return;
+    }
 
-      dispatch(
-        setCurrentQuestion(
-          currentQuestionIndex - 1
-        )
-      );
-    }, [
-      dispatch,
-      currentQuestionIndex,
-    ]);
+    await saveCurrentQuestionTime();
+
+    dispatch(
+      setCurrentQuestion(
+        currentQuestionIndex - 1
+      )
+    );
+  }, [
+    dispatch,
+    currentQuestionIndex,
+    saveCurrentQuestionTime,
+  ]);
 
   // ======================================
   // NEXT QUESTION
   // ======================================
 
-  const handleNext =
-    useCallback(() => {
-      if (
-        currentQuestionIndex >=
-        examQuestions.length - 1
-      ) {
-        return;
-      }
+const handleNext =
+  useCallback(async () => {
+    if (
+      currentQuestionIndex >=
+      examQuestions.length - 1
+    ) {
+      return;
+    }
 
-      dispatch(
-        setCurrentQuestion(
-          currentQuestionIndex + 1
-        )
-      );
-    }, [
-      dispatch,
-      currentQuestionIndex,
-      examQuestions.length,
-    ]);
+    await saveCurrentQuestionTime();
+
+    dispatch(
+      setCurrentQuestion(
+        currentQuestionIndex + 1
+      )
+    );
+  }, [
+    dispatch,
+    currentQuestionIndex,
+    examQuestions.length,
+    saveCurrentQuestionTime,
+  ]);
 
   // ======================================
   // QUESTION PALETTE
   // ======================================
 
-  const handleQuestionClick =
-    useCallback(
-      (index) => {
-        if (
-          index < 0 ||
-          index >= examQuestions.length
-        ) {
-          return;
-        }
+const handleQuestionClick =
+  useCallback(
+    async (index) => {
+      if (
+        index < 0 ||
+        index >= examQuestions.length ||
+        index === currentQuestionIndex
+      ) {
+        return;
+      }
 
-        dispatch(
-          setCurrentQuestion(index)
-        );
-      },
-      [
-        dispatch,
-        examQuestions.length,
-      ]
-    );
+      await saveCurrentQuestionTime();
 
+      dispatch(
+        setCurrentQuestion(index)
+      );
+    },
+    [
+      dispatch,
+      examQuestions.length,
+      currentQuestionIndex,
+      saveCurrentQuestionTime,
+    ]
+  );
   // ======================================
   // TOGGLE REVIEW
   // ======================================
@@ -568,6 +862,16 @@ const handleOptionSelect = useCallback(
       setSubmitting(true);
 
       try {
+        // --------------------------------
+        // SAVE CURRENT QUESTION TIME
+        // --------------------------------
+
+        await saveCurrentQuestionTime();
+
+        // --------------------------------
+        // SUBMIT EXAM
+        // --------------------------------
+
         await dispatch(
           submitExam(
             activeAttemptId
@@ -602,41 +906,8 @@ const handleOptionSelect = useCallback(
       dispatch,
       activeAttemptId,
       navigate,
+      saveCurrentQuestionTime,
     ]);
-
-  // ======================================
-  // HYDRATING / INITIAL LOADING
-  // ======================================
-  // Never render the actual exam with initial Redux state.
-  // Readiness is derived instead of using setState inside an effect.
-
-  const examReady =
-    Boolean(
-      activeAttemptId &&
-      activeAttemptId === attemptId &&
-      examQuestions.length > 0 &&
-      !loading
-    );
-
-  if (!examReady) {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center px-6">
-        <div
-          className="text-center"
-          role="status"
-          aria-live="polite"
-        >
-          <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
-          <h2 className="mt-5 text-xl font-semibold text-slate-700">
-            Resuming Exam...
-          </h2>
-          <p className="mt-2 text-sm text-slate-500">
-            Restoring your current question and remaining time.
-          </p>
-        </div>
-      </div>
-    );
-  }
 
   // ======================================
   // LOADING
@@ -814,7 +1085,6 @@ const handleOptionSelect = useCallback(
 
         <div className="lg:col-span-3">
           <QuestionCard
-
             question={
               currentQuestionForCard
             }
@@ -828,6 +1098,9 @@ const handleOptionSelect = useCallback(
               answers[
                 currentQuestionId
               ]
+            }
+            questionTime={
+              currentQuestionTime
             }
             onOptionSelect={
               handleOptionSelect

@@ -70,7 +70,6 @@ const getInitialState = () => ({
 // ======================================
 // HYDRATE EXAM STATE
 // ======================================
-
 const normalizeQuestionMap = (value) => {
   if (!Array.isArray(value)) {
     return value || {};
@@ -161,67 +160,58 @@ const examSlice = createSlice({
         index;
     },
 
-    // ==================================
-    // SAVE SELECTED ANSWER - UI STATE
-    // ==================================
+// ==================================
+// SAVE SELECTED ANSWER - UI STATE
+// ==================================
 
-    saveSelectedAnswer: (
-      state,
-      action
-    ) => {
-      const {
-        questionId,
-        answer,
-      } = action.payload;
+saveSelectedAnswer: (
+  state,
+  action
+) => {
+  const {
+    questionId,
+    answer,
+  } = action.payload;
 
-      if (!questionId) {
-        return;
-      }
+  if (!questionId) {
+    return;
+  }
 
-      // Unselect answer
-      if (answer === null) {
-        delete state.selectedAnswers[
-          questionId
-        ];
+  // Unselect answer
+  if (answer === null) {
+    delete state.selectedAnswers[
+      questionId
+    ];
 
-        return;
-      }
+    return;
+  }
 
-      // Validate selected answer
-      if (
-        !["A", "B", "C", "D"].includes(
-          answer
-        )
-      ) {
-        return;
-      }
+  // Validate selected answer
+  if (
+    !["A", "B", "C", "D"].includes(
+      answer
+    )
+  ) {
+    return;
+  }
 
-      // Save selected answer
-      state.selectedAnswers[
-        questionId
-      ] = answer;
-    },
+  // Save selected answer
+  state.selectedAnswers[
+    questionId
+  ] = answer;
+},
+clearSelectedAnswer: (
+  state,
+  action
+) => {
+  const { questionId } = action.payload;
 
-    // ==================================
-    // CLEAR SELECTED ANSWER
-    // ==================================
+  if (!questionId) {
+    return;
+  }
 
-    clearSelectedAnswer: (
-      state,
-      action
-    ) => {
-      const { questionId } =
-        action.payload;
-
-      if (!questionId) {
-        return;
-      }
-
-      delete state.selectedAnswers[
-        questionId
-      ];
-    },
-
+  delete state.selectedAnswers[questionId];
+},
     // ==================================
     // MARK VISITED
     // ==================================
@@ -423,52 +413,49 @@ const examSlice = createSlice({
         }
       )
 
-      .addCase(
-        startExam.fulfilled,
-        (
-          state,
-          action
-        ) => {
-          state.loading = false;
+    .addCase(
+      startExam.fulfilled,
+      (state, action) => {
+        state.loading = false;
 
-          const exam =
-            action.payload?.data;
+        const exam =
+          action.payload?.data;
 
-          if (!exam) {
-            return;
-          }
-
-          state.attemptId =
-            exam.attemptId ??
-            exam._id ??
-            null;
-
-          state.testSnapshotId =
-            exam.testSnapshotId ??
-            exam.testSnapshot ??
-            null;
-
-          state.title =
-            exam.title ??
-            "";
-
-          state.subject =
-            exam.subject ??
-            "";
-
-          state.currentQuestionIndex =
-            Number.isInteger(
-              exam.currentQuestionIndex
-            )
-              ? exam.currentQuestionIndex
-              : 0;
-
-          state.remainingTime =
-            Number(exam.remainingTime) || 0;
-
-          state.submitted = false;
+        if (!exam) {
+          return;
         }
-      )
+
+        state.attemptId =
+          exam.attemptId ??
+          exam._id ??
+          null;
+
+        state.testSnapshotId =
+          exam.testSnapshotId ??
+          exam.testSnapshot ??
+          null;
+
+        state.title =
+          exam.title ??
+          "";
+
+        state.subject =
+          exam.subject ??
+          "";
+
+        state.currentQuestionIndex =
+          Number.isInteger(
+            exam.currentQuestionIndex
+          )
+            ? exam.currentQuestionIndex
+            : 0;
+
+        state.remainingTime =
+          Number(exam.remainingTime) || 0;
+
+        state.submitted = false;
+      }
+    )
 
       .addCase(
         startExam.rejected,
@@ -570,74 +557,39 @@ const examSlice = createSlice({
             "Failed to save answer.";
         }
       )
-
       // ======================================
-      // UPDATE EXAM PROGRESS
-      // ======================================
+// UPDATE EXAM PROGRESS
+// ======================================
 
-      .addCase(
-        updateExamProgress.pending,
-        (state) => {
-          state.progressSaving = true;
-        }
-      )
+    .addCase(
+      updateExamProgress.pending,
+      (state) => {
+        state.progressSaving = true;
+        state.progressError = null;
+      }
+    )
 
-      .addCase(
-        updateExamProgress.fulfilled,
-        (
-          state,
-          action
-        ) => {
-          state.progressSaving = false;
+    .addCase(
+      updateExamProgress.fulfilled,
+      (state) => {
+        // Local Redux state is already the current UI state.
+        // Do not apply server response values here because
+        // an older response must never move the UI backwards.
+        state.progressSaving = false;
+        state.progressError = null;
+      }
+    )
 
-          const progress =
-            action.payload?.data;
+.addCase(
+  updateExamProgress.rejected,
+  (state, action) => {
+    state.progressSaving = false;
 
-          if (!progress) {
-            return;
-          }
-
-          /*
-           * IMPORTANT:
-           *
-           * The browser/UI is the source of truth
-           * for currentQuestionIndex while the
-           * student is actively navigating.
-           *
-           * A delayed server response must NOT
-           * move the student back to an older
-           * question.
-           *
-           * currentQuestionIndex is still persisted
-           * by the backend and is restored through
-           * fetchExamQuestions() after refresh.
-           */
-
-          state.visitedQuestions =
-            normalizeQuestionMap(
-              progress.visitedQuestions
-            );
-
-          state.reviewQuestions =
-            normalizeQuestionMap(
-              progress.reviewQuestions
-            );
-        }
-      )
-
-      .addCase(
-        updateExamProgress.rejected,
-        (
-          state,
-          action
-        ) => {
-          state.progressSaving = false;
-
-          state.progressError =
-            action.payload ||
-            "Failed to update exam progress.";
-        }
-      )
+    state.progressError =
+      action.payload ||
+      "Failed to update exam progress.";
+  }
+)
 
       // ==================================
       // SUBMIT EXAM
